@@ -8,15 +8,152 @@ import os
 import pandas as pd
 import re
 from tika import parser
+import requests
+import csv
+from bs4 import BeautifulSoup
+import time
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 lista_pdf=os.listdir()
 lista_pdf=[x for x in lista_pdf if x[-4:]=='.pdf']
 lista_csv=os.listdir('C:/Users/kubaf/Documents/Skoki/WC/Kwalifikacje/csvki')
 lista_csv=[x for x in lista_csv if x[-7:]=='RLQ.csv']
 lista=[x for x in lista_pdf if x[:-7]+'RLQ.csv' not in lista_csv]
-
 lista.reverse()
 lista=[lista[1]]
+
+def scraping_fis(linki):
+    info=['codex','place','month','day','year','gender','hill_size','team','season']
+    database=pd.DataFrame([],columns=info)
+    names_all=[]
+    for i,item in enumerate(linki):
+            time.sleep(4)
+            [link,year]=item
+            r = requests.get(link, headers={'user-agent': 'abcd'})
+            soup = BeautifulSoup(r.text, "lxml")
+            for a in soup.find_all('span', {'class': 'event-details__field'}):
+                codex=a.text[-4:]
+            for a in soup.find_all('h1',{'class': 'heading heading_l2 heading_white heading_off-sm-style'}):
+                print(a.text)
+                place=a.text
+            for a in soup.find_all('span',{'class': 'date__full'}):
+                print(a.text)
+                date=a.text
+                date=a.text.replace(',','').split()
+            for a in soup.find_all('div',{'class': 'event-header__kind'}):
+                print(a.text)
+                tmp=a.text.replace('','').split()
+                gender=tmp[0][:-2]
+                hill_size=tmp[-1][2:]
+                if len(tmp)>=3:
+                    team=1
+                else:
+                    team=0
+            new_comp=pd.Series([codex]+[place]+date+[gender]+[hill_size]+[team]+[year], index = database.columns)
+            print(new_comp)
+            database=database.append(new_comp,ignore_index=True)
+            name=str(year)+'JP'+str(codex)+'naz.csv'
+            print(name)
+            r = requests.get(link, headers={'user-agent': 'abcd'})
+            soup = BeautifulSoup(r.text, "lxml")
+            names_list=[]
+            if team:
+                klas='table-row table-row_theme_additional'
+            else:
+                klas='table-row'
+            for a in soup.find_all('a',{'class': klas}):
+                tmp=a.text.replace('\n','<')
+                tmp=tmp.split('<')
+                tmp=[x for x in tmp if x]
+                for i,line in enumerate(tmp):
+                    nazwa=line.split(' ')
+                    nazwa=[x for x in nazwa if x]
+                    tmp[i]=' '.join(nazwa)
+                    if(len(nazwa)>1):
+                        tmp[i+1:]=[]
+                        break
+                if team:
+                    names_list.append(tmp[-4:])
+                else:
+                    names_list.append(tmp[-3:])
+            names_all=names_all+[names_list]
+    return([database,names_all])
+def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','RLT','RTRIA'],import_data=[[],[],[],[],[]],scrap=True):
+    [linki_tmp,linki,kody,database,names_list]=import_data
+    if not linki_tmp:
+        for i in range(len(years)):
+            time.sleep(5)
+            url = 'https://www.fis-ski.com/DB/?eventselection=&place=&sectorcode=JP&seasoncode='+str(years[i])+'&categorycode='+genre+'&disciplinecode=&gendercode=&racedate=&racecodex=&nationcode=&seasonmonth=X-'+str(years[i])+'&saveselection=-1&seasonselection='
+            r = requests.get(url, headers={'user-agent': 'ejdzent'})
+            soup = BeautifulSoup(r.text, "lxml")
+            for a in soup.find_all('a', {'class': 'g-sm justify-left hidden-xs hidden-md-up bold'},href=True):
+                linki_tmp.append(a['href'])
+                print(a['href'])
+        linki_tmp=list(dict.fromkeys(linki_tmp))
+    if not linki:
+        for url in linki_tmp:
+            time.sleep(4)
+            year=url[-4:]
+            r = requests.get(url, headers={'user-agent': 'ejdzent'})
+            soup = BeautifulSoup(r.text, "lxml")
+            for a in soup.find_all('a', {'class': 'px-1 g-lg-3 g-md-3 g-sm-4 g-xs-4 justify-left'},href=True):
+                linki.append([a['href'],year])
+                print([a['href'],year])
+        #linki=list(dict.fromkeys(linki))
+        #kody=list(dict.fromkeys(kody))
+        print(linki)
+    if not kody:
+        for item in linki: 
+            time.sleep(4)
+            print(item)
+            url=item[0]
+            year=item[1]
+            r = requests.get(url, headers={'user-agent': 'ejdzent'})
+            soup = BeautifulSoup(r.text, "lxml")
+            for a in soup.find_all('span', {'class': 'event-details__field'}):
+                codex=a.text[-4:]
+                print(codex)
+            for suffix in to_download:
+                tmp_file_name=year+'JP'+codex+suffix
+                print(tmp_file_name)
+                kody.append(tmp_file_name)
+    for kod in kody:
+        time.sleep(4)
+        data=kod[0:4]
+        cc=kod[6:10]
+        url='http://data.fis-ski.com/pdf/'+data+'/JP/'+cc+'/'+kod+'.pdf'
+        r = requests.get(url, allow_redirects=True)
+        open(kod+'.pdf', 'wb').write(r.content)
+        print('Pobrano konkurs: '+kod+'.pdf')
+    if scrap:
+        [database,names_list]=scraping_fis(linki)
+    return([linki_tmp,linki,kody,database,names_list])
+new_data=import_links(years=[2010,2020],genre='WC')
+def import_start_list(comp): 
+    qual=comp['qual']
+    year=comp['season']
+    codex=comp['codex']
+    if qual:
+        file_name=str(year)+'JP'+str(codex)+'SLQ.pdf'
+    else:
+        file_name=str(year)+'JP'+str(codex)+'SLR1.pdf'
+    parsed = parser.from_file(file_name)
+    tekst=parsed["content"]
+    tekst=tekst.lower()
+    tekst_lin=tekst.splitlines()
+    tekst_lin = [i for i in tekst_lin if i] 
+    lista=[]
+    for i,line in enumerate(tekst_lin):
+        if len(line)==sum(c.isdigit() for c in line) and sum(c.isalpha() for c in tekst_lin[i+1]):
+            if comp['season']<2016:
+                const=1
+            else:
+                const=2
+            next_line=tekst_lin[i+const]
+            lista.append([line,next_line])
+            if sum(c.isdigit() for c in next_line) or max(1-next_line.count(' '),0):
+                print('Alert: w konkursie nr ' +str(k)+' zawodnik z nr '+line+' nazywa się '+next_line+'!')
+     return(lista)  
+ 
 def zwroc_skoki(nazwa=[],tekstlin=[],TCS=0):
     kwale=1
     team=0
