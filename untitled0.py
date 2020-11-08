@@ -6,6 +6,7 @@ Created on Sat Sep 12 14:14:52 2020
 """
 import os
 import pandas as pd
+import numpy as np
 import re
 from tika import parser
 import requests
@@ -13,13 +14,20 @@ import csv
 from bs4 import BeautifulSoup
 import time
 os.chdir('C:/Users/kubaf/Documents/Skoki')
-lista_pdf=os.listdir()
-lista_pdf=[x for x in lista_pdf if x[-4:]=='.pdf']
-lista_csv=os.listdir('C:/Users/kubaf/Documents/Skoki/WC/Kwalifikacje/csvki')
-lista_csv=[x for x in lista_csv if x[-7:]=='RLQ.csv']
-lista=[x for x in lista_pdf if x[:-7]+'RLQ.csv' not in lista_csv]
-lista.reverse()
-lista=[lista[1]]
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+def take_number(string):
+    string=string.replace('m','')
+    tmp=string.split(' ')
+    take=[x for x in tmp if is_number(x)]
+    print(take)
+    return float(take[0])
 
 def scraping_fis(linki):
     info=['codex','place','month','day','year','gender','hill_size','team','season']
@@ -77,6 +85,7 @@ def scraping_fis(linki):
                     names_list.append(tmp[-3:])
             names_all=names_all+[names_list]
     return([database,names_all])
+
 def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','RLT','RTRIA'],import_data=[[],[],[],[],[]],scrap=True):
     [linki_tmp,linki,kody,database,names_list]=import_data
     if not linki_tmp:
@@ -127,51 +136,102 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
     if scrap:
         [database,names_list]=scraping_fis(linki)
     return([linki_tmp,linki,kody,database,names_list])
-new_data=import_links(years=[2010,2020],genre='WC')
-def import_start_list(comp): 
-    qual=comp['qual']
-    year=comp['season']
-    codex=comp['codex']
+#new_data=import_links()
+
+to_process=['SLQ','SLR1']
+to_process=[x+'.pdf' for x in to_process]
+lista=os.listdir()
+lista=[x for x in lista if any(t for t in to_process if t in x)]
+lista.reverse()
+
+def import_start_list(nazwa): 
+    qual=len([x for x in nazwa if x=='Q'])
+    year=nazwa[:4]
+    codex=nazwa[6:10]
+    print(year,codex)
     if qual:
         file_name=str(year)+'JP'+str(codex)+'SLQ.pdf'
     else:
         file_name=str(year)+'JP'+str(codex)+'SLR1.pdf'
     parsed = parser.from_file(file_name)
     tekst=parsed["content"]
+    tekst=tekst.replace('* ','')
     tekst=tekst.lower()
     tekst_lin=tekst.splitlines()
     tekst_lin = [i for i in tekst_lin if i] 
     lista=[]
     for i,line in enumerate(tekst_lin):
-        if len(line)==sum(c.isdigit() for c in line) and sum(c.isalpha() for c in tekst_lin[i+1]):
-            if comp['season']<2016:
+        
+        if len(line)==sum(c.isdigit() for c in line)+line.count('-') and sum(c.isalpha() for c in tekst_lin[i+1]):
+            if int(year)<2016:
                 const=1
             else:
                 const=2
             next_line=tekst_lin[i+const]
             lista.append([line,next_line])
             if sum(c.isdigit() for c in next_line) or max(1-next_line.count(' '),0):
-                print('Alert: w konkursie nr ' +str(k)+' zawodnik z nr '+line+' nazywa się '+next_line+'!')
-     return(lista)  
- 
-def zwroc_skoki(nazwa=[],tekstlin=[],TCS=0):
+                print('Alert: zawodnik z nr '+line+' nazywa się '+next_line+'!')
+    info=['season','codex','hill_size','k-point','meter value','gate factor','wind factor']
+    comps_infos=pd.DataFrame([],columns=info)
+    word=['hill size','k-point','meter value','gate factor','wind factor']
+    infos=[]
+    for words in word:
+        add=[i for i in tekst_lin if words in i]
+        if add:
+            infos.append(take_number(add[0]))
+        else:
+            infos.append(np.nan)
+    new_info=pd.Series([year]+[codex]+infos, index = comps_infos.columns)
+    comps_infos=comps_infos.append(new_info,ignore_index=True)
+    return([lista,comps_infos])  
+
+start_lists=[]
+for nazwa in lista:
+    [lista,comps_infos]=import_start_list(nazwa)
+    with open(nazwa[:-4]+'.csv','w+') as result_file:
+        for line in lista:
+            mod_line=';'.join(line)
+            result_file.write(mod_line)
+            result_file.write('\n')
+    result_file.close()
+    start_lists=start_lists+[[lista,comps_infos]]
+
+to_process=['RLQ','RL']
+to_process=[x+'.pdf' for x in to_process]
+lista=os.listdir()
+lista=[x for x in lista if any(t for t in to_process if t in x)]
+lista.reverse()
+
+def zwroc_skoki(nazwa,tekstlin=[],TCS=0):
     kwale=1
     team=0
     pre_2016=0
-    if nazwa:
-        if nazwa[-5]=='Q':
-            kwale=1
-        if int(nazwa[0:4])<2016:
-            pre_2016=1
-        else:
-            pre_2016=0
-        parsed = parser.from_file(nazwa)
-        tekst=parsed["content"]
-        tekst=tekst.lower()
-        tekst_lin=tekst.splitlines()
-        tekst_lin = [i for i in tekst_lin if i] 
+    names_list=[]
+    if nazwa[-5]=='Q':
+        kwale=1
+        names_jumpers=nazwa[0:10]+'SLQ'
+    else:
+        names_jumpers=nazwa[0:10]+'SLR1' 
+    with open(names_jumpers+'.csv', 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            names_list.append(row)
+    file.close()
+    print(names_list)
+    
+    if int(nazwa[0:4])<2016:
+        pre_2016=1
+    else:
+        pre_2016=0
+    parsed = parser.from_file(nazwa)
+    tekst=parsed["content"]
+    tekst=tekst.lower()
+    tekst_lin=tekst.splitlines()
+    tekst_lin = [i for i in tekst_lin if i] 
+    
     if tekstlin:
         tekst_lin=tekstlin
+        
     for line in range(len(tekst_lin[0:8])):
         if tekst_lin[line].count('team')>0:
             team=1
@@ -348,7 +408,7 @@ for plik in lista:
     result=collect(content[0],content[1],content[2],content[3],content[4])
     result.to_csv(plik[:-4]+'.csv')
 
-przyklad='2014JP3796RLQ.pdf'
+przyklad='2021JP3190RLQ.pdf'
 parsed = parser.from_file(przyklad)
 tekst=parsed["content"]
 tekst=tekst.lower()
