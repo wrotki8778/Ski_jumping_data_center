@@ -54,7 +54,6 @@ def scraping_fis(linki):
                     team=0
             new_comp=pd.Series([codex]+[place]+date+[gender]+[hill_size]+[team]+[year], index = database.columns)
             database=database.append(new_comp,ignore_index=True)
-            name=str(year)+'JP'+str(codex)+'naz.csv'
             r = requests.get(link, headers={'user-agent': 'abcd'})
             soup = BeautifulSoup(r.text, "lxml")
             names_list=[]
@@ -138,6 +137,9 @@ def import_start_list(nazwa):
         file_name=str(year)+'JP'+str(codex)+'SLQ.pdf'
     else:
         file_name=str(year)+'JP'+str(codex)+'SLR1.pdf'
+    id=str(year)+'JP'+str(codex)+'RL'
+    if qual:
+        id=id+'Q'
     parsed = parser.from_file(file_name)
     tekst=parsed["content"]
     tekst=tekst.replace('* ','')
@@ -155,7 +157,7 @@ def import_start_list(nazwa):
             lista.append([line,next_line])
             if sum(c.isdigit() for c in next_line) or max(1-next_line.count(' '),0):
                 print('Alert: zawodnik z nr '+line+' nazywa się '+next_line+'!')
-    info=['season','codex','hill_size','k-point','meter value','gate factor','wind factor']
+    info=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id']
     comps_infos=pd.DataFrame([],columns=info)
     word=['hill size','k-point','meter value','gate factor','wind factor']
     infos=[]
@@ -165,21 +167,24 @@ def import_start_list(nazwa):
             infos.append(take_number(add[0]))
         else:
             infos.append(np.nan)
-    new_info=pd.Series([year]+[codex]+infos, index = comps_infos.columns)
+    new_info=pd.Series([year]+[codex]+infos+[id], index = comps_infos.columns)
     comps_infos=comps_infos.append(new_info,ignore_index=True)
     return([lista,comps_infos])  
 
 start_lists=[]
+comps_infos_all=pd.DataFrame([],index=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id'])
 for nazwa in lista:
     [lista,comps_infos]=import_start_list(nazwa)
+    comps_infos_all=comps_infos_all.append(comps_infos,ignore_index=True)
     with open(nazwa[:-4]+'.csv','w+') as result_file:
         for line in lista:
             mod_line=';'.join(line)
             result_file.write(mod_line)
             result_file.write('\n')
     result_file.close()
-    start_lists=start_lists+[[lista,comps_infos]]
+    start_lists=start_lists+[[lista]]
 
+comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')    
 to_process=['RLQ','RL']
 to_process=[x+'.pdf' for x in to_process]
 lista=os.listdir()
