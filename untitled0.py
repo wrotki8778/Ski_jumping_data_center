@@ -10,7 +10,6 @@ import numpy as np
 import re
 from tika import parser
 import requests
-import csv
 from bs4 import BeautifulSoup
 import time
 os.chdir('C:/Users/kubaf/Documents/Skoki')
@@ -24,6 +23,7 @@ def is_number(s):
 
 def take_number(string):
     string=string.replace('m','')
+    string=string.replace('/',' ')
     tmp=string.split(' ')
     take=[x for x in tmp if is_number(x)]
     return float(take[0])
@@ -76,6 +76,13 @@ def scraping_fis(linki):
                     names_list.append(tmp[-4:])
                 else:
                     names_list.append(tmp[-3:])
+            file_name=str(year)+'JP'+str(codex)+'nazfis.csv'
+            with open(file_name,'w+') as result_file:
+                for i,line in enumerate(names_list):
+                    mod_line=';'.join(line)
+                    result_file.write(mod_line)
+                    result_file.write('\n')
+            result_file.close()    
             names_all=names_all+[names_list]
     return([database,names_all])
 
@@ -84,7 +91,7 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
     if not linki_tmp:
         for i in range(len(years)):
             time.sleep(5)
-            url = 'https://www.fis-ski.com/DB/?eventselection=&place=&sectorcode=JP&seasoncode='+str(years[i])+'&categorycode='+genre+'&disciplinecode=&gendercode=&racedate=&racecodex=&nationcode=&seasonmonth=X-'+str(years[i])+'&saveselection=-1&seasonselection='
+            url = 'https://www.fis-ski.com/DB/?eventselection=results&place=&sectorcode=JP&seasoncode='+str(years[i])+'&categorycode='+genre+'&disciplinecode=&gendercode=&racedate=&racecodex=&nationcode=&seasonmonth=X-'+str(years[i])+'&saveselection=-1&seasonselection='
             r = requests.get(url, headers={'user-agent': 'ejdzent'})
             soup = BeautifulSoup(r.text, "lxml")
             for a in soup.find_all('a', {'class': 'g-sm justify-left hidden-xs hidden-md-up bold'},href=True):
@@ -117,11 +124,13 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
         url='http://data.fis-ski.com/pdf/'+data+'/JP/'+cc+'/'+kod+'.pdf'
         r = requests.get(url, allow_redirects=True)
         open(kod+'.pdf', 'wb').write(r.content)
+        if os.path.getsize(kod+'.pdf')<15:
+            os.remove(kod+'.pdf')
         print('Pobrano konkurs: '+kod+'.pdf')
     if scrap:
         [database,names_list]=scraping_fis(linki)
     return([linki_tmp,linki,kody,database,names_list])
-#new_data=import_links()
+new_data=import_links()
 
 to_process=['SLQ','SLR1']
 to_process=[x+'.pdf' for x in to_process]
@@ -129,7 +138,7 @@ lista=os.listdir()
 lista=[x for x in lista if any(t for t in to_process if t in x)]
 lista.reverse()
 
-def import_start_list(nazwa): 
+def import_start_list(nazwa,new_data=[],block=False): 
     qual=len([x for x in nazwa if x=='Q'])
     year=nazwa[:4]
     codex=nazwa[6:10]
@@ -157,32 +166,46 @@ def import_start_list(nazwa):
             lista.append([line,next_line])
             if sum(c.isdigit() for c in next_line) or max(1-next_line.count(' '),0):
                 print('Alert: zawodnik z nr '+line+' nazywa się '+next_line+'!')
+                
     info=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id']
     comps_infos=pd.DataFrame([],columns=info)
     word=['hill size','k-point','meter value','gate factor','wind factor']
     infos=[]
     for words in word:
         add=[i for i in tekst_lin if words in i]
+        print(add)
         if add:
             infos.append(take_number(add[0]))
         else:
             infos.append(np.nan)
     new_info=pd.Series([year]+[codex]+infos+[id], index = comps_infos.columns)
     comps_infos=comps_infos.append(new_info,ignore_index=True)
-    return([lista,comps_infos])  
+    file_name=str(year)+'JP'+str(codex)+'naz.csv'
+    with open(file_name,'w+') as result_file:
+        for i,line in enumerate(lista):
+            mod_line=';'.join(line)
+            result_file.write(mod_line)
+            result_file.write('\n')
+    result_file.close()
+    if not block:
+        return([lista,comps_infos])  
+    else:
+        return([[],comps_infos])
 
 start_lists=[]
 comps_infos_all=pd.DataFrame([],index=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id'])
 for nazwa in lista:
-    [lista,comps_infos]=import_start_list(nazwa)
+    [list,comps_infos]=import_start_list(nazwa)
     comps_infos_all=comps_infos_all.append(comps_infos,ignore_index=True)
-    with open(nazwa[:-4]+'.csv','w+') as result_file:
+    """
+    with open(nazwa[:-4]+'naz.csv','w+') as result_file:
         for line in lista:
             mod_line=';'.join(line)
             result_file.write(mod_line)
             result_file.write('\n')
     result_file.close()
-    start_lists=start_lists+[[lista]]
+    """
+    start_lists=start_lists+[[list]]
 
 comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')    
 to_process=['RLQ','RL']
@@ -190,20 +213,22 @@ to_process=[x+'.pdf' for x in to_process]
 lista=os.listdir()
 lista=[x for x in lista if any(t for t in to_process if t in x)]
 lista.reverse()
-lista=lista[0:4]
 
-def zwroc_skoki(nazwa,tekstlin=[],TCS=0):
+def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
+    if not comp.empty:
+        nazwa=comp['id']+'.pdf'
     kwale=1
     team=0
     pre_2016=0
     names_list=[]
     if nazwa[-5]=='Q':
         kwale=1
-        names_jumpers=nazwa[0:10]+'SLQ'
+    if not names:
+        names_list=pd.DataFrame(import_start_list(nazwa)[0],columns=['bib','name'])
+        print(names_list)
     else:
-        names_jumpers=nazwa[0:10]+'SLR1' 
-    names_list=pd.read_csv(names_jumpers+'.csv',sep=';',header=None)
-    names_list.columns=['bib','name'] 
+        names_list=pd.DataFrame(names,columns=['bib','codex','name'])
+        names_list['name']=names_list['name'].str.lower()
     if int(nazwa[0:4])<2016:
         pre_2016=1
     else:
@@ -220,16 +245,18 @@ def zwroc_skoki(nazwa,tekstlin=[],TCS=0):
             team=1
     end=[]
     word='round'
-    word2='competition / weather information'
+    word2='weather information'
     for i,line in enumerate(tekst_lin):
         if word2 in line: # or word in line.split() to search for full words
             end.append(i)
         if word in line: # or word in line.split() to search for full words
             kwale=0
     tekst_lin=tekst_lin[:end[0]]
-    lista=[i for i,x in enumerate(tekst_lin) if any(t for t in names_list['name'] if x.count(t))]+[len(tekst_lin)]
-    indices=[(lista[i],lista[i+1]) for i in range(len(lista)-1)]
-    skoki=[tekst_lin[s:e] for s,e in indices]
+    lista=[(i,x) for i,x in enumerate(tekst_lin) if any(t for t in names_list['name'] if x.count(t))]+[(len(tekst_lin),'end')]
+    indices=[(lista[i][0],lista[i+1][0],[t for t in names_list['name'] if x.count(t)]) for i,x in enumerate(lista[:-1])]
+    skoki=[x+tekst_lin[s:e] for s,e,x in indices]
+    if len(indices)<len(names_list):
+        print('Warning: in '+comp['id']+' '+str(len(names_list) - len(indices))+' not found!')
     return([skoki,kwale,team,pre_2016,TCS])    
 
 def przeksztalc(string,kwale=0,team=0,TCS=0):
@@ -269,13 +296,9 @@ def przeksztalc(string,kwale=0,team=0,TCS=0):
 def znowu_przeksztalc(skok,kwale=0,team=0,pre_2016=0,TCS=0):
     output = [idx for idx, line in enumerate(skok) if line.count('.')>7] 
     info=['name','wind','wind_comp','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
-    ind_name=2
-    if pre_2016 or TCS:
-        ind_name=1
     if kwale==1 and team==0:
         info=['name','wind','wind_comp','points','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','gate','gate_points']
-    if team==1:
-        ind_name=0
+
     new_jump=pd.DataFrame([],columns=info)
     for i in range(len(output)):
         name=skok[0]
@@ -298,13 +321,14 @@ def collect(jumps,kwale=0,team=0,pre_2016=0,TCS=0):
         new_jumps=znowu_przeksztalc(jumps[i],kwale,team,pre_2016,TCS)
         database=database.append(new_jumps,ignore_index=True)
     return(database)
-przyklad='2021JP3139RL.pdf'
+przyklad='2021JP3198RL.pdf'
 parsed = parser.from_file(przyklad)
 tekst=parsed["content"]
 tekst=tekst.lower()
 tekst_lin=tekst.splitlines()
 tekst_lin = [i for i in tekst_lin if i] 
-content=zwroc_skoki(przyklad)
+n=1
+content=zwroc_skoki(comps_infos_all.iloc[n])
 troche_dalej=znowu_przeksztalc(content[0][17],content[1],content[2],content[3],content[4])
 dalej=collect(content[0],content[1],content[2],content[3],content[4])
 dalej.to_csv(przyklad[:-4]+'.csv')
