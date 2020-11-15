@@ -28,6 +28,7 @@ def take_number(string):
     take=[x for x in tmp if is_number(x)]
     return float(take[0])
 
+
 def scraping_fis(linki):
     info=['codex','place','month','day','year','gender','hill_size','team','season']
     database=pd.DataFrame([],columns=info)
@@ -96,7 +97,6 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
             soup = BeautifulSoup(r.text, "lxml")
             for a in soup.find_all('a', {'class': 'g-sm justify-left hidden-xs hidden-md-up bold'},href=True):
                 linki_tmp.append(a['href'])
-        linki_tmp=list(dict.fromkeys(linki_tmp))
     if not linki:
         for url in linki_tmp:
             time.sleep(4)
@@ -126,11 +126,12 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
         open(kod+'.pdf', 'wb').write(r.content)
         if os.path.getsize(kod+'.pdf')<15:
             os.remove(kod+'.pdf')
-        print('Pobrano konkurs: '+kod+'.pdf')
+        else:
+            print('Pobrano konkurs: '+kod+'.pdf')
     if scrap:
         [database,names_list]=scraping_fis(linki)
     return([linki_tmp,linki,kody,database,names_list])
-new_data=import_links()
+new_data=import_links([2011],'WC')
 
 to_process=['SLQ','SLR1']
 to_process=[x+'.pdf' for x in to_process]
@@ -207,7 +208,8 @@ for nazwa in lista:
     """
     start_lists=start_lists+[[list]]
 
-comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')    
+comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
+#comps_infos_all.to_csv('2011WCcomps.csv')  
 to_process=['RLQ','RL']
 to_process=[x+'.pdf' for x in to_process]
 lista=os.listdir()
@@ -249,17 +251,23 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
     for i,line in enumerate(tekst_lin):
         if word2 in line: # or word in line.split() to search for full words
             end.append(i)
-        if word in line: # or word in line.split() to search for full words
+        if word in line and not(end): # or word in line.split() to search for full words
             kwale=0
     tekst_lin=tekst_lin[:end[0]]
-    lista=[(i,x) for i,x in enumerate(tekst_lin) if any(t for t in names_list['name'] if x.count(t))]+[(len(tekst_lin),'end')]
-    indices=[(lista[i][0],lista[i+1][0],[t for t in names_list['name'] if x.count(t)]) for i,x in enumerate(lista[:-1])]
-    skoki=[x+tekst_lin[s:e] for s,e,x in indices]
+    lista=[(i,[t for t in names_list['name'] if x.count(t)][0]) for i,x in enumerate(tekst_lin) if any(t for t in names_list['name'] if x.count(t))]+[(len(tekst_lin),'end')]
+    print(lista)
+    indices=[(lista[i][0],lista[i+1][0],x[1]) for i,x in enumerate(lista[:-1])]
+    print(indices)
+    skoki=[[x]+tekst_lin[s:e] for s,e,x in indices]
     if len(indices)<len(names_list):
         print('Warning: in '+comp['id']+' '+str(len(names_list) - len(indices))+' not found!')
     return([skoki,kwale,team,pre_2016,TCS])    
 
 def przeksztalc(string,kwale=0,team=0,TCS=0):
+    if team:
+        tmp=string.split(' ')
+        if tmp[0].count('-'):
+            string=' '.join(tmp[1:])
     if TCS:
         string=string.replace('pq', '0.')
     pozycja=string.find('.')+2
@@ -281,7 +289,7 @@ def przeksztalc(string,kwale=0,team=0,TCS=0):
         offset=[1]
     if TCS==1:
         n=[12]
-        offset=[1]    
+        offset=[1]  
     kropki=[i for i, a in enumerate(nowy_string) if a == '.']
     kropki=[kropki[i] for i in n]
     if n:
@@ -295,6 +303,7 @@ def przeksztalc(string,kwale=0,team=0,TCS=0):
     return(nofy_string)
 def znowu_przeksztalc(skok,kwale=0,team=0,pre_2016=0,TCS=0):
     output = [idx for idx, line in enumerate(skok) if line.count('.')>7] 
+    print(skok[0],output)
     info=['name','wind','wind_comp','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
     if kwale==1 and team==0:
         info=['name','wind','wind_comp','points','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','gate','gate_points']
@@ -321,18 +330,18 @@ def collect(jumps,kwale=0,team=0,pre_2016=0,TCS=0):
         new_jumps=znowu_przeksztalc(jumps[i],kwale,team,pre_2016,TCS)
         database=database.append(new_jumps,ignore_index=True)
     return(database)
-przyklad='2021JP3198RL.pdf'
+for i,comp in comps_infos_all.iterrows():
+    content=zwroc_skoki(comp)
+    dalej=collect(content[0],content[1],content[2],content[3],content[4])
+    dalej.to_csv(comp['id']+'.csv')
+
+
+przyklad='2011JP3125RL.pdf'
 parsed = parser.from_file(przyklad)
 tekst=parsed["content"]
 tekst=tekst.lower()
 tekst_lin=tekst.splitlines()
 tekst_lin = [i for i in tekst_lin if i] 
-n=1
-content=zwroc_skoki(comps_infos_all.iloc[n])
-troche_dalej=znowu_przeksztalc(content[0][17],content[1],content[2],content[3],content[4])
-dalej=collect(content[0],content[1],content[2],content[3],content[4])
-dalej.to_csv(przyklad[:-4]+'.csv')
-
 for plik in lista:
     print(plik)
     content=zwroc_skoki(nazwa=plik)
