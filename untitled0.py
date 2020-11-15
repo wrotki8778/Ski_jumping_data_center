@@ -174,7 +174,6 @@ def import_start_list(nazwa,new_data=[],block=False):
     infos=[]
     for words in word:
         add=[i for i in tekst_lin if words in i]
-        print(add)
         if add:
             infos.append(take_number(add[0]))
         else:
@@ -209,7 +208,8 @@ for nazwa in lista:
     start_lists=start_lists+[[list]]
 
 comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
-#comps_infos_all.to_csv('2011WCcomps.csv')  
+#comps_infos_all.to_csv('2011WCcomps.csv')
+#comps_infos_all=pd.read_csv('2011WCcomps.csv') 
 to_process=['RLQ','RL']
 to_process=[x+'.pdf' for x in to_process]
 lista=os.listdir()
@@ -227,7 +227,6 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
         kwale=1
     if not names:
         names_list=pd.DataFrame(import_start_list(nazwa)[0],columns=['bib','name'])
-        print(names_list)
     else:
         names_list=pd.DataFrame(names,columns=['bib','codex','name'])
         names_list['name']=names_list['name'].str.lower()
@@ -251,23 +250,22 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
     for i,line in enumerate(tekst_lin):
         if word2 in line: # or word in line.split() to search for full words
             end.append(i)
-        if word in line and not(end): # or word in line.split() to search for full words
+        if word in line and i<=80: # or word in line.split() to search for full words
             kwale=0
     tekst_lin=tekst_lin[:end[0]]
     lista=[(i,[t for t in names_list['name'] if x.count(t)][0]) for i,x in enumerate(tekst_lin) if any(t for t in names_list['name'] if x.count(t))]+[(len(tekst_lin),'end')]
-    print(lista)
     indices=[(lista[i][0],lista[i+1][0],x[1]) for i,x in enumerate(lista[:-1])]
-    print(indices)
     skoki=[[x]+tekst_lin[s:e] for s,e,x in indices]
     if len(indices)<len(names_list):
         print('Warning: in '+comp['id']+' '+str(len(names_list) - len(indices))+' not found!')
     return([skoki,kwale,team,pre_2016,TCS])    
 
 def przeksztalc(string,kwale=0,team=0,TCS=0):
-    if team:
-        tmp=string.split(' ')
-        if tmp[0].count('-'):
-            string=' '.join(tmp[1:])
+    tmp=string.split(' ')
+    if team and tmp[0].count('-'):
+            del tmp[0]
+    tmp=[x for x in tmp if not sum(i.isalpha() for i in x)]
+    string=' '.join(tmp)
     if TCS:
         string=string.replace('pq', '0.')
     pozycja=string.find('.')+2
@@ -304,6 +302,8 @@ def przeksztalc(string,kwale=0,team=0,TCS=0):
 def znowu_przeksztalc(skok,kwale=0,team=0,pre_2016=0,TCS=0):
     output = [idx for idx, line in enumerate(skok) if line.count('.')>7] 
     print(skok[0],output)
+    if len(output)>2:
+        print('Uwaga: zawodnik '+skok[0]+' oddał '+len(output)+" skoki!")
     info=['name','wind','wind_comp','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
     if kwale==1 and team==0:
         info=['name','wind','wind_comp','points','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','gate','gate_points']
@@ -335,19 +335,17 @@ for i,comp in comps_infos_all.iterrows():
     dalej=collect(content[0],content[1],content[2],content[3],content[4])
     dalej.to_csv(comp['id']+'.csv')
 
-
-przyklad='2011JP3125RL.pdf'
+n=33
+comp=comps_infos_all.iloc[n]
+przyklad=comp['id']+'.pdf'
 parsed = parser.from_file(przyklad)
 tekst=parsed["content"]
 tekst=tekst.lower()
 tekst_lin=tekst.splitlines()
 tekst_lin = [i for i in tekst_lin if i] 
-for plik in lista:
-    print(plik)
-    content=zwroc_skoki(nazwa=plik)
-    result=collect(content[0],content[1],content[2],content[3],content[4])
-    result.to_csv(plik[:-4]+'.csv')
-
+content=zwroc_skoki(comp,tekstlin=tekst_lin)
+dalej=collect(content[0],content[1],content[2],content[3],content[4])
+dalej.to_csv(comp['id']+'.csv')
     
 
     
