@@ -20,7 +20,11 @@ def is_number(s):
         return True
     except ValueError:
         return False
-
+def decimal(list,list_k):
+    output=[]
+    for i,number in enumerate(list):
+        output=output+[abs(list_k[i]*number-int(list_k[i]*number))>0]
+    return output
 def take_number(string):
     string=string.replace('m','')
     string=string.replace('/',' ')
@@ -131,7 +135,7 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
     if scrap:
         [database,names_list]=scraping_fis(linki)
     return([linki_tmp,linki,kody,database,names_list])
-new_data=import_links([2011],'WC')
+#new_data=import_links([2011],'WC')
 
 to_process=['SLQ','SLR1']
 to_process=[x+'.pdf' for x in to_process]
@@ -207,9 +211,9 @@ for nazwa in lista:
     """
     start_lists=start_lists+[[list]]
 
-comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
+#comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
 #comps_infos_all.to_csv('2011WCcomps.csv')
-#comps_infos_all=pd.read_csv('2011WCcomps.csv') 
+comps_infos_all=pd.read_csv('2011WCcomps.csv') 
 to_process=['RLQ','RL']
 to_process=[x+'.pdf' for x in to_process]
 lista=os.listdir()
@@ -224,7 +228,7 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
     pre_2016=0
     names_list=[]
     if nazwa[-5]=='Q':
-        kwale=1
+        kwale=2
     if not names:
         names_list=pd.DataFrame(import_start_list(nazwa)[0],columns=['bib','name'])
     else:
@@ -247,11 +251,14 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
     end=[]
     word='round'
     word2='weather information'
+    word3='large hill ko'
     for i,line in enumerate(tekst_lin):
         if word2 in line: # or word in line.split() to search for full words
             end.append(i)
         if word in line and i<=80: # or word in line.split() to search for full words
             kwale=0
+        if word3 in line and i<=80: # or word in line.split() to search for full words
+            TCS=1
     tekst_lin=tekst_lin[:end[0]]
     lista=[(i,[t for t in names_list['name'] if x.count(t)][0]) for i,x in enumerate(tekst_lin) if any(t for t in names_list['name'] if x.count(t))]+[(len(tekst_lin),'end')]
     indices=[(lista[i][0],lista[i+1][0],x[1]) for i,x in enumerate(lista[:-1])]
@@ -261,17 +268,17 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
     return([skoki,kwale,team,pre_2016,TCS])    
 
 def przeksztalc(string,kwale=0,team=0,TCS=0):
+    string=string.replace('pq', '0.')
     tmp=string.split(' ')
     if team and tmp[0].count('-'):
             del tmp[0]
     tmp=[x for x in tmp if not sum(i.isalpha() for i in x)]
     string=' '.join(tmp)
-    if TCS:
-        string=string.replace('pq', '0.')
     pozycja=string.find('.')+2
     nowy_string=string[:pozycja]+' '+string[pozycja:]
     nowy_string=re.sub(r'[a-z]+', '', nowy_string, re.I)
     nowy_string=nowy_string.replace('©', '')
+    nowy_string=nowy_string.replace('#', '')
     znacznik=nowy_string.find('*')
     if znacznik:
         nowy_string=nowy_string[(znacznik+1):]
@@ -279,14 +286,14 @@ def przeksztalc(string,kwale=0,team=0,TCS=0):
     nowy_string=wyrazy[1] + ' ' + wyrazy[2] + ' ' + wyrazy[0]  
     n=[12]
     offset=[1]
-    if kwale==1:
+    if kwale:
         n=[]
         offset=[]
-    if kwale==1 and team==1:
+    if kwale and team:
         n=[12]
         offset=[1]
-    if TCS==1:
-        n=[12]
+    if TCS and kwale==2:
+        n=[11]
         offset=[1]  
     kropki=[i for i, a in enumerate(nowy_string) if a == '.']
     kropki=[kropki[i] for i in n]
@@ -296,16 +303,16 @@ def przeksztalc(string,kwale=0,team=0,TCS=0):
         wyrazy=nofy_string.split(' ')
     else:
         nofy_string=nowy_string
-    if TCS and kwale:
+    if TCS and kwale==2:
         nofy_string=' '.join(wyrazy[0:3]) + ' ' + ' '.join(wyrazy[4:13]) + ' ' + ' '.join(wyrazy[14:])
     return(nofy_string)
 def znowu_przeksztalc(skok,kwale=0,team=0,pre_2016=0,TCS=0):
+    exit_code=0
     output = [idx for idx, line in enumerate(skok) if line.count('.')>7] 
-    print(skok[0],output)
     if len(output)>2:
         print('Uwaga: zawodnik '+skok[0]+' oddał '+len(output)+" skoki!")
     info=['name','wind','wind_comp','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
-    if kwale==1 and team==0:
+    if kwale and not(team):
         info=['name','wind','wind_comp','points','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','gate','gate_points']
 
     new_jump=pd.DataFrame([],columns=info)
@@ -313,26 +320,38 @@ def znowu_przeksztalc(skok,kwale=0,team=0,pre_2016=0,TCS=0):
         name=skok[0]
         notes_pre=przeksztalc(skok[output[i]],kwale,team,TCS)
         notes=[float(x) for x in notes_pre.split()]
-        passed_values=14-kwale
-        if min(kwale,team)==1:
+        passed_values=14-bool(kwale)
+        if min(kwale,team):
             passed_values=14
         if(len(notes)==passed_values):
             notes.append(0)
         data=pd.Series([name]+notes, index = new_jump.columns)
+        conds=[abs(data['wind'])>3,abs(data['wind_comp'])>60,data['note_points']>60,data['note_5']>20]+decimal([data['wind_comp'],data['points'],data['dist_points'],data['gate_points'],data['speed'], data['note_1'], data['note_5'],data['note_points'],data['dist'],data['gate']],[10,10,10,10,10,2,2,2,2,1])
+        condition=any(conds)
+        if condition:
+            exit_code=1
+            #print(data)
+            #print(conds)
         new_jump=new_jump.append(data,ignore_index=True)
-    return(new_jump)
+    return([new_jump,exit_code])
 def collect(jumps,kwale=0,team=0,pre_2016=0,TCS=0):
+    exit_code=0
     info=['name','wind','wind_comp','dist','speed','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
     if kwale==1 and team==0:
         info=['name','wind','wind_comp','points','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','gate','gate_points']
     database=pd.DataFrame([],columns=info)
     for i in range(len(jumps)):
-        new_jumps=znowu_przeksztalc(jumps[i],kwale,team,pre_2016,TCS)
+        new_jumps,exit_code_tmp=znowu_przeksztalc(jumps[i],kwale,team,pre_2016,TCS)
+        exit_code=exit_code+exit_code_tmp
         database=database.append(new_jumps,ignore_index=True)
-    return(database)
+    return([database,exit_code])
 for i,comp in comps_infos_all.iterrows():
+    if i<33:
+        continue
     content=zwroc_skoki(comp)
-    dalej=collect(content[0],content[1],content[2],content[3],content[4])
+    [dalej,exit_code]=collect(content[0],content[1],content[2],content[3],content[4])
+    if exit_code:
+        print(comp)
     dalej.to_csv(comp['id']+'.csv')
 
 n=33
@@ -344,7 +363,7 @@ tekst=tekst.lower()
 tekst_lin=tekst.splitlines()
 tekst_lin = [i for i in tekst_lin if i] 
 content=zwroc_skoki(comp,tekstlin=tekst_lin)
-dalej=collect(content[0],content[1],content[2],content[3],content[4])
+dalej,exit_code=collect(content[0],content[1],content[2],content[3],content[4])
 dalej.to_csv(comp['id']+'.csv')
     
 
