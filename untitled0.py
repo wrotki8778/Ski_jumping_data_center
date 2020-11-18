@@ -12,6 +12,7 @@ from tika import parser
 import requests
 from bs4 import BeautifulSoup
 import time
+from datetime import datetime
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 
 def is_number(s):
@@ -31,7 +32,9 @@ def take_number(string):
     tmp=string.split(' ')
     take=[x for x in tmp if is_number(x)]
     return float(take[0])
-
+def to_date(day,month,year):
+    string=str(day)+' '+month+' '+str(year)
+    return(datetime.strptime(string, '%d %B %Y'))
 
 def scraping_fis(linki):
     info=['codex','place','month','day','year','gender','hill_size','team','season']
@@ -157,6 +160,7 @@ def import_start_list(nazwa,new_data=[],block=False):
     parsed = parser.from_file(file_name)
     tekst=parsed["content"]
     tekst=tekst.replace('* ','')
+    tekst=tekst.replace('*','')
     tekst=tekst.lower()
     tekst_lin=tekst.splitlines()
     tekst_lin = [i for i in tekst_lin if i] 
@@ -212,8 +216,10 @@ for nazwa in lista:
     start_lists=start_lists+[[list]]
 
 #comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
-#comps_infos_all.to_csv('2011WCcomps.csv')
-comps_infos_all=pd.read_csv('2011WCcomps.csv') 
+#comps_infos_all.to_csv('2011WCcomps_new.csv',index=False)
+#comps_infos_all['date']=comps_infos_all.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
+#comps_infos_all=comps_infos_all.drop(['month','day','year'],axis=1)
+comps_infos_all=pd.read_csv('2011WCcomps_new.csv') 
 to_process=['RLQ','RL']
 to_process=[x+'.pdf' for x in to_process]
 lista=os.listdir()
@@ -352,8 +358,7 @@ for i,comp in comps_infos_all.iterrows():
     [dalej,exit_code]=collect(content[0],content[1],content[2],content[3],content[4])
     if exit_code:
         print(comp)
-    dalej.to_csv(comp['id']+'.csv')
-
+    dalej.to_csv(comp['id']+'.csv',index=False)
 n=33
 comp=comps_infos_all.iloc[n]
 przyklad=comp['id']+'.pdf'
@@ -364,7 +369,38 @@ tekst_lin=tekst.splitlines()
 tekst_lin = [i for i in tekst_lin if i] 
 content=zwroc_skoki(comp,tekstlin=tekst_lin)
 dalej,exit_code=collect(content[0],content[1],content[2],content[3],content[4])
-dalej.to_csv(comp['id']+'.csv')
+dalej.to_csv(comp['id']+'.csv',index=False)
+
+info=['name','wind','wind_comp','dist','speed','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
+database=pd.DataFrame([],columns=info) 
+names=pd.DataFrame([],columns=['bib','name'])  
+names_fis=pd.DataFrame([],columns=['bib','codex','name'])  
+for i,comp in comps_infos_all.iterrows():
+    tmp=pd.read_csv(comp['id']+'.csv')
+    try:
+        tmp_naz=pd.read_csv(str(comp['season'])+'JP'+str(comp['codex'])+'naz.csv',sep=';',header=None)
+        tmp_naz.columns=['bib','name']
+        names=names.append(tmp_naz)
+    except ValueError:
+        continue
+    try:
+        tmp_nazfis=pd.read_csv(str(comp['season'])+'JP'+str(comp['codex'])+'nazfis.csv',sep=';',header=None)
+        tmp_nazfis.columns=['bib','codex','name']
+        names_fis=names_fis.append(tmp_nazfis)
+    except ValueError:
+        continue
+    tmp['id']=comp['id']
+    tmp=tmp.drop(['Unnamed: 0'],axis=1)
+    database=database.append(tmp)
+
+names_fis['name']=names_fis['name'].str.lower()
+names_fis=pd.merge(names_fis,names,how='right',on=['name'])
+names_fis=names_fis.drop_duplicates(['name','codex'])
+names_fis=names_fis.drop(['bib_x','bib_y'],axis=1)
+database=pd.merge(database,names_fis,how='left',on=['name'])
+database=database.drop(['name'],axis=1)
+database.to_csv('2011WCresults.csv',index=False)
+
     
 
     
