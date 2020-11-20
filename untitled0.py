@@ -138,7 +138,7 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
     if scrap:
         [database,names_list]=scraping_fis(linki)
     return([linki_tmp,linki,kody,database,names_list])
-#new_data=import_links([2011],'WC')
+new_data=import_links()
 
 to_process=['SLQ','SLR1']
 to_process=[x+'.pdf' for x in to_process]
@@ -215,11 +215,11 @@ for nazwa in lista:
     """
     start_lists=start_lists+[[list]]
 
-#comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
+comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
 #comps_infos_all.to_csv('2011WCcomps_new.csv',index=False)
-#comps_infos_all['date']=comps_infos_all.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
-#comps_infos_all=comps_infos_all.drop(['month','day','year'],axis=1)
-comps_infos_all=pd.read_csv('2011WCcomps_new.csv') 
+comps_infos_all['date']=comps_infos_all.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
+comps_infos_all=comps_infos_all.drop(['month','day','year'],axis=1)
+#comps_infos_all=pd.read_csv('2011WCcomps_new.csv') 
 to_process=['RLQ','RL']
 to_process=[x+'.pdf' for x in to_process]
 lista=os.listdir()
@@ -354,26 +354,14 @@ def collect(jumps,kwale=0,team=0,pre_2016=0,TCS=0):
         database=database.append(new_jumps,ignore_index=True)
     return([database,exit_code])
 for i,comp in comps_infos_all.iterrows():
-    if i<33:
-        continue
     content=zwroc_skoki(comp)
     [dalej,exit_code]=collect(content[0],content[1],content[2],content[3],content[4])
     if exit_code:
         print(comp)
     dalej.to_csv(comp['id']+'.csv',index=False)
-n=33
-comp=comps_infos_all.iloc[n]
-przyklad=comp['id']+'.pdf'
-parsed = parser.from_file(przyklad)
-tekst=parsed["content"]
-tekst=tekst.lower()
-tekst_lin=tekst.splitlines()
-tekst_lin = [i for i in tekst_lin if i] 
-content=zwroc_skoki(comp,tekstlin=tekst_lin)
-dalej,exit_code=collect(content[0],content[1],content[2],content[3],content[4])
-dalej.to_csv(comp['id']+'.csv',index=False)
 
-info=['name','wind','wind_comp','dist','speed','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
+
+info=['name','wind','wind_comp','dist','speed','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points','id']
 database=pd.DataFrame([],columns=info) 
 names=pd.DataFrame([],columns=['bib','name'])  
 names_fis=pd.DataFrame([],columns=['bib','codex','name'])  
@@ -392,11 +380,11 @@ for i,comp in comps_infos_all.iterrows():
     except ValueError:
         continue
     tmp['id']=comp['id']
-    try:
-        tmp=tmp.drop(['Unnamed: 0'],axis=1)
-    except KeyError:
-        continue
     database=database.append(tmp)
+    try:
+        database=database.drop(['Unnamed: 0'],axis=1)
+    except KeyError:
+        x=0
 
 names_fis['name']=names_fis['name'].str.lower()
 names_fis=pd.merge(names_fis,names,how='right',on=['name'])
@@ -405,7 +393,19 @@ names_fis=names_fis.drop(['bib_x','bib_y'],axis=1)
 database=pd.merge(database,names_fis,how='left',on=['name'])
 database=database.drop(['name'],axis=1)
 #database.to_csv('2011WCresults.csv',index=False)
-
+"""
+n=33
+comp=comps_infos_all.iloc[n]
+przyklad=comp['id']+'.pdf'
+parsed = parser.from_file(przyklad)
+tekst=parsed["content"]
+tekst=tekst.lower()
+tekst_lin=tekst.splitlines()
+tekst_lin = [i for i in tekst_lin if i] 
+content=zwroc_skoki(comp,tekstlin=tekst_lin)
+dalej,exit_code=collect(content[0],content[1],content[2],content[3],content[4])
+dalej.to_csv(comp['id']+'.csv',index=False)
+"""
     
 
     
