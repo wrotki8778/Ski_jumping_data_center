@@ -317,6 +317,8 @@ def znowu_przeksztalc(skok,kwale=0,team=0,pre_2016=0,TCS=0):
     output = [idx for idx, line in enumerate(skok) if line.count('.')>7] 
     if len(output)>2:
         print('Uwaga: zawodnik '+skok[0]+' oddał '+len(output)+" skoki!")
+    if kwale and len(output)>1:
+        print('Uwaga: zawodnik '+skok[0]+' oddał '+len(output)+" skoki w jednoseryjnym konkursie!")
     info=['name','wind','wind_comp','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
     if kwale and not(team):
         info=['name','wind','wind_comp','points','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','gate','gate_points']
@@ -390,7 +392,10 @@ for i,comp in comps_infos_all.iterrows():
     except ValueError:
         continue
     tmp['id']=comp['id']
-    tmp=tmp.drop(['Unnamed: 0'],axis=1)
+    try:
+        tmp=tmp.drop(['Unnamed: 0'],axis=1)
+    except KeyError:
+        continue
     database=database.append(tmp)
 
 names_fis['name']=names_fis['name'].str.lower()
@@ -399,7 +404,7 @@ names_fis=names_fis.drop_duplicates(['name','codex'])
 names_fis=names_fis.drop(['bib_x','bib_y'],axis=1)
 database=pd.merge(database,names_fis,how='left',on=['name'])
 database=database.drop(['name'],axis=1)
-database.to_csv('2011WCresults.csv',index=False)
+#database.to_csv('2011WCresults.csv',index=False)
 
     
 
