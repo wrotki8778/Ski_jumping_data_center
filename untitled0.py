@@ -360,39 +360,6 @@ for i,comp in comps_infos_all.iterrows():
         print(comp)
     dalej.to_csv(comp['id']+'.csv',index=False)
 
-
-info=['name','wind','wind_comp','dist','speed','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points','id']
-database=pd.DataFrame([],columns=info) 
-names=pd.DataFrame([],columns=['bib','name'])  
-names_fis=pd.DataFrame([],columns=['bib','codex','name'])  
-for i,comp in comps_infos_all.iterrows():
-    tmp=pd.read_csv(comp['id']+'.csv')
-    try:
-        tmp_naz=pd.read_csv(str(comp['season'])+'JP'+str(comp['codex'])+'naz.csv',sep=';',header=None)
-        tmp_naz.columns=['bib','name']
-        names=names.append(tmp_naz)
-    except ValueError:
-        continue
-    try:
-        tmp_nazfis=pd.read_csv(str(comp['season'])+'JP'+str(comp['codex'])+'nazfis.csv',sep=';',header=None)
-        tmp_nazfis.columns=['bib','codex','name']
-        names_fis=names_fis.append(tmp_nazfis)
-    except ValueError:
-        continue
-    tmp['id']=comp['id']
-    database=database.append(tmp)
-    try:
-        database=database.drop(['Unnamed: 0'],axis=1)
-    except KeyError:
-        x=0
-
-names_fis['name']=names_fis['name'].str.lower()
-names_fis=pd.merge(names_fis,names,how='right',on=['name'])
-names_fis=names_fis.drop_duplicates(['name','codex'])
-names_fis=names_fis.drop(['bib_x','bib_y'],axis=1)
-database=pd.merge(database,names_fis,how='left',on=['name'])
-database=database.drop(['name'],axis=1)
-#database.to_csv('2011WCresults.csv',index=False)
 """
 n=33
 comp=comps_infos_all.iloc[n]
