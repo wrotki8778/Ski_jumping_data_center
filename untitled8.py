@@ -8,9 +8,6 @@ import os
 import pandas as pd
 import numpy as np
 os.chdir('C:/Users/kubaf/Documents/Skoki')
-comps=pd.read_csv('comps_all_new.csv')
-comps=comps.sort_values(['date','id'],ascending=[True,False])
-comps=comps.reset_index()
 def merge_names(comps,directory):
     names=pd.DataFrame([],columns=['bib','name'])  
     names_fis=pd.DataFrame([],columns=['bib','codex','name'])  
@@ -57,9 +54,19 @@ def merge_comps(names,comps,directory):
     results=pd.merge(results,names,how='left',on=['name'])
     results=results.drop(['name','Unnamed: 0'],axis=1)
     return(results)
+def merge_infos(directory):
+    columns_names=['codex','place','gender','hill_size_x','team','season','hill_size_y','k-point','meter value','gate factor','wind factor','type','date','id']
+    comps=pd.DataFrame([],columns=columns_names)
+    list=os.listdir(directory)
+    for i,item in enumerate(list):
+        tmp=pd.read_csv(directory+'\\'+item,sep=',')
+        comps=comps.append(tmp)
+    return(comps)
+comps=merge_infos(os.getcwd()+'\\comps\\')
+comps=comps.sort_values(['date','id'],ascending=[True,False])
+comps=comps.reset_index()
 names=merge_names(comps,os.getcwd()+'\\nazwy\\')
 results=merge_comps(names,comps,os.getcwd()+'\\results\\')
-
 def new_rating(ratingi,k,print_exp):
     delty=[]
     for i,ocena in enumerate(ratingi):
