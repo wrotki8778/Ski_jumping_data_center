@@ -61,6 +61,7 @@ def merge_infos(directory):
     for i,item in enumerate(list):
         tmp=pd.read_csv(directory+'\\'+item,sep=',')
         comps=comps.append(tmp)
+    comps=comps.drop_duplicates(['id'])
     return(comps)
 comps=merge_infos(os.getcwd()+'\\comps\\')
 comps=comps.sort_values(['date','id'],ascending=[True,False])

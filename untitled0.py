@@ -5,6 +5,7 @@ Created on Sat Sep 12 14:14:52 2020
 @author: kubaf
 """
 import os
+import os.path
 import pandas as pd
 import numpy as np
 import re
@@ -85,7 +86,7 @@ def scraping_fis(linki):
                 else:
                     names_list.append(tmp[-3:])
             file_name=str(year)+'JP'+str(codex)+'nazfis.csv'
-            with open(file_name,'w+') as result_file:
+            with open(os.getcwd()+'\\nazwy\\'+file_name,'w+') as result_file:
                 for i,line in enumerate(names_list):
                     mod_line=';'.join(line)
                     result_file.write(mod_line)
@@ -125,24 +126,32 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
                 tmp_file_name=year+'JP'+codex+suffix
                 kody.append(tmp_file_name)
     for kod in kody:
-        time.sleep(4)
+        time.sleep(1)
         data=kod[0:4]
         cc=kod[6:10]
-        url='http://data.fis-ski.com/pdf/'+data+'/JP/'+cc+'/'+kod+'.pdf'
+        url='http://medias3.fis-ski.com/pdf/'+data+'/JP/'+cc+'/'+kod+'.pdf'
         r = requests.get(url, allow_redirects=True)
-        open(kod+'.pdf', 'wb').write(r.content)
-        if os.path.getsize(kod+'.pdf')<15:
-            os.remove(kod+'.pdf')
+        if r.status_code==404:
+            continue
         else:
-            print('Pobrano konkurs: '+kod+'.pdf')
+            time.sleep(4)
+            open(os.getcwd()+'\\PDFs\\'+kod+'.pdf', 'wb').write(r.content)
+            if os.path.getsize(os.getcwd()+'\\PDFs\\'+kod+'.pdf')<15:
+                os.remove(os.getcwd()+'\\PDFs\\'+kod+'.pdf')
+            else:
+                print('Pobrano konkurs: '+kod+'.pdf')
     if scrap:
         [database,names_list]=scraping_fis(linki)
     return([linki_tmp,linki,kody,database,names_list])
-new_data=import_links()
+
+years=[2021]
+tick=0
+types=['WC','COC','GP']
+new_data=import_links(years=years,genre=types[tick])
 
 to_process=['SLQ','SLR1']
 to_process=[x+'.pdf' for x in to_process]
-lista=os.listdir()
+lista=os.listdir(os.getcwd()+'\\PDFs\\')
 lista=[x for x in lista if any(t for t in to_process if t in x)]
 lista.reverse()
 
@@ -157,7 +166,7 @@ def import_start_list(nazwa,new_data=[],block=False):
     id=str(year)+'JP'+str(codex)+'RL'
     if qual:
         id=id+'Q'
-    parsed = parser.from_file(file_name)
+    parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
     tekst=parsed["content"]
     tekst=tekst.replace('* ','')
     tekst=tekst.replace('*','')
@@ -172,9 +181,13 @@ def import_start_list(nazwa,new_data=[],block=False):
             else:
                 const=2
             next_line=tekst_lin[i+const]
-            lista.append([line,next_line])
             if sum(c.isdigit() for c in next_line) or max(1-next_line.count(' '),0):
-                print('Alert: zawodnik z nr '+line+' nazywa się '+next_line+'!')
+                print('Alert: w konkursie '+ nazwa +' zawodnik z nr '+line+' nazywa się '+next_line+'!')
+                const=3-const
+                next_line=tekst_lin[i+const]
+                print('Teraz w konkursie '+ nazwa +' zawodnik z nr '+line+' nazywa się '+next_line+'!')
+            else:
+                lista.append([line,next_line])
                 
     info=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id']
     comps_infos=pd.DataFrame([],columns=info)
@@ -189,12 +202,13 @@ def import_start_list(nazwa,new_data=[],block=False):
     new_info=pd.Series([year]+[codex]+infos+[id], index = comps_infos.columns)
     comps_infos=comps_infos.append(new_info,ignore_index=True)
     file_name=str(year)+'JP'+str(codex)+'naz.csv'
-    with open(file_name,'w+') as result_file:
-        for i,line in enumerate(lista):
-            mod_line=';'.join(line)
-            result_file.write(mod_line)
-            result_file.write('\n')
-    result_file.close()
+    if not os.path.isfile(os.getcwd()+'\\nazwy\\'+file_name): 
+        with open(os.getcwd()+'\\nazwy\\'+file_name,'w+') as result_file:
+            for i,line in enumerate(lista):
+                mod_line=';'.join(line)
+                result_file.write(mod_line)
+                result_file.write('\n')
+        result_file.close()
     if not block:
         return([lista,comps_infos])  
     else:
@@ -216,9 +230,11 @@ for nazwa in lista:
     start_lists=start_lists+[[list]]
 
 comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
-#comps_infos_all.to_csv('2011WCcomps_new.csv',index=False)
 comps_infos_all['date']=comps_infos_all.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
 comps_infos_all=comps_infos_all.drop(['month','day','year'],axis=1)
+comps_infos_all['type']=tick
+name='_'.join([str(x) for x in years])+'_'+str(types[tick])+'.csv'
+comps_infos_all.to_csv(os.getcwd()+'\\comps\\'+name,index=False)
 #comps_infos_all=pd.read_csv('2011WCcomps_new.csv') 
 to_process=['RLQ','RL']
 to_process=[x+'.pdf' for x in to_process]
@@ -244,7 +260,7 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
         pre_2016=1
     else:
         pre_2016=0
-    parsed = parser.from_file(nazwa)
+    parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+nazwa)
     tekst=parsed["content"]
     tekst=tekst.lower()
     tekst_lin=tekst.splitlines()
@@ -358,7 +374,7 @@ for i,comp in comps_infos_all.iterrows():
     [dalej,exit_code]=collect(content[0],content[1],content[2],content[3],content[4])
     if exit_code:
         print(comp)
-    dalej.to_csv(comp['id']+'.csv',index=False)
+    dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
 
 """
 n=33
