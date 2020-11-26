@@ -126,11 +126,15 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
                 tmp_file_name=year+'JP'+codex+suffix
                 kody.append(tmp_file_name)
     for kod in kody:
-        time.sleep(1)
         data=kod[0:4]
         cc=kod[6:10]
         url='http://medias3.fis-ski.com/pdf/'+data+'/JP/'+cc+'/'+kod+'.pdf'
-        r = requests.get(url, allow_redirects=True)
+        if not os.path.isfile(os.getcwd()+'\\PDFs\\'+kod+'.pdf'):
+            time.sleep(1)
+            r = requests.get(url, allow_redirects=True)
+        else:
+            print('Pominięto konkurs: '+kod+'.pdf')
+            continue
         if r.status_code==404:
             continue
         else:
@@ -147,7 +151,7 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
 years=[2021]
 tick=0
 types=['WC','COC','GP']
-new_data=import_links(years=years,genre=types[tick])
+new_data=import_links(years=years,genre=types[tick],scrap=True)
 
 to_process=['SLQ','SLR1']
 to_process=[x+'.pdf' for x in to_process]
@@ -183,11 +187,10 @@ def import_start_list(nazwa,new_data=[],block=False):
             next_line=tekst_lin[i+const]
             if sum(c.isdigit() for c in next_line) or max(1-next_line.count(' '),0):
                 print('Alert: w konkursie '+ nazwa +' zawodnik z nr '+line+' nazywa się '+next_line+'!')
-                const=3-const
+                const=1
                 next_line=tekst_lin[i+const]
                 print('Teraz w konkursie '+ nazwa +' zawodnik z nr '+line+' nazywa się '+next_line+'!')
-            else:
-                lista.append([line,next_line])
+            lista.append([line,next_line])
                 
     info=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id']
     comps_infos=pd.DataFrame([],columns=info)
@@ -216,6 +219,7 @@ def import_start_list(nazwa,new_data=[],block=False):
 
 start_lists=[]
 comps_infos_all=pd.DataFrame([],index=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id'])
+
 for nazwa in lista:
     [list,comps_infos]=import_start_list(nazwa)
     comps_infos_all=comps_infos_all.append(comps_infos,ignore_index=True)

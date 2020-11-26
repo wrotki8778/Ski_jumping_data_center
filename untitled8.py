@@ -158,7 +158,7 @@ def show_rating(comps,index,names,rating_db,take_all=True):
     return(new_results)
 
 rating_db=build_rating(comps,results)
-results=show_rating(comps,800,names,rating_db,False)
+results=show_rating(comps,648,names,rating_db,False)
 ryoyu=rating_db[rating_db['codex']==5658]
 ryoyu['progress']=np.cumsum(ryoyu['rating'])
 """quals_results.to_csv('new_qual_results_fix.csv')"""
