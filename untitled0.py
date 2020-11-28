@@ -148,29 +148,18 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
         [database,names_list]=scraping_fis(linki)
     return([linki_tmp,linki,kody,database,names_list])
 
-years=[2021]
-tick=0
-types=['WC','COC','GP']
-new_data=import_links(years=years,genre=types[tick],scrap=True)
-
-to_process=['SLQ','SLR1']
-to_process=[x+'.pdf' for x in to_process]
-lista=os.listdir(os.getcwd()+'\\PDFs\\')
-lista=[x for x in lista if any(t for t in to_process if t in x)]
-lista.reverse()
-
 def import_start_list(nazwa,new_data=[],block=False): 
-    qual=len([x for x in nazwa if x=='Q'])
     year=nazwa[:4]
     codex=nazwa[6:10]
-    if qual:
-        file_name=str(year)+'JP'+str(codex)+'SLQ.pdf'
-    else:
-        file_name=str(year)+'JP'+str(codex)+'SLR1.pdf'
-    id=str(year)+'JP'+str(codex)+'RL'
-    if qual:
-        id=id+'Q'
-    parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
+    try:
+        file_name=nazwa[:10]+'SLQ.pdf'
+        parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
+    except FileNotFoundError:
+        file_name=nazwa[:10]+'SLR1.pdf'
+        parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
+    except:
+        return([])
+
     tekst=parsed["content"]
     tekst=tekst.replace('* ','')
     tekst=tekst.replace('*','')
@@ -192,7 +181,7 @@ def import_start_list(nazwa,new_data=[],block=False):
                 print('Teraz w konkursie '+ nazwa +' zawodnik z nr '+line+' nazywa się '+next_line+'!')
             lista.append([line,next_line])
                 
-    info=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id']
+    info=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id','training']
     comps_infos=pd.DataFrame([],columns=info)
     word=['hill size','k-point','meter value','gate factor','wind factor']
     infos=[]
@@ -202,7 +191,9 @@ def import_start_list(nazwa,new_data=[],block=False):
             infos.append(take_number(add[0]))
         else:
             infos.append(np.nan)
-    new_info=pd.Series([year]+[codex]+infos+[id], index = comps_infos.columns)
+    ID=nazwa[:-4]
+    training=nazwa.count('RLT') or nazwa.count('RTRIA')
+    new_info=pd.Series([year]+[codex]+infos+[ID]+[training], index = comps_infos.columns)
     comps_infos=comps_infos.append(new_info,ignore_index=True)
     file_name=str(year)+'JP'+str(codex)+'naz.csv'
     if not os.path.isfile(os.getcwd()+'\\nazwy\\'+file_name): 
@@ -216,35 +207,6 @@ def import_start_list(nazwa,new_data=[],block=False):
         return([lista,comps_infos])  
     else:
         return([[],comps_infos])
-
-start_lists=[]
-comps_infos_all=pd.DataFrame([],index=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id'])
-
-for nazwa in lista:
-    [list,comps_infos]=import_start_list(nazwa)
-    comps_infos_all=comps_infos_all.append(comps_infos,ignore_index=True)
-    """
-    with open(nazwa[:-4]+'naz.csv','w+') as result_file:
-        for line in lista:
-            mod_line=';'.join(line)
-            result_file.write(mod_line)
-            result_file.write('\n')
-    result_file.close()
-    """
-    start_lists=start_lists+[[list]]
-
-comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
-comps_infos_all['date']=comps_infos_all.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
-comps_infos_all=comps_infos_all.drop(['month','day','year'],axis=1)
-comps_infos_all['type']=tick
-name='_'.join([str(x) for x in years])+'_'+str(types[tick])+'.csv'
-comps_infos_all.to_csv(os.getcwd()+'\\comps\\'+name,index=False)
-#comps_infos_all=pd.read_csv('2011WCcomps_new.csv') 
-to_process=['RLQ','RL']
-to_process=[x+'.pdf' for x in to_process]
-lista=os.listdir()
-lista=[x for x in lista if any(t for t in to_process if t in x)]
-lista.reverse()
 
 def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
     if not comp.empty:
@@ -373,17 +335,47 @@ def collect(jumps,kwale=0,team=0,pre_2016=0,TCS=0):
         exit_code=exit_code+exit_code_tmp
         database=database.append(new_jumps,ignore_index=True)
     return([database,exit_code])
-for i,comp in comps_infos_all.iterrows():
+
+years=[2021]
+tick=0
+types=['WC','COC','GP']
+new_data=import_links(years=years,genre=types[tick])
+
+
+to_process=['RLQ','RL','RLT','RTRIA']
+to_process=[x+'.pdf' for x in to_process]
+new_data_ids=new_data[3].apply(lambda x: x['season']+'JP'+x['codex'],axis=1).tolist()
+lista=os.listdir(os.getcwd()+'\\PDFs\\')
+lista=[x for x in lista if any(t for t in to_process if t in x) and any(t for t in new_data_ids if t in x)]
+lista.reverse()
+
+start_lists=[]
+comps_infos_all=pd.DataFrame([],index=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id'])
+
+for nazwa in lista:
+    [list,comps_infos]=import_start_list(nazwa)
+    comps_infos_all=comps_infos_all.append(comps_infos,ignore_index=True)
+    start_lists=start_lists+[[list]]
+
+comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
+comps_infos_all['date']=comps_infos_all.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
+comps_infos_all=comps_infos_all.drop(['month','day','year'],axis=1)
+comps_infos_all['type']=tick
+name='_'.join([str(x) for x in years])+'_'+str(types[tick])+'.csv'
+comps_infos_all.to_csv(os.getcwd()+'\\comps\\'+name,index=False)
+comps=comps_infos_all[comps_infos_all['training']==0]
+
+for i,comp in comps.iterrows():
     content=zwroc_skoki(comp)
     [dalej,exit_code]=collect(content[0],content[1],content[2],content[3],content[4])
     if exit_code:
         print(comp)
     dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
 
+
 """
-n=33
+n=0
 comp=comps_infos_all.iloc[n]
-przyklad=comp['id']+'.pdf'
 parsed = parser.from_file(przyklad)
 tekst=parsed["content"]
 tekst=tekst.lower()

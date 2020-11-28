@@ -55,7 +55,7 @@ def merge_comps(names,comps,directory):
     results=results.drop(['name','Unnamed: 0'],axis=1)
     return(results)
 def merge_infos(directory):
-    columns_names=['codex','place','gender','hill_size_x','team','season','hill_size_y','k-point','meter value','gate factor','wind factor','type','date','id']
+    columns_names=['codex','place','gender','hill_size_x','team','season','hill_size_y','k-point','meter value','gate factor','wind factor','type','date','id','training']
     comps=pd.DataFrame([],columns=columns_names)
     list=os.listdir(directory)
     for i,item in enumerate(list):
@@ -64,6 +64,7 @@ def merge_infos(directory):
     comps=comps.drop_duplicates(['id'])
     return(comps)
 comps=merge_infos(os.getcwd()+'\\comps\\')
+comps=comps[comps['training']!=1]
 comps=comps.sort_values(['date','id'],ascending=[True,False])
 comps=comps.reset_index()
 names=merge_names(comps,os.getcwd()+'\\nazwy\\')

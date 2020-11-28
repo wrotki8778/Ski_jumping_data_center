@@ -15,78 +15,52 @@ lista=[x for x in lista if x[-4:]=='.pdf']
 alt_lista=alt_lista[6:]"""
 lista.reverse()
 """lista=lista[-1:]"""
-def zwroc_skoki(nazwa=[],tekstlin=[],TCS=0):
-    kwale=1
-    team=0
-    pre_2016=0
-    pre_2013=0
-    if nazwa:
-        if nazwa[-5]=='Q':
-            kwale=1
-        if int(nazwa[0:4])<2017:
-            pre_2016=1
-        else:
-            pre_2016=0
-        parsed = parser.from_file(nazwa)
-        tekst=parsed["content"]
-        tekst=tekst.lower()
-        tekst_lin=tekst.splitlines()
-        tekst_lin = [i for i in tekst_lin if i] 
-    if tekstlin:
-        tekst_lin=tekstlin
-    for line in range(len(tekst_lin[0:8])):
-        if tekst_lin[line].count('team')>0:
-            team=1
-    totale=[]
-    end=[]
-    pejdze=[]
-    numer=[]
-    word='total'
-    word_alt='remarks'
-    word2='competition / weather information'
-    word3='page'
-    word3_alt='bib name'
-    word4='1st r'
-    layout='tria'
-    for i,line in enumerate(tekst_lin):
-        if line.count('dns')>0:
-            print(line)
-            """tekst_lin[i]=line.replace(' dns', '')"""
-            print(line)
-            line=line.replace('dsq', '')
-    for i,line in enumerate(tekst_lin):
-        if (i+1)<len(tekst_lin):
-            cond_1=[not(tekst_lin[i].count('.')),tekst_lin[i].isnumeric(),tekst_lin[i+1][0].isalpha()]
-            cond_2=[team, tekst_lin[i][0].isdigit(),not(tekst_lin[i+1][0].isdigit()),tekst_lin[i].count('-')]
-        if min(cond_1) or min(cond_2):
-            numer.append(i)
-        if word2 in line: # or word in line.split() to search for full words
-            end.append(i)
-        if (word3 in line or word3_alt in line) and not(end):
-            pejdze.append(i)
-    tekst_lin=tekst_lin[:end[0]]
-    numer=sorted(numer+pejdze+[len(tekst_lin)])
-    skoki=[]
-    for i in range(len(numer)-1):
-        if numer[i] in pejdze:
-            continue
-        else:
-            skok=tekst_lin[numer[i]:numer[i+1]]
-            skok=[i for i in skok if i]
-            skok=skok+['']*(18-len(skok))
-            print(skok)
-            if 'TRIA' in nazwa:
-                skok_final=[skok[0]]
-                print(pre_2016)
-                if not(pre_2016):
-                    const=4  
-                else:
-                    const=5
-                skok_final=skok_final+[skok[6-const]]
-                dns=skok[const].count('dns')
-                if skok[const].count('.')==1:
-                    skok[const]='0.0 '+skok[const]
-                sklej=' '.join([skok[const]]+skok[const+2:])
+def training_initial_processing(comp):
+    init_results=zwroc_skoki(comp)
+    for i,skok in enumerate(init_results):
+        skok=tekst_lin[numer[i]:numer[i+1]]
+        skok=[i for i in skok if i]
+        skok=skok+['']*(18-len(skok))
+        print(skok)
+        if 'TRIA' in nazwa:
+            skok_final=[skok[0]]
+            print(pre_2016)
+            if not(pre_2016):
+                const=4  
+            else:
+                const=5
+            skok_final=skok_final+[skok[6-const]]
+            dns=skok[const].count('dns')
+            if skok[const].count('.')==1:
+                skok[const]='0.0 '+skok[const]
+            sklej=' '.join([skok[const]]+skok[const+2:])
+            sklej=sklej.split(' ')
+            sklej=[x for x in sklej if x]
+            sklej=' '.join(sklej)
+            print(sklej)
+            sklej=''.join([i for i in sklej if not(i.isalpha())])
+            print(sklej)
+            if dns or not(sklej):
+                sklej='dns'
+            print(sklej)
+            skok_final=skok_final+[sklej]
+        if 'RLT' in nazwa:
+            layout='rlt'
+            skok_final=[skok[0]]
+            print(pre_2016)
+            if not(pre_2016):
+                const=4  
+            else:
+                const=5
+            skok_final=skok_final+[skok[6-const]]
+            shift=[0,2,3]
+            for i in range(3):
+                indeksy=[j+const+4*i for j in shift]
+                print(indeksy)
+                dns=skok[indeksy[0]].count('dns')
+                if skok[indeksy[0]].count('.')==1:
+                    skok[indeksy[0]]='0.0 '+skok[indeksy[0]]
+                sklej=' '.join([skok[i] for i in indeksy])
                 sklej=sklej.split(' ')
                 sklej=[x for x in sklej if x]
                 sklej=' '.join(sklej)
@@ -97,36 +71,8 @@ def zwroc_skoki(nazwa=[],tekstlin=[],TCS=0):
                     sklej='dns'
                 print(sklej)
                 skok_final=skok_final+[sklej]
-            if 'RLT' in nazwa:
-                layout='rlt'
-                skok_final=[skok[0]]
-                print(pre_2016)
-                if not(pre_2016):
-                    const=4  
-                else:
-                    const=5
-                skok_final=skok_final+[skok[6-const]]
-                shift=[0,2,3]
-                for i in range(3):
-                    indeksy=[j+const+4*i for j in shift]
-                    print(indeksy)
-                    dns=skok[indeksy[0]].count('dns')
-                    if skok[indeksy[0]].count('.')==1:
-                        skok[indeksy[0]]='0.0 '+skok[indeksy[0]]
-                    sklej=' '.join([skok[i] for i in indeksy])
-                    sklej=sklej.split(' ')
-                    sklej=[x for x in sklej if x]
-                    sklej=' '.join(sklej)
-                    print(sklej)
-                    sklej=''.join([i for i in sklej if not(i.isalpha())])
-                    print(sklej)
-                    if dns or not(sklej):
-                        sklej='dns'
-                    print(sklej)
-                    skok_final=skok_final+[sklej]
-            print(skok_final)
-            
-            skoki.append(skok_final)
+        print(skok_final)
+        skoki.append(skok_final)
     return([skoki,pre_2016,layout])    
 
 def przeksztalc(string,pre_2016,layout):
