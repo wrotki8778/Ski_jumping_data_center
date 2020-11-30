@@ -208,12 +208,12 @@ def import_start_list(nazwa,new_data=[],block=False):
     else:
         return([[],comps_infos])
 
-def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
+def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[]):
     if not comp.empty:
         nazwa=comp['id']+'.pdf'
     kwale=1
     team=0
-    pre_2016=0
+    TCS=0
     names_list=[]
     if nazwa[-5]=='Q':
         kwale=2
@@ -222,10 +222,6 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
     else:
         names_list=pd.DataFrame(names,columns=['bib','codex','name'])
         names_list['name']=names_list['name'].str.lower()
-    if int(nazwa[0:4])<2016:
-        pre_2016=1
-    else:
-        pre_2016=0
     parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+nazwa)
     tekst=parsed["content"]
     tekst=tekst.lower()
@@ -253,9 +249,34 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[],TCS=0):
     skoki=[[x]+tekst_lin[s:e] for s,e,x in indices]
     if len(indices)<len(names_list):
         print('Warning: in '+comp['id']+' '+str(len(names_list) - len(indices))+' not found!')
-    return([skoki,kwale,team,pre_2016,TCS])    
-
-def przeksztalc(string,kwale=0,team=0,TCS=0):
+    next_skoki=list(map(conc_numbers,skoki,[comp]*len(skoki)))
+    return([next_skoki,kwale,team,TCS])    
+def conc_numbers(skok,comp):
+    if comp['id'].count('RTRIA'):
+        start=min([i for i,x in enumerate(skok) if x.count('.')])
+        end=max([i for i,x in enumerate(skok) if min(x.count('.'),sum([t.isnumeric() for t in x if t.isnumeric()]))])
+        try:
+            end_2=min([i for i,x in enumerate(skok) if x.count('page')])
+        except ValueError:
+            end_2=end
+        print(end,end_2)
+        line=' '.join([skok[start][4:]]+skok[start+1:min(end,end_2-1)+1])
+        if skok[start].count('.')==1:
+            line='0.0 '+line
+        return([skok[0],line])
+    else:
+        return(skok)
+def przeksztalc(comp,string,kwale=0,team=0,TCS=0):
+    nazwa=comp['id']
+    if nazwa.count('RTRIA'):
+        return(przeksztalc_rlt(string,kwale,team,TCS,'rtria'))
+    elif nazwa.count('RLT'):
+        return(przeksztalc_rlt(string,kwale,team,TCS,'rlt'))
+    elif nazwa.count('RL'):
+        return(przeksztalc_rl_rlq(string,kwale,team,TCS))
+    else:
+        return([])
+def przeksztalc_rl_rlq(string,kwale,team,TCS):
     string=string.replace('pq', '0.')
     tmp=string.split(' ')
     if team and tmp[0].count('-'):
@@ -294,59 +315,80 @@ def przeksztalc(string,kwale=0,team=0,TCS=0):
     if TCS and kwale==2:
         nofy_string=' '.join(wyrazy[0:3]) + ' ' + ' '.join(wyrazy[4:13]) + ' ' + ' '.join(wyrazy[14:])
     return(nofy_string)
-def znowu_przeksztalc(skok,kwale=0,team=0,pre_2016=0,TCS=0):
+def przeksztalc_rlt(string,kwale,team,TCS,layout):
+    string=string.replace('©', '')
+    nowy_string=string.split()
+    nowy_string=[x for x in nowy_string if x]
+    print(nowy_string)
+    if nowy_string.count('dns'):
+        if layout=='rtria':
+            return([0,0,0,0,0,0,0,0])
+        else:
+            return([0,0,0,0,0,0,0,0])
+    if layout=='rtria':
+        nofy_string=nowy_string[:2]+nowy_string[-4:]+nowy_string[4:-4]
+    else:
+        nofy_string=8*['0.0']
+    print(nofy_string)
+    return(nofy_string+(8-len(nofy_string))*['0.0'])
+def column_info(comp,kwale,team,TCS):
+    info=['name','wind','wind_comp','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
+    if kwale and not(team):
+        info=['name','wind','wind_comp','points','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','gate','gate_points']
+    nazwa=comp['id']
+    if nazwa.count('RTRIA'):
+        info=['name','speed','dist','wind','wind_comp','dist_points','loc','gate','gate_points']
+    elif nazwa.count('RLT'):
+        info=['name','wind_comp','loc','speed','dist','gate','wind','dist_points','gate_points']
+    return(info)
+def znowu_przeksztalc(comp,skok,kwale=0,team=0,TCS=0):
     exit_code=0
     output = [idx for idx, line in enumerate(skok) if line.count('.')>7] 
     if len(output)>2:
         print('Uwaga: zawodnik '+skok[0]+' oddał '+len(output)+" skoki!")
     if kwale and len(output)>1:
         print('Uwaga: zawodnik '+skok[0]+' oddał '+len(output)+" skoki w jednoseryjnym konkursie!")
-    info=['name','wind','wind_comp','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
-    if kwale and not(team):
-        info=['name','wind','wind_comp','points','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','gate','gate_points']
-
+    info=column_info(comp,kwale,team,TCS)
     new_jump=pd.DataFrame([],columns=info)
     for i in range(len(output)):
         name=skok[0]
-        notes_pre=przeksztalc(skok[output[i]],kwale,team,TCS)
-        notes=[float(x) for x in notes_pre.split()]
-        passed_values=14-bool(kwale)
+        notes_pre=przeksztalc(comp,skok[output[i]],kwale,team,TCS)
+        notes=[float(x) for x in notes_pre]
+        passed_values=14-bool(kwale)-5*comp['training']
         if min(kwale,team):
             passed_values=14
         if(len(notes)==passed_values):
             notes.append(0)
         data=pd.Series([name]+notes, index = new_jump.columns)
-        conds=[abs(data['wind'])>3,abs(data['wind_comp'])>60,data['note_points']>60,data['note_5']>20]+decimal([data['wind_comp'],data['points'],data['dist_points'],data['gate_points'],data['speed'], data['note_1'], data['note_5'],data['note_points'],data['dist'],data['gate']],[10,10,10,10,10,2,2,2,2,1])
-        condition=any(conds)
-        if condition:
-            exit_code=1
-            #print(data)
-            #print(conds)
+        if not comp['training']:
+            conds=[abs(data['wind'])>3,abs(data['wind_comp'])>60,data['note_points']>60,data['note_5']>20]+decimal([data['wind_comp'],data['points'],data['dist_points'],data['gate_points'],data['speed'], data['note_1'], data['note_5'],data['note_points'],data['dist'],data['gate']],[10,10,10,10,10,2,2,2,2,1])
+            condition=any(conds)
+            if condition:
+                exit_code=1
         new_jump=new_jump.append(data,ignore_index=True)
     return([new_jump,exit_code])
-def collect(jumps,kwale=0,team=0,pre_2016=0,TCS=0):
+def collect(comp=[]):
+    jumps,kwale,team,TCS=zwroc_skoki(comp)
     exit_code=0
-    info=['name','wind','wind_comp','dist','speed','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
-    if kwale==1 and team==0:
-        info=['name','wind','wind_comp','points','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','gate','gate_points']
+    info=column_info(comp,kwale,team,TCS)
     database=pd.DataFrame([],columns=info)
     for i in range(len(jumps)):
-        new_jumps,exit_code_tmp=znowu_przeksztalc(jumps[i],kwale,team,pre_2016,TCS)
+        new_jumps,exit_code_tmp=znowu_przeksztalc(comp,jumps[i],kwale,team,TCS)
         exit_code=exit_code+exit_code_tmp
         database=database.append(new_jumps,ignore_index=True)
     return([database,exit_code])
-
+"""
 years=[2021]
 tick=0
 types=['WC','COC','GP']
 new_data=import_links(years=years,genre=types[tick])
 
-
+act_comps=new_data[3]
+act_comps['id']=act_comps.apply(lambda x: x['season']+'JP'+x['codex'],axis=1).tolist()
 to_process=['RLQ','RL','RLT','RTRIA']
 to_process=[x+'.pdf' for x in to_process]
-new_data_ids=new_data[3].apply(lambda x: x['season']+'JP'+x['codex'],axis=1).tolist()
 lista=os.listdir(os.getcwd()+'\\PDFs\\')
-lista=[x for x in lista if any(t for t in to_process if t in x) and any(t for t in new_data_ids if t in x)]
+lista=[x for x in lista if any(t for t in to_process if t in x) and any(t for t in comps['id'] if t in x)]
 lista.reverse()
 
 start_lists=[]
@@ -356,7 +398,6 @@ for nazwa in lista:
     [list,comps_infos]=import_start_list(nazwa)
     comps_infos_all=comps_infos_all.append(comps_infos,ignore_index=True)
     start_lists=start_lists+[[list]]
-
 comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
 comps_infos_all['date']=comps_infos_all.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
 comps_infos_all=comps_infos_all.drop(['month','day','year'],axis=1)
@@ -364,27 +405,31 @@ comps_infos_all['type']=tick
 name='_'.join([str(x) for x in years])+'_'+str(types[tick])+'.csv'
 comps_infos_all.to_csv(os.getcwd()+'\\comps\\'+name,index=False)
 comps=comps_infos_all[comps_infos_all['training']==0]
+"""
+comps=pd.read_csv(os.getcwd()+'\\comps\\2021_WC.csv')
+n=7
+comp=comps.iloc[n]
+parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
+tekst=parsed["content"]
+tekst=tekst.lower()
+tekst_lin=tekst.splitlines()
+tekst_lin = [i for i in tekst_lin if i] 
+content=zwroc_skoki(comp,tekstlin=tekst_lin)
+dalej,exit_code=collect(comp)
+dalej.to_csv(comp['id']+'.csv',index=False)
 
+"""
 for i,comp in comps.iterrows():
     content=zwroc_skoki(comp)
     [dalej,exit_code]=collect(content[0],content[1],content[2],content[3],content[4])
     if exit_code:
         print(comp)
     dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
+"""
 
 
-"""
-n=0
-comp=comps_infos_all.iloc[n]
-parsed = parser.from_file(przyklad)
-tekst=parsed["content"]
-tekst=tekst.lower()
-tekst_lin=tekst.splitlines()
-tekst_lin = [i for i in tekst_lin if i] 
-content=zwroc_skoki(comp,tekstlin=tekst_lin)
-dalej,exit_code=collect(content[0],content[1],content[2],content[3],content[4])
-dalej.to_csv(comp['id']+'.csv',index=False)
-"""
+
+
     
 
     
