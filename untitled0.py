@@ -252,18 +252,35 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[]):
     next_skoki=list(map(conc_numbers,skoki,[comp]*len(skoki)))
     return([next_skoki,kwale,team,TCS])    
 def conc_numbers(skok,comp):
-    if comp['id'].count('RTRIA'):
+    if not comp['training']:
+        return(skok)
+    try:
         start=min([i for i,x in enumerate(skok) if x.count('.')])
         end=max([i for i,x in enumerate(skok) if min(x.count('.'),sum([t.isnumeric() for t in x if t.isnumeric()]))])
-        try:
-            end_2=min([i for i,x in enumerate(skok) if x.count('page')])
-        except ValueError:
-            end_2=end
-        print(end,end_2)
-        line=' '.join([skok[start][4:]]+skok[start+1:min(end,end_2-1)+1])
+    except ValueError:
+        return([skok[0]]+[10*'0.0 '])
+    try:
+        end_2=min([i for i,x in enumerate(skok) if x.count('page')])-1
+    except ValueError:
+        end_2=end
+    print(start,end,end_2)
+    if comp['id'].count('RTRIA'):
+        line=' '.join([skok[start][4:]]+skok[start+1:min(end,end_2)+1])
         if skok[start].count('.')==1:
             line='0.0 '+line
         return([skok[0],line])
+    elif comp['id'].count('RLT'):
+        indexes=[(i,i+4) for i in range(start,min(end,end_2)) if not((i-start)%4)]
+        lines=[' '.join(skok[i:j]) for i,j in indexes]
+        new_lines=[skok[0]]
+        for i,line in enumerate(lines):
+            tmp=line.split(' ')
+            tmp=[x for x in tmp if x=='dns' or not sum([t.isalpha() for t in x])]
+            while(tmp[0]=='dns'):
+                new_lines.append(10*'0.0 ')
+                tmp=tmp[1:]
+            new_lines.append(' '.join(tmp))
+        return(new_lines)
     else:
         return(skok)
 def przeksztalc(comp,string,kwale=0,team=0,TCS=0):
@@ -320,15 +337,14 @@ def przeksztalc_rlt(string,kwale,team,TCS,layout):
     nowy_string=string.split()
     nowy_string=[x for x in nowy_string if x]
     print(nowy_string)
-    if nowy_string.count('dns'):
-        if layout=='rtria':
-            return([0,0,0,0,0,0,0,0])
-        else:
-            return([0,0,0,0,0,0,0,0])
+    if nowy_string.count('dns') and layout=='rtria':
+        return([0,0,0,0,0,0,0,0])
+    elif nowy_string.count('dns') and layout=='rlt':
+        return([0,0,0,0,0,0,0,0])
     if layout=='rtria':
         nofy_string=nowy_string[:2]+nowy_string[-4:]+nowy_string[4:-4]
     else:
-        nofy_string=8*['0.0']
+        nofy_string=nowy_string[:2]+nowy_string[-2:]+nowy_string[4:-2]
     print(nofy_string)
     return(nofy_string+(8-len(nofy_string))*['0.0'])
 def column_info(comp,kwale,team,TCS):
@@ -339,12 +355,12 @@ def column_info(comp,kwale,team,TCS):
     if nazwa.count('RTRIA'):
         info=['name','speed','dist','wind','wind_comp','dist_points','loc','gate','gate_points']
     elif nazwa.count('RLT'):
-        info=['name','wind_comp','loc','speed','dist','gate','wind','dist_points','gate_points']
+        info=['name','speed','dist','wind_comp','loc','gate','wind','dist_points','gate_points']
     return(info)
 def znowu_przeksztalc(comp,skok,kwale=0,team=0,TCS=0):
     exit_code=0
     output = [idx for idx, line in enumerate(skok) if line.count('.')>7] 
-    if len(output)>2:
+    if len(output)>2 and not comp['training']:
         print('Uwaga: zawodnik '+skok[0]+' oddał '+len(output)+" skoki!")
     if kwale and len(output)>1:
         print('Uwaga: zawodnik '+skok[0]+' oddał '+len(output)+" skoki w jednoseryjnym konkursie!")
@@ -353,6 +369,9 @@ def znowu_przeksztalc(comp,skok,kwale=0,team=0,TCS=0):
     for i in range(len(output)):
         name=skok[0]
         notes_pre=przeksztalc(comp,skok[output[i]],kwale,team,TCS)
+        if not comp['training']:
+            notes_pre=[x for x in notes_pre.split(' ') if x]
+        print(notes_pre)
         notes=[float(x) for x in notes_pre]
         passed_values=14-bool(kwale)-5*comp['training']
         if min(kwale,team):
@@ -366,6 +385,7 @@ def znowu_przeksztalc(comp,skok,kwale=0,team=0,TCS=0):
             if condition:
                 exit_code=1
         new_jump=new_jump.append(data,ignore_index=True)
+        print(data)
     return([new_jump,exit_code])
 def collect(comp=[]):
     jumps,kwale,team,TCS=zwroc_skoki(comp)
@@ -407,7 +427,15 @@ comps_infos_all.to_csv(os.getcwd()+'\\comps\\'+name,index=False)
 comps=comps_infos_all[comps_infos_all['training']==0]
 """
 comps=pd.read_csv(os.getcwd()+'\\comps\\2021_WC.csv')
-n=7
+
+for i,comp in comps.iterrows():
+    content=zwroc_skoki(comp)
+    [dalej,exit_code]=collect(comp)
+    if exit_code:
+        print(comp)
+    dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
+
+n=1
 comp=comps.iloc[n]
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
 tekst=parsed["content"]
@@ -418,14 +446,8 @@ content=zwroc_skoki(comp,tekstlin=tekst_lin)
 dalej,exit_code=collect(comp)
 dalej.to_csv(comp['id']+'.csv',index=False)
 
-"""
-for i,comp in comps.iterrows():
-    content=zwroc_skoki(comp)
-    [dalej,exit_code]=collect(content[0],content[1],content[2],content[3],content[4])
-    if exit_code:
-        print(comp)
-    dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
-"""
+
+
 
 
 
