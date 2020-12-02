@@ -95,7 +95,7 @@ def scraping_fis(linki):
             names_all=names_all+[names_list]
     return([database,names_all])
 
-def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','RLT','RTRIA'],import_data=[[],[],[],[],[]],scrap=True):
+def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','RLT','RTRIA'],import_data=[[],[],[],[],[]],import_num=0,scrap=True):
     [linki_tmp,linki,kody,database,names_list]=import_data
     if not linki_tmp:
         for i in range(len(years)):
@@ -104,7 +104,9 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
             r = requests.get(url, headers={'user-agent': 'ejdzent'})
             soup = BeautifulSoup(r.text, "lxml")
             for a in soup.find_all('a', {'class': 'g-sm justify-left hidden-xs hidden-md-up bold'},href=True):
-                linki_tmp.append(a['href'])
+                linki_tmp.append(a['href'])  
+        if import_num:
+            linki_tmp=linki_tmp[:import_num]
     if not linki:
         for url in linki_tmp:
             time.sleep(4)
@@ -249,7 +251,7 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[]):
     skoki=[[x]+tekst_lin[s:e] for s,e,x in indices]
     if len(indices)<len(names_list):
         print('Warning: in '+comp['id']+' '+str(len(names_list) - len(indices))+' not found!')
-    next_skoki=list(map(conc_numbers,skoki,[comp]*len(skoki)))
+    next_skoki=[conc_numbers(skok,comp) for i,skok in enumerate(skoki)]
     return([next_skoki,kwale,team,TCS])    
 def conc_numbers(skok,comp):
     if not comp['training']:
@@ -263,7 +265,6 @@ def conc_numbers(skok,comp):
         end_2=min([i for i,x in enumerate(skok) if x.count('page')])-1
     except ValueError:
         end_2=end
-    print(start,end,end_2)
     if comp['id'].count('RTRIA'):
         line=' '.join([skok[start][4:]]+skok[start+1:min(end,end_2)+1])
         if skok[start].count('.')==1:
@@ -336,7 +337,6 @@ def przeksztalc_rlt(string,kwale,team,TCS,layout):
     string=string.replace('©', '')
     nowy_string=string.split()
     nowy_string=[x for x in nowy_string if x]
-    print(nowy_string)
     if nowy_string.count('dns') and layout=='rtria':
         return([0,0,0,0,0,0,0,0])
     elif nowy_string.count('dns') and layout=='rlt':
@@ -345,7 +345,6 @@ def przeksztalc_rlt(string,kwale,team,TCS,layout):
         nofy_string=nowy_string[:2]+nowy_string[-4:]+nowy_string[4:-4]
     else:
         nofy_string=nowy_string[:2]+nowy_string[-2:]+nowy_string[4:-2]
-    print(nofy_string)
     return(nofy_string+(8-len(nofy_string))*['0.0'])
 def column_info(comp,kwale,team,TCS):
     info=['name','wind','wind_comp','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
@@ -371,7 +370,6 @@ def znowu_przeksztalc(comp,skok,kwale=0,team=0,TCS=0):
         notes_pre=przeksztalc(comp,skok[output[i]],kwale,team,TCS)
         if not comp['training']:
             notes_pre=[x for x in notes_pre.split(' ') if x]
-        print(notes_pre)
         notes=[float(x) for x in notes_pre]
         passed_values=14-bool(kwale)-5*comp['training']
         if min(kwale,team):
@@ -384,8 +382,16 @@ def znowu_przeksztalc(comp,skok,kwale=0,team=0,TCS=0):
             condition=any(conds)
             if condition:
                 exit_code=1
+                print(conds)
+                print(data)
+        else:
+            conds=[abs(data['wind'])>3,abs(data['wind_comp'])>60]+decimal([data['wind_comp'],data['dist_points'],data['gate_points'],data['speed'],data['dist'],data['gate']],[10,10,10,10,2,1])
+            condition=any(conds)
+            if condition:
+                exit_code=1
+                print(conds)
+                print(data)
         new_jump=new_jump.append(data,ignore_index=True)
-        print(data)
     return([new_jump,exit_code])
 def collect(comp=[]):
     jumps,kwale,team,TCS=zwroc_skoki(comp)
@@ -397,36 +403,36 @@ def collect(comp=[]):
         exit_code=exit_code+exit_code_tmp
         database=database.append(new_jumps,ignore_index=True)
     return([database,exit_code])
-"""
+
 years=[2021]
 tick=0
 types=['WC','COC','GP']
-new_data=import_links(years=years,genre=types[tick])
+new_data=import_links(years=years,genre=types[tick],import_num=0)
 
-act_comps=new_data[3]
-act_comps['id']=act_comps.apply(lambda x: x['season']+'JP'+x['codex'],axis=1).tolist()
+comps_init=new_data[3]
+comps_init_id=comps_init.apply(lambda x: x['season']+'JP'+x['codex'],axis=1).tolist()
 to_process=['RLQ','RL','RLT','RTRIA']
 to_process=[x+'.pdf' for x in to_process]
 lista=os.listdir(os.getcwd()+'\\PDFs\\')
-lista=[x for x in lista if any(t for t in to_process if t in x) and any(t for t in comps['id'] if t in x)]
+lista=[x for x in lista if any(t for t in to_process if t in x) and any(t for t in comps_init_id if t in x)]
 lista.reverse()
 
 start_lists=[]
-comps_infos_all=pd.DataFrame([],index=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id'])
+comps=pd.DataFrame([],index=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id'])
 
 for nazwa in lista:
     [list,comps_infos]=import_start_list(nazwa)
-    comps_infos_all=comps_infos_all.append(comps_infos,ignore_index=True)
+    comps=comps.append(comps_infos,ignore_index=True)
     start_lists=start_lists+[[list]]
-comps_infos_all=pd.merge(comps_infos_all,new_data[3],on=['season','codex'],how='inner')  
-comps_infos_all['date']=comps_infos_all.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
-comps_infos_all=comps_infos_all.drop(['month','day','year'],axis=1)
-comps_infos_all['type']=tick
+comps=pd.merge(comps,comps_init,on=['season','codex'],how='inner')  
+comps['date']=comps.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
+comps=comps.drop(['month','day','year'],axis=1)
+comps['type']=tick
 name='_'.join([str(x) for x in years])+'_'+str(types[tick])+'.csv'
-comps_infos_all.to_csv(os.getcwd()+'\\comps\\'+name,index=False)
-comps=comps_infos_all[comps_infos_all['training']==0]
-"""
-comps=pd.read_csv(os.getcwd()+'\\comps\\2021_WC.csv')
+comps.to_csv(os.getcwd()+'\\comps\\'+name,index=False)
+
+
+#comps=pd.read_csv(os.getcwd()+'\\comps\\2021_WC.csv')
 
 for i,comp in comps.iterrows():
     content=zwroc_skoki(comp)
@@ -434,7 +440,7 @@ for i,comp in comps.iterrows():
     if exit_code:
         print(comp)
     dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
-
+"""
 n=1
 comp=comps.iloc[n]
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
@@ -445,7 +451,7 @@ tekst_lin = [i for i in tekst_lin if i]
 content=zwroc_skoki(comp,tekstlin=tekst_lin)
 dalej,exit_code=collect(comp)
 dalej.to_csv(comp['id']+'.csv',index=False)
-
+"""
 
 
 
