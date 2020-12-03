@@ -36,7 +36,16 @@ def take_number(string):
 def to_date(day,month,year):
     string=str(day)+' '+month+' '+str(year)
     return(datetime.strptime(string, '%d %B %Y'))
-
+def validate(date_text):
+    if len(date_text)<6:
+        return False
+    test=date_text[:3] + date_text[3].upper() + date_text[4:]
+    try:
+        if test != datetime.strptime(test, '%d %b %Y').strftime('%d %b %Y'):
+            raise ValueError
+        return True
+    except ValueError:
+        return False
 def scraping_fis(linki):
     info=['codex','place','month','day','year','gender','hill_size','team','season']
     database=pd.DataFrame([],columns=info)
@@ -149,8 +158,27 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
     if scrap:
         [database,names_list]=scraping_fis(linki)
     return([linki_tmp,linki,kody,database,names_list])
-
-def import_start_list(nazwa,new_data=[],block=False): 
+def find_names(tekst_lin,year,tick):
+    lista=[]
+    if tick!=1:
+        for i,line in enumerate(tekst_lin):        
+            if len(line)==sum(c.isdigit() for c in line)+line.count('-') and sum(c.isalpha() for c in tekst_lin[i+1]):
+                if int(year)<2016:
+                    const=1
+                else:
+                    const=2
+                next_line=tekst_lin[i+const]
+                if sum(c.isdigit() for c in next_line) or max(1-next_line.count(' '),0):
+                    print('Alert: w konkursie '+ nazwa +' zawodnik z nr '+line+' nazywa się '+next_line+'!')
+                    const=1
+                    next_line=tekst_lin[i+const]
+                    print('Teraz w konkursie '+ nazwa +' zawodnik z nr '+line+' nazywa się '+next_line+'!')
+                lista.append([line,next_line])
+    else:
+        indexes=[i for i,x in enumerate(tekst_lin) if validate(x)]
+        lista=[[tekst_lin[i+1]]+[tekst_lin[i-3]] for i in indexes]
+    return(lista)
+def import_start_list(nazwa,tick=0,new_data=[],block=False): 
     year=nazwa[:4]
     codex=nazwa[6:10]
     try:
@@ -168,21 +196,7 @@ def import_start_list(nazwa,new_data=[],block=False):
     tekst=tekst.lower()
     tekst_lin=tekst.splitlines()
     tekst_lin = [i for i in tekst_lin if i] 
-    lista=[]
-    for i,line in enumerate(tekst_lin):        
-        if len(line)==sum(c.isdigit() for c in line)+line.count('-') and sum(c.isalpha() for c in tekst_lin[i+1]):
-            if int(year)<2016:
-                const=1
-            else:
-                const=2
-            next_line=tekst_lin[i+const]
-            if sum(c.isdigit() for c in next_line) or max(1-next_line.count(' '),0):
-                print('Alert: w konkursie '+ nazwa +' zawodnik z nr '+line+' nazywa się '+next_line+'!')
-                const=1
-                next_line=tekst_lin[i+const]
-                print('Teraz w konkursie '+ nazwa +' zawodnik z nr '+line+' nazywa się '+next_line+'!')
-            lista.append([line,next_line])
-                
+    lista=find_names(tekst_lin,year,tick)              
     info=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id','training']
     comps_infos=pd.DataFrame([],columns=info)
     word=['hill size','k-point','meter value','gate factor','wind factor']
@@ -213,6 +227,7 @@ def import_start_list(nazwa,new_data=[],block=False):
 def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[]):
     if not comp.empty:
         nazwa=comp['id']+'.pdf'
+    tick=comp['type']
     kwale=1
     team=0
     TCS=0
@@ -220,7 +235,7 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[]):
     if nazwa[-5]=='Q':
         kwale=2
     if not names:
-        names_list=pd.DataFrame(import_start_list(nazwa)[0],columns=['bib','name'])
+        names_list=pd.DataFrame(import_start_list(nazwa,tick)[0],columns=['bib','name'])
     else:
         names_list=pd.DataFrame(names,columns=['bib','codex','name'])
         names_list['name']=names_list['name'].str.lower()
@@ -405,7 +420,7 @@ def collect(comp=[]):
     return([database,exit_code])
 
 years=[2021]
-tick=0
+tick=1
 types=['WC','COC','GP']
 new_data=import_links(years=years,genre=types[tick],import_num=0)
 
@@ -421,7 +436,7 @@ start_lists=[]
 comps=pd.DataFrame([],index=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id'])
 
 for nazwa in lista:
-    [list,comps_infos]=import_start_list(nazwa)
+    [list,comps_infos]=import_start_list(nazwa,tick)
     comps=comps.append(comps_infos,ignore_index=True)
     start_lists=start_lists+[[list]]
 comps=pd.merge(comps,comps_init,on=['season','codex'],how='inner')  
@@ -439,8 +454,9 @@ for i,comp in comps.iterrows():
     [dalej,exit_code]=collect(comp)
     if exit_code:
         print(comp)
-    dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
-"""
+    if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
+        dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
+
 n=1
 comp=comps.iloc[n]
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
@@ -451,7 +467,7 @@ tekst_lin = [i for i in tekst_lin if i]
 content=zwroc_skoki(comp,tekstlin=tekst_lin)
 dalej,exit_code=collect(comp)
 dalej.to_csv(comp['id']+'.csv',index=False)
-"""
+
 
 
 
