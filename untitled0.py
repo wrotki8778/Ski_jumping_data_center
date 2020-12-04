@@ -103,7 +103,6 @@ def scraping_fis(linki):
             result_file.close()    
             names_all=names_all+[names_list]
     return([database,names_all])
-
 def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','RLT','RTRIA'],import_data=[[],[],[],[],[]],import_num=0,scrap=True):
     [linki_tmp,linki,kody,database,names_list]=import_data
     if not linki_tmp:
@@ -223,7 +222,6 @@ def import_start_list(nazwa,tick=0,new_data=[],block=False):
         return([lista,comps_infos])  
     else:
         return([[],comps_infos])
-
 def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[]):
     if not comp.empty:
         nazwa=comp['id']+'.pdf'
@@ -269,6 +267,8 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[]):
     next_skoki=[conc_numbers(skok,comp) for i,skok in enumerate(skoki)]
     return([next_skoki,kwale,team,TCS])    
 def conc_numbers(skok,comp):
+    if comp['type']==1:
+        return(conc_numbers_coc(skok,comp))
     if not comp['training']:
         return(skok)
     try:
@@ -299,6 +299,26 @@ def conc_numbers(skok,comp):
         return(new_lines)
     else:
         return(skok)
+def conc_numbers_coc(skok,comp):
+    if comp['training']:
+        return(skok)
+    try:
+        start=min([i for i,x in enumerate(skok) if x.count('.') and sum([t.isnumeric() for t in x if t.isnumeric()])])
+    except ValueError:
+        return([skok[0]]+[10*'0.0 '])
+    ciach_skok=skok[start:]
+    try:
+        end=start+min([i for i,x in enumerate(ciach_skok) if sum([t.isalpha() for t in x if t.isalpha()])])
+    except ValueError:
+        end=len(skok)
+    print(start,end)
+    if end-start-1:
+        pierwszy=[i for i in range(start,end) if not((i-start)%2)]
+        drugi=[i for i in range(start,end) if (i-start)%2 and i!=start+3]
+        print(pierwszy,drugi)
+        return([skok[0]]+[' '.join([skok[i] for i in pierwszy])]+[' '.join([skok[i] for i in drugi])])
+    else:
+        return([skok[0],skok[start]])
 def przeksztalc(comp,string,kwale=0,team=0,TCS=0):
     nazwa=comp['id']
     if nazwa.count('RTRIA'):
@@ -449,14 +469,6 @@ comps.to_csv(os.getcwd()+'\\comps\\'+name,index=False)
 
 #comps=pd.read_csv(os.getcwd()+'\\comps\\2021_WC.csv')
 
-for i,comp in comps.iterrows():
-    content=zwroc_skoki(comp)
-    [dalej,exit_code]=collect(comp)
-    if exit_code:
-        print(comp)
-    if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
-        dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
-
 n=1
 comp=comps.iloc[n]
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
@@ -467,6 +479,16 @@ tekst_lin = [i for i in tekst_lin if i]
 content=zwroc_skoki(comp,tekstlin=tekst_lin)
 dalej,exit_code=collect(comp)
 dalej.to_csv(comp['id']+'.csv',index=False)
+
+for i,comp in comps.iterrows():
+    content=zwroc_skoki(comp)
+    [dalej,exit_code]=collect(comp)
+    if exit_code:
+        print(comp)
+    if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
+        dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
+
+
 
 
 
