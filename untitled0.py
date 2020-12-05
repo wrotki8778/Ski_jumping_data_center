@@ -46,6 +46,18 @@ def validate(date_text):
         return True
     except ValueError:
         return False
+def rozdziel(string):
+    new_string=string
+    if string.count('-'):
+        new_string =  string.split('-')[0]+' '+' '.join(['-'+e for e in string.split('-')[1:] if e])
+    tmp=new_string.split(' ')
+    if not([i for i in tmp if i.count('.')>1]):
+        return(new_string)
+    if new_string.count('.')>1:
+        index=min([i for i,x in enumerate(new_string) if x=='.'])+2
+        return(new_string[:index]+' ' + new_string[index:])
+    else:
+        return(new_string)    
 def scraping_fis(linki):
     info=['codex','place','month','day','year','gender','hill_size','team','season']
     database=pd.DataFrame([],columns=info)
@@ -275,7 +287,7 @@ def conc_numbers(skok,comp):
         start=min([i for i,x in enumerate(skok) if x.count('.')])
         end=max([i for i,x in enumerate(skok) if min(x.count('.'),sum([t.isnumeric() for t in x if t.isnumeric()]))])
     except ValueError:
-        return([skok[0]]+[10*'0.0 '])
+        return([skok[0]])
     try:
         end_2=min([i for i,x in enumerate(skok) if x.count('page')])-1
     except ValueError:
@@ -305,21 +317,21 @@ def conc_numbers_coc(skok,comp):
     try:
         start=min([i for i,x in enumerate(skok) if x.count('.') and sum([t.isnumeric() for t in x if t.isnumeric()])])
     except ValueError:
-        return([skok[0]]+[10*'0.0 '])
+        return([skok[0]])
     ciach_skok=skok[start:]
     try:
         end=start+min([i for i,x in enumerate(ciach_skok) if sum([t.isalpha() for t in x if t.isalpha()])])
     except ValueError:
         end=len(skok)
-    print(start,end)
     if end-start-1:
         pierwszy=[i for i in range(start,end) if not((i-start)%2)]
         drugi=[i for i in range(start,end) if (i-start)%2 and i!=start+3]
-        print(pierwszy,drugi)
         return([skok[0]]+[' '.join([skok[i] for i in pierwszy])]+[' '.join([skok[i] for i in drugi])])
     else:
         return([skok[0],skok[start]])
 def przeksztalc(comp,string,kwale=0,team=0,TCS=0):
+    if comp['type']==1:
+        return(przeksztalc_coc(string))
     nazwa=comp['id']
     if nazwa.count('RTRIA'):
         return(przeksztalc_rlt(string,kwale,team,TCS,'rtria'))
@@ -329,6 +341,25 @@ def przeksztalc(comp,string,kwale=0,team=0,TCS=0):
         return(przeksztalc_rl_rlq(string,kwale,team,TCS))
     else:
         return([])
+def przeksztalc_coc(string):
+    nq=0
+    tmp=string.split(' ')
+    new_string=string
+    if not tmp[0].count('.'):
+        tmp=tmp[1:]
+        nq=1
+    if tmp[0]!=rozdziel(tmp[0]):
+        tmp_tmp=rozdziel(tmp[0]).split(' ')
+        tmp[0]=tmp_tmp[1]+' ' + tmp_tmp[0]
+    tmp=[rozdziel(x) for x in tmp]
+    new_string=' '.join(tmp)
+    if nq:
+        tmp=new_string.split(' ')
+        tmp=[x for x in tmp if x]
+        if len(tmp)==15:
+            tmp=tmp[:13]+[tmp[14]]+[tmp[13]]
+        new_string=' '.join(tmp)
+    return(new_string)
 def przeksztalc_rl_rlq(string,kwale,team,TCS):
     string=string.replace('pq', '0.')
     tmp=string.split(' ')
@@ -390,6 +421,8 @@ def column_info(comp,kwale,team,TCS):
         info=['name','speed','dist','wind','wind_comp','dist_points','loc','gate','gate_points']
     elif nazwa.count('RLT'):
         info=['name','speed','dist','wind_comp','loc','gate','wind','dist_points','gate_points']
+    if comp['type']==1:
+        info=['name','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','wind_comp','wind','gate','gate_points']
     return(info)
 def znowu_przeksztalc(comp,skok,kwale=0,team=0,TCS=0):
     exit_code=0
