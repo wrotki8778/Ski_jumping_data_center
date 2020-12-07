@@ -189,7 +189,7 @@ def find_names(tekst_lin,nazwa,year,tick):
                 lista.append([line,next_line])
     else:
         indexes=[i for i,x in enumerate(tekst_lin) if validate(x)]
-        check_club=[bool(len(tekst_lin[i-1].split(' '))-1) for i in indexes]
+        check_club=[bool(len(tekst_lin[x-1].split(' '))-1) for x in indexes]
         names=[]
         for i,x in enumerate(indexes):
             if check_club[i]:
@@ -239,6 +239,12 @@ def import_start_list(nazwa,tick=0,new_data=[],block=False):
                 result_file.write(mod_line)
                 result_file.write('\n')
         result_file.close()
+    with open(os.getcwd()+'\\elastic_nazwy\\'+file_name,'w+') as result_file:
+        for i,line in enumerate(lista):
+            mod_line=';'.join(line)
+            result_file.write(mod_line)
+            result_file.write('\n')
+    result_file.close()
     if not block:
         return([lista,comps_infos])  
     else:
@@ -453,12 +459,14 @@ def znowu_przeksztalc(comp,skok,kwale=0,team=0,TCS=0):
         passed_values=len(info)
         if(len(notes)==passed_values-2):
             notes.append(0)
+        print(notes)
         data=pd.Series([name]+notes, index = new_jump.columns)
         if not comp['training']:
             conds=[abs(data['wind'])>5,abs(data['wind_comp'])>60,data['note_points']>60,data['note_5']>20]+decimal([data['wind_comp'],data['points'],data['dist_points'],data['gate_points'],data['speed'], data['note_1'], data['note_5'],data['note_points'],data['dist'],data['gate']],[10,10,10,10,10,2,2,2,2,1])
             condition=any(conds)
             if condition:
                 exit_code=1
+                print(comp['id'])
                 print(conds)
                 print(data)
         else:
@@ -466,12 +474,16 @@ def znowu_przeksztalc(comp,skok,kwale=0,team=0,TCS=0):
             condition=any(conds)
             if condition:
                 exit_code=1
+                print(comp['id'])
                 print(conds)
                 print(data)
         new_jump=new_jump.append(data,ignore_index=True)
     return([new_jump,exit_code])
-def collect(comp=[]):
-    jumps,kwale,team,TCS=zwroc_skoki(comp)
+def collect(comp=[],tekstlin=[]):
+    if not(tekstlin):
+        jumps,kwale,team,TCS=zwroc_skoki(comp)
+    else:
+        jumps,kwale,team,TCS=zwroc_skoki(comp,tekstlin=tekstlin)
     exit_code=0
     info=column_info(comp,kwale,team,TCS)
     database=pd.DataFrame([],columns=info)
@@ -510,9 +522,26 @@ name='_'.join([str(x) for x in years])+'_'+str(types[tick])+'.csv'
 comps.to_csv(os.getcwd()+'\\comps\\'+name,index=False)
 """
 comps=pd.read_csv(os.getcwd()+'\\comps\\2019_COC.csv')
+comps=comps[comps['training']==0]
+comps=comps[comps['wind factor'].notna()]
+exit_codes=[]
+errors=[]
+for i,comp in comps.iterrows():
+    
+    if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
+        try:
+            content=zwroc_skoki(comp)
+            [dalej,exit_code]=collect(comp)
+            if exit_code:
+                exit_codes.append(comp)
+                print(comp)
+            dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
+        except:
+            errors.append(comp)
+            print(comp)
 
-n=59
-comp=comps.iloc[n]
+n=9
+comp=comps.loc[n]
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
 tekst=parsed["content"]
 tekst=tekst.lower()
@@ -525,16 +554,11 @@ tekst_lin_start=tekst_start.splitlines()
 tekst_lin_start = [i for i in tekst_lin_start if i] 
 content_start=import_start_list(comp['id']+'.pdf',1)
 content=zwroc_skoki(comp,tekstlin=tekst_lin)
-dalej,exit_code=collect(comp)
+dalej,exit_code=collect(comp,tekst_lin)
 dalej.to_csv(comp['id']+'.csv',index=False)
 
-for i,comp in comps.iterrows():
-    content=zwroc_skoki(comp)
-    [dalej,exit_code]=collect(comp)
-    if exit_code:
-        print(comp)
-    if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
-        dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
+
+
 
 
 
