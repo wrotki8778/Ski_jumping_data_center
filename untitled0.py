@@ -37,6 +37,8 @@ def to_date(day,month,year):
     string=str(day)+' '+month+' '+str(year)
     return(datetime.strptime(string, '%d %B %Y'))
 def validate(date_text):
+    if len(date_text)==10:
+        date_text='0'+date_text
     if len(date_text)<6:
         return False
     test=date_text[:3] + date_text[3].upper() + date_text[4:]
@@ -174,19 +176,23 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
 def find_names(tekst_lin,nazwa,year,tick):
     lista=[]
     if tick!=1:
-        for i,line in enumerate(tekst_lin):        
-            if len(line)==sum(c.isdigit() for c in line)+line.count('-') and sum(c.isalpha() for c in tekst_lin[i+1]):
-                if int(year)<2016:
-                    const=1
-                else:
-                    const=2
-                next_line=tekst_lin[i+const]
-                if sum(c.isdigit() for c in next_line) or max(1-next_line.count(' '),0):
-                    print('Alert: w konkursie '+ nazwa +' zawodnik z nr '+line+' nazywa się '+next_line+'!')
-                    const=1
-                    next_line=tekst_lin[i+const]
-                    print('Teraz w konkursie '+ nazwa +' zawodnik z nr '+line+' nazywa się '+next_line+'!')
-                lista.append([line,next_line])
+        names=[]
+        bibs=[]
+        indexes=[i for i,x in enumerate(tekst_lin) if validate(x)]
+        if int(year)<2016:
+            const=2
+        else:
+            const=1
+        check_club=[len(tekst_lin[x-3].split(' '))==1 and tekst_lin[x-3].isnumeric() for x in indexes]
+        for i,x in enumerate(indexes):
+            if check_club[i]:
+                names.append(tekst_lin[x-const])
+                bibs.append(tekst_lin[x-3])
+            else:
+                tmp=tekst_lin[x-1].split(' ')
+                names.append(' '.join(tmp[1:]))
+                bibs.append(tmp[0])
+        lista=[[bibs[i]]+[names[i]] for i,x in enumerate(indexes)]
     else:
         indexes=[i for i,x in enumerate(tekst_lin) if validate(x)]
         check_club=[bool(len(tekst_lin[x-1].split(' '))-1) for x in indexes]
@@ -550,19 +556,21 @@ for i,comp in comps.iterrows():
         try:
             content=zwroc_skoki(comp)
             [dalej,exit_code]=collect(comp) 
-            if exit_code or dalej.empty:
+            if (exit_code or dalej.empty) and not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
                 exit_codes.append(comp)
                 print(comp)
-            if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
+                continue
+            if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):             
                 dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
             dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp['id']+'.csv',index=False)
         except:
-            errors.append(comp)
-            print(comp)
+            if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
+                errors.append(comp)
+                print(comp)
 
-n=80
+n=121
 comp=comps.loc[n]
-#comp['type']=1
+comp['type']=0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
 tekst=parsed["content"]
 tekst=tekst.lower()
