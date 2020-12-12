@@ -60,62 +60,55 @@ def rozdziel(string):
         return(new_string[:index]+' ' + new_string[index:])
     else:
         return(new_string)    
-def scraping_fis(linki):
+def scraping_fis(soup,year):
     info=['codex','place','month','day','year','gender','hill_size','team','season']
     database=pd.DataFrame([],columns=info)
     names_all=[]
-    for i,item in enumerate(linki):
-            time.sleep(4)
-            [link,year]=item
-            r = requests.get(link, headers={'user-agent': 'abcd'})
-            soup = BeautifulSoup(r.text, "lxml")
-            for a in soup.find_all('span', {'class': 'event-details__field'}):
-                codex=a.text[-4:]
-            for a in soup.find_all('h1',{'class': 'heading heading_l2 heading_white heading_off-sm-style'}):
-                place=a.text
-            for a in soup.find_all('span',{'class': 'date__full'}):
-                date=a.text
-                date=a.text.replace(',','').split()
-            for a in soup.find_all('div',{'class': 'event-header__kind'}):
-                tmp=a.text.replace('','').split()
-                gender=tmp[0][:-2]
-                hill_size=tmp[-1][2:]
-                if len(tmp)>=3:
-                    team=1
-                else:
-                    team=0
-            new_comp=pd.Series([codex]+[place]+date+[gender]+[hill_size]+[team]+[year], index = database.columns)
-            database=database.append(new_comp,ignore_index=True)
-            r = requests.get(link, headers={'user-agent': 'abcd'})
-            soup = BeautifulSoup(r.text, "lxml")
-            names_list=[]
+    for a in soup.find_all('span', {'class': 'event-details__field'}):
+        codex=a.text[-4:]
+    for a in soup.find_all('h1',{'class': 'heading heading_l2 heading_white heading_off-sm-style'}):
+        place=a.text
+    for a in soup.find_all('span',{'class': 'date__full'}):
+        date=a.text
+        date=a.text.replace(',','').split()
+    for a in soup.find_all('div',{'class': 'event-header__kind'}):
+        tmp=a.text.replace('','').split()
+        gender=tmp[0][:-2]
+        hill_size=tmp[-1][2:]
+        if len(tmp)>=3:
+            team=1
+        else:
+            team=0
+        new_comp=pd.Series([codex]+[place]+date+[gender]+[hill_size]+[team]+[year], index = database.columns)
+        database=database.append(new_comp,ignore_index=True)
+        names_list=[]
+        if team:
+            klas='table-row table-row_theme_additional'
+        else:
+            klas='table-row'
+        for a in soup.find_all('a',{'class': klas}):
+            tmp=a.text.replace('\n','<')
+            tmp=tmp.split('<')
+            tmp=[x for x in tmp if x]
+            for i,line in enumerate(tmp):
+                nazwa=line.split(' ')
+                nazwa=[x for x in nazwa if x]
+                tmp[i]=' '.join(nazwa)
+                if(len(nazwa)>1):
+                    tmp[i+1:]=[]
+                    break
             if team:
-                klas='table-row table-row_theme_additional'
+                names_list.append(tmp[-4:])
             else:
-                klas='table-row'
-            for a in soup.find_all('a',{'class': klas}):
-                tmp=a.text.replace('\n','<')
-                tmp=tmp.split('<')
-                tmp=[x for x in tmp if x]
-                for i,line in enumerate(tmp):
-                    nazwa=line.split(' ')
-                    nazwa=[x for x in nazwa if x]
-                    tmp[i]=' '.join(nazwa)
-                    if(len(nazwa)>1):
-                        tmp[i+1:]=[]
-                        break
-                if team:
-                    names_list.append(tmp[-4:])
-                else:
-                    names_list.append(tmp[-3:])
-            file_name=str(year)+'JP'+str(codex)+'nazfis.csv'
-            with open(os.getcwd()+'\\nazwy\\'+file_name,'w+') as result_file:
-                for i,line in enumerate(names_list):
-                    mod_line=';'.join(line)
-                    result_file.write(mod_line)
-                    result_file.write('\n')
-            result_file.close()    
-            names_all=names_all+[names_list]
+                names_list.append(tmp[-3:])
+        file_name=str(year)+'JP'+str(codex)+'nazfis.csv'
+        with open(os.getcwd()+'\\nazwy\\'+file_name,'w+') as result_file:
+            for i,line in enumerate(names_list):
+                mod_line=';'.join(line)
+                result_file.write(mod_line)
+                result_file.write('\n')
+        result_file.close()    
+        names_all=names_all+[names_list]
     return([database,names_all])
 def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','RLT','RTRIA'],import_data=[[],[],[],[],[]],import_num=0,scrap=True):
     [linki_tmp,linki,kody,database,names_list]=import_data
@@ -150,6 +143,8 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
             for suffix in to_download:
                 tmp_file_name=year+'JP'+codex+suffix
                 kody.append(tmp_file_name)
+            if scrap:
+                [database,names_list]=scraping_fis(soup,year)
                 
     for kod in kody:
         data=kod[0:4]
@@ -170,10 +165,8 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
                 os.remove(os.getcwd()+'\\PDFs\\'+kod+'.pdf')
             else:
                 print('Pobrano konkurs: '+kod+'.pdf')
-    if scrap:
-        [database,names_list]=scraping_fis(linki)
     return([linki_tmp,linki,kody,database,names_list])
-def find_names(tekst_lin,nazwa,year,tick):
+def find_names(tekst_lin,year,tick):
     lista=[]
     if tick!=1:
         names=[]
@@ -204,20 +197,18 @@ def find_names(tekst_lin,nazwa,year,tick):
                 names.append(tekst_lin[x-3])
         lista=[[tekst_lin[x+1]]+[names[i]] for i,x in enumerate(indexes)]
     return(lista)
-def import_start_list(comp,new_data=[],block=False,tekstlin=[]): 
+def import_start_list(comp,pdf_name,new_data=[],block=False,tekstlin=[]): 
     year=comp['season']
     codex=comp['codex']
-    nazwa=str(year)+'JP'+str(codex)
     tick=comp['type']
     try:
-        file_name=nazwa+'SLQ.pdf'
+        file_name=comp['ID']+'SLQ.pdf'
         parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
     except FileNotFoundError:
-        file_name=nazwa+'SLR1.pdf'
+        file_name=comp['ID']+'SLR1.pdf'
         parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
     except:
         return([])
-
     tekst=parsed["content"]
     tekst=tekst.replace('* ','')
     tekst=tekst.replace('*','')
@@ -226,7 +217,7 @@ def import_start_list(comp,new_data=[],block=False,tekstlin=[]):
     tekst_lin = [i for i in tekst_lin if i]
     if tekstlin:
         tekst_lin=tekstlin
-    lista=find_names(tekst_lin,nazwa,year,tick)              
+    lista=find_names(tekst_lin,year,tick)              
     info=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id','training']
     comps_infos=pd.DataFrame([],columns=info)
     word=['hill size','k-point','meter value','gate factor','wind factor']
@@ -237,9 +228,8 @@ def import_start_list(comp,new_data=[],block=False,tekstlin=[]):
             infos.append(take_number(add[0]))
         else:
             infos.append(np.nan)
-    ID=nazwa[:-4]
-    training=nazwa.count('RLT') or nazwa.count('RTRIA')
-    new_info=pd.Series([year]+[codex]+infos+[ID]+[training], index = comps_infos.columns)
+    training=pdf_name.count('RLT') or pdf_name.count('RTRIA')
+    new_info=pd.Series([year]+[codex]+infos+[pdf_name]+[training], index = comps_infos.columns)
     comps_infos=comps_infos.append(new_info,ignore_index=True)
     file_name=str(year)+'JP'+str(codex)+'naz.csv'
     if not os.path.isfile(os.getcwd()+'\\nazwy\\'+file_name): 
@@ -516,27 +506,29 @@ def collect(comp=[],tekstlin=[]):
         database=database.append(new_jumps,ignore_index=True)
     return([database,exit_code])
 
-years=[2021]
+years=[2020]
 tick=1
 types=['WC','COC','GP']
-new_data=import_links(years=years,genre=types[tick],import_num=0)
+new_data=import_links(years=years,genre=types[tick],import_num=8)
 
 comps_init=new_data[3]
 comps_init['type']=tick
-comps_init_id=comps_init.apply(lambda x: x['season']+'JP'+x['codex'],axis=1).tolist()
 to_process=['RLQ','RL','RLT','RTRIA']
 to_process=[x+'.pdf' for x in to_process]
 lista=os.listdir(os.getcwd()+'\\PDFs\\')
-lista=[x for x in lista if any(t for t in to_process if t in x) and any(t for t in comps_init_id if t in x)]
+comps_init['ID']=comps_init.apply(lambda x: x['season']+'JP'+x['codex'],axis=1).tolist()
+lista=[x for x in lista if any(t for t in to_process if t in x) and any(t for t in comps_init['ID'] if t in x)]
 lista.reverse()
 
 start_lists=[]
 comps=pd.DataFrame([],index=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id'])
 
-for i,comp in comps_init.iterrows():
-    [list,comps_infos]=import_start_list(comp)
+for i,pdf_name in enumerate(lista):
+    comp=comps_init[comps_init['ID']==pdf_name[:10]].iloc[0]
+    [list,comps_infos]=import_start_list(comp,pdf_name[:-4])
     comps=comps.append(comps_infos,ignore_index=True)
     start_lists=start_lists+[[list]]
+comps_init=comps_init.drop(['ID'],axis=1)
 comps=pd.merge(comps,comps_init,on=['season','codex'],how='inner')  
 comps['date']=comps.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
 comps=comps.drop(['month','day','year'],axis=1)
@@ -546,7 +538,7 @@ if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name,index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name,index=False)
 
-comps=pd.read_csv(os.getcwd()+'\\comps\\2019_COC.csv')
+#comps=pd.read_csv(os.getcwd()+'\\comps\\2019_COC.csv')
 #comps=comps[comps['training']==0]
 comps=comps[comps['wind factor'].notna()]
 
@@ -568,7 +560,8 @@ for i,comp in comps.iterrows():
                 errors.append(comp)
                 print(comp)
 
-n=121
+
+n=38
 comp=comps.loc[n]
 comp['type']=0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')

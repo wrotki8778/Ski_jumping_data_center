@@ -63,12 +63,6 @@ def merge_infos(directory):
         comps=comps.append(tmp)
     comps=comps.drop_duplicates(['id'])
     return(comps)
-comps=merge_infos(os.getcwd()+'\\comps\\')
-comps=comps[comps['training']!=1]
-comps=comps.sort_values(['date','id'],ascending=[True,False])
-comps=comps.reset_index()
-names=merge_names(comps,os.getcwd()+'\\nazwy\\')
-results=merge_comps(names,comps,os.getcwd()+'\\results\\')
 def new_rating(ratingi,k,print_exp):
     delty=[]
     for i,ocena in enumerate(ratingi):
@@ -96,7 +90,6 @@ def new_rating(ratingi,k,print_exp):
             print(i,ocena,exp_score,fact_score,delta)
         """print(delta,exp_score,fact_score)"""
     return(delty)
-
 def doklej_rating(results,i,comp,rating_db,k,print_exp):
     ratingi=results.loc[:,'rating']
     delty=pd.DataFrame(new_rating(ratingi,k,print_exp))
@@ -135,8 +128,7 @@ def build_rating(comps,results):
             rating_act.columns=['codex','next_rating']
             part_results=pd.merge(part_results,rating_act,how='left')
             part_results['delta']=part_results['next_rating']-part_results['rating']
-    return(rating_db)
-        
+    return(rating_db)       
 def show_rating(comps,index,names,rating_db,take_all=True):
     names=names.drop_duplicates(subset=['codex']) 
     pre_comps=list(comps.iloc[:index]['id'])+['2010JP0000RL']
@@ -146,7 +138,6 @@ def show_rating(comps,index,names,rating_db,take_all=True):
     else:
         comp_codex=rating_db[rating_db['id']==comp['id']]['codex']
         rating_cut=rating_db[rating_db['id'].isin(pre_comps) & (rating_db['codex'].isin(comp_codex))]
-        print(rating_cut)
     rating_cut=rating_cut.groupby('codex')['rating'].sum().reset_index()
     rating_cut=pd.merge(names,rating_cut,how='inner')
     rating_prev=rating_cut.groupby('codex')['rating'].sum().reset_index()
@@ -158,8 +149,14 @@ def show_rating(comps,index,names,rating_db,take_all=True):
     new_results=new_results.drop_duplicates(subset=['codex'])
     return(new_results)
 
+comps=merge_infos(os.getcwd()+'\\comps\\')
+comps=comps[comps['training']!=1]
+comps=comps.sort_values(['date','id'],ascending=[True,False])
+comps=comps.reset_index()
+names=merge_names(comps,os.getcwd()+'\\nazwy\\')
+results=merge_comps(names,comps,os.getcwd()+'\\results\\')
 rating_db=build_rating(comps,results)
-results=show_rating(comps,1492,names,rating_db,False)
+results=show_rating(comps,1269,names,rating_db,False)
 ryoyu=rating_db[rating_db['codex']==5658]
 ryoyu['progress']=np.cumsum(ryoyu['rating'])
 """quals_results.to_csv('new_qual_results_fix.csv')"""
