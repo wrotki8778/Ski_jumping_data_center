@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """
-Created on Sat Sep 12 14:14:52 2020
+Script to download, parse and process FIS ski jumping documents.
 
-@author: kubaf
+@author: wrotki8778
 """
 import os
 import os.path
@@ -16,125 +15,200 @@ import time
 from datetime import datetime
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 
+
 def is_number(s):
+    """Check that s can be described as a number or not."""
     try:
         float(s)
         return True
     except ValueError:
         return False
-def decimal(list,list_k):
-    output=[]
-    for i,number in enumerate(list):
-        output=output+[abs(list_k[i]*number-int(list_k[i]*number))>0]
+
+
+def decimal(list, list_k):
+    """
+    Check that a list of numbers are multiples of corresponding values.
+
+    Inputs:
+        list - a list of numbers to check,
+        list_k - a list of integers (1,2,5,10)
+        which corresponds to the multiples of
+        1, 0.5, 0.2 and 0.1 respectively
+
+    Output:
+        output - a list of True/False values
+        and True is given iff an appropriate
+        value of list is a multiple of an appropriate
+        quantity in list_k.
+    """
+    output = []
+    for i, number in enumerate(list):
+        output = output + [abs(list_k[i]*number - int(list_k[i]*number)) > 0]
     return output
+
+
 def take_number(string):
-    string=string.replace('m','')
-    string=string.replace('/',' ')
-    tmp=string.split(' ')
-    take=[x for x in tmp if is_number(x)]
+    """Return a first numeric value in a given string."""
+    string = string.replace('m', '')
+    string = string.replace('/', ' ')
+    tmp = string.split(' ')
+    take = [x for x in tmp if is_number(x)]
     return float(take[0])
-def to_date(day,month,year):
-    string=str(day)+' '+month+' '+str(year)
+
+
+def to_date(day, month, year):
+    """Return a date format with given inputs.
+
+    Inputs:
+        day - number (01-31),
+        month - string ('Jan', 'Feb' etc.)
+        year - number (1000-9999),
+
+    Output:
+        a date-time expression
+    """
+    string = str(day)+' '+month+' '+str(year)
     return(datetime.strptime(string, '%d %B %Y'))
+
+
 def validate(date_text):
-    if len(date_text)==10:
-        date_text='0'+date_text
-    if len(date_text)<6:
+    """Check that a date_text string can be described as in a date format."""
+    if len(date_text) == 10:
+        date_text = '0'+date_text
+    if len(date_text) < 6:
         return False
-    test=date_text[:3] + date_text[3].upper() + date_text[4:]
+    test = date_text[:3] + date_text[3].upper() + date_text[4:]
     try:
         if test != datetime.strptime(test, '%d %b %Y').strftime('%d %b %Y'):
             raise ValueError
         return True
     except ValueError:
         return False
+
+
 def rozdziel(string):
-    new_string=string
+    """Process a string to split a multi-'.'-substrings."""
+    new_string = string
     if string.count('-'):
-        new_string =  string.split('-')[0]+' '+' '.join(['-'+e for e in string.split('-')[1:] if e])
-    tmp=new_string.split(' ')
-    if not([i for i in tmp if i.count('.')>1]):
+        new_string = string.split('-')[0]+' '+' '.join(['-'+e for e in string.split('-')[1:] if e])
+    tmp = new_string.split(' ')
+    if not([i for i in tmp if i.count('.') > 1]):
         return(new_string)
-    if new_string.count('.')>1:
-        index=min([i for i,x in enumerate(new_string) if x=='.'])+2
+    if new_string.count('.') > 1:
+        index = min([i for i, x in enumerate(new_string) if x == '.'])+2
         return(new_string[:index]+' ' + new_string[index:])
     else:
-        return(new_string)    
-def scraping_fis(soup,year):
-    info=['codex','place','month','day','year','gender','hill_size','team','season']
-    database=pd.DataFrame([],columns=info)
-    names_all=[]
+        return(new_string)
+
+
+def scraping_fis(soup, year):
+    """
+    Return a list of information from a scrapped FIS site.
+
+    Inputs:
+        soup - FIS site of a competition parsed by a BeautifulSoup module,
+        year - number (1000-9999) representing a given season,
+
+    Outputs:
+        database - a Pandas Series with:
+            codex - number (1000-9999) representing a given competition,
+            place - string with a city where the competition was held,
+            date - list with a date when the competition was held
+            when a month, day and a year are written separately,
+            gender - 'Men'/'Women' variable saying whether it was a mens' race
+            or not,
+            hill_size - HS of a hill where the competition was held,
+            team - 0/1 variable saying whether it was a team race
+            or not,
+            year - same as input.
+        names_list - a list with names of athletes starting in
+        a competition, where we have:
+            bib - number connected with a given athlete
+            (not provided if team variable is 1),
+            fis_code - number representing a given athlete in a FIS database,
+            name - full name of an athlete.
+        Moreover names_list is exported to a separate folder in a .csv file.
+    """
+    info = ['codex', 'place', 'month', 'day', 'year']+['gender', 'hill_size', 'team', 'season']
+    database = pd.DataFrame([], columns=info)
+    names_all = []
     for a in soup.find_all('span', {'class': 'event-details__field'}):
-        codex=a.text[-4:]
-    for a in soup.find_all('h1',{'class': 'heading heading_l2 heading_white heading_off-sm-style'}):
-        place=a.text
-    for a in soup.find_all('span',{'class': 'date__full'}):
-        date=a.text
-        date=a.text.replace(',','').split()
-    for a in soup.find_all('div',{'class': 'event-header__kind'}):
-        tmp=a.text.replace('','').split()
-        gender=tmp[0][:-2]
-        hill_size=tmp[-1][2:]
-        if len(tmp)>=3:
-            team=1
+        codex = a.text[-4:]
+    for a in soup.find_all('h1', {'class': 'heading heading_l2 heading_white heading_off-sm-style'}):
+        place = a.text
+    for a in soup.find_all('span', {'class': 'date__full'}):
+        date = a.text
+        date = a.text.replace(',', '').split()
+    for a in soup.find_all('div', {'class': 'event-header__kind'}):
+        tmp = a.text.replace('', '').split()
+        gender = tmp[0][:-2]
+        hill_size = tmp[-1][2:]
+        if len(tmp) >= 3:
+            team = 1
         else:
-            team=0
-        new_comp=pd.Series([codex]+[place]+date+[gender]+[hill_size]+[team]+[year], index = database.columns)
-        database=database.append(new_comp,ignore_index=True)
-        names_list=[]
+            team = 0
+        infos = [codex]+[place]+date+[gender]+[hill_size]+[team]+[year]
+        new_comp = pd.Series(infos, index=database.columns)
+        database = database.append(new_comp, ignore_index=True)
+        names_list = []
         if team:
-            klas='table-row table-row_theme_additional'
+            klas = 'table-row table-row_theme_additional'
         else:
-            klas='table-row'
-        for a in soup.find_all('a',{'class': klas}):
-            tmp=a.text.replace('\n','<')
-            tmp=tmp.split('<')
-            tmp=[x for x in tmp if x]
-            for i,line in enumerate(tmp):
-                nazwa=line.split(' ')
-                nazwa=[x for x in nazwa if x]
-                tmp[i]=' '.join(nazwa)
-                if(len(nazwa)>1):
-                    tmp[i+1:]=[]
+            klas = 'table-row'
+        for a in soup.find_all('a', {'class': klas}):
+            tmp = a.text.replace('\n', '<')
+            tmp = tmp.split('<')
+            tmp = [x for x in tmp if x]
+            for i, line in enumerate(tmp):
+                nazwa = line.split(' ')
+                nazwa = [x for x in nazwa if x]
+                tmp[i] = ' '.join(nazwa)
+                if(len(nazwa) > 1):
+                    tmp[i+1:] = []
                     break
             if team:
                 names_list.append(tmp[-4:])
             else:
                 names_list.append(tmp[-3:])
-        file_name=str(year)+'JP'+str(codex)+'nazfis.csv'
-        with open(os.getcwd()+'\\nazwy\\'+file_name,'w+') as result_file:
-            for i,line in enumerate(names_list):
-                mod_line=';'.join(line)
+        file_name = str(year)+'JP'+str(codex)+'nazfis.csv'
+        with open(os.getcwd()+'\\nazwy\\'+file_name, 'w+') as result_file:
+            for i, line in enumerate(names_list):
+                mod_line = ';'.join(line)
                 result_file.write(mod_line)
                 result_file.write('\n')
-        result_file.close()    
-        names_all=names_all+[names_list]
-    return([database,names_all])
-def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','RLT','RTRIA'],import_data=[[],[],[],[],[]],import_num=0,scrap=True):
-    [linki_tmp,linki,kody,database,names_list]=import_data
+        result_file.close()
+        names_all = names_all+[names_list]
+    return([database, names_all])
+
+
+def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR1', 'RLT', 'RTRIA'], import_data=[[], [], [], [], []], import_num=0, scrap=True):
+    [linki_tmp, linki, kody, database, names_list] = import_data
     if not linki_tmp:
         for i in range(len(years)):
             time.sleep(5)
             url = 'https://www.fis-ski.com/DB/?eventselection=results&place=&sectorcode=JP&seasoncode='+str(years[i])+'&categorycode='+genre+'&disciplinecode=&gendercode=&racedate=&racecodex=&nationcode=&seasonmonth=X-'+str(years[i])+'&saveselection=-1&seasonselection='
             r = requests.get(url, headers={'user-agent': 'ejdzent'})
             soup = BeautifulSoup(r.text, "lxml")
-            for a in soup.find_all('a', {'class': 'g-sm justify-left hidden-xs hidden-md-up bold'},href=True):
-                linki_tmp.append(a['href'])  
+            for a in soup.find_all('a', {'class': 'g-sm justify-left hidden-xs hidden-md-up bold'}, href=True):
+                linki_tmp.append(a['href'])
         if import_num:
-            linki_tmp=linki_tmp[:import_num]
+            linki_tmp = linki_tmp[:import_num]
     if not linki:
         for url in linki_tmp:
             time.sleep(4)
-            year=url[-4:]
+            year = url[-4:]
             r = requests.get(url, headers={'user-agent': 'ejdzent'})
             soup = BeautifulSoup(r.text, "lxml")
-            for a in soup.find_all('a', {'class': 'px-1 g-lg-3 g-md-3 g-sm-4 g-xs-4 justify-left'},href=True):
-                linki.append([a['href'],year])
+            for a in soup.find_all('a', {'class': 'px-1 g-lg-3 g-md-3 g-sm-4 g-xs-4 justify-left'}, href=True):
+                linki.append([a['href'], year])
     if not kody:
+        info = ['codex', 'place', 'month', 'day', 'year']+['gender', 'hill_size', 'team', 'season']
+        database = pd.DataFrame([], columns=info)
+        names_list = []
         for item in linki: 
             time.sleep(4)
-            url=item[0]
-            year=item[1]
+            url = item[0]
+            year = item[1]
             r = requests.get(url, headers={'user-agent': 'ejdzent'})
             soup = BeautifulSoup(r.text, "lxml")
             for a in soup.find_all('span', {'class': 'event-details__field'}):
@@ -144,28 +218,31 @@ def import_links(years=[2021],genre='GP',to_download=['RL','RLQ','SLQ','SLR1','R
                 tmp_file_name=year+'JP'+codex+suffix
                 kody.append(tmp_file_name)
             if scrap:
-                [database,names_list]=scraping_fis(soup,year)
-                
+                tmp, tmp_2 = scraping_fis(soup, year)
+                database = database.append(tmp)
+                names_list.append(tmp_2)
     for kod in kody:
-        data=kod[0:4]
-        cc=kod[6:10]
-        url='http://medias3.fis-ski.com/pdf/'+data+'/JP/'+cc+'/'+kod+'.pdf'
+        data = kod[0:4]
+        cc = kod[6:10]
+        url = 'http://medias3.fis-ski.com/pdf/'+data+'/JP/'+cc+'/'+kod+'.pdf'
         if not os.path.isfile(os.getcwd()+'\\PDFs\\'+kod+'.pdf'):
             time.sleep(1)
             r = requests.get(url, allow_redirects=True)
         else:
             print('Pominięto konkurs: '+kod+'.pdf')
             continue
-        if r.status_code==404:
+        if r.status_code == 404:
             continue
         else:
             time.sleep(4)
             open(os.getcwd()+'\\PDFs\\'+kod+'.pdf', 'wb').write(r.content)
-            if os.path.getsize(os.getcwd()+'\\PDFs\\'+kod+'.pdf')<15:
+            if os.path.getsize(os.getcwd()+'\\PDFs\\'+kod+'.pdf') < 15:
                 os.remove(os.getcwd()+'\\PDFs\\'+kod+'.pdf')
             else:
                 print('Pobrano konkurs: '+kod+'.pdf')
-    return([linki_tmp,linki,kody,database,names_list])
+    return([linki_tmp, linki, kody, database, names_list])
+
+
 def find_names(tekst_lin,year,tick):
     lista=[]
     if tick!=1:
@@ -197,15 +274,21 @@ def find_names(tekst_lin,year,tick):
                 names.append(tekst_lin[x-3])
         lista=[[tekst_lin[x+1]]+[names[i]] for i,x in enumerate(indexes)]
     return(lista)
-def import_start_list(comp,pdf_name,new_data=[],block=False,tekstlin=[]): 
-    year=comp['season']
-    codex=comp['codex']
-    tick=comp['type']
+
+
+def import_start_list(comp, pdf_name, new_data=[], block=False, tekstlin=[]):
+    year = comp['season']
+    codex = comp['codex']
+    tick = comp['type']
+    if 'id' in comp.index:
+        name = comp['id'][:10]
+    else:
+        name = comp['ID']
     try:
-        file_name=comp['ID']+'SLQ.pdf'
+        file_name = name+'SLQ.pdf'
         parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
     except FileNotFoundError:
-        file_name=comp['ID']+'SLR1.pdf'
+        file_name = name+'SLR1.pdf'
         parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
     except:
         return([])
@@ -216,8 +299,8 @@ def import_start_list(comp,pdf_name,new_data=[],block=False,tekstlin=[]):
     tekst_lin=tekst.splitlines()
     tekst_lin = [i for i in tekst_lin if i]
     if tekstlin:
-        tekst_lin=tekstlin
-    lista=find_names(tekst_lin,year,tick)              
+        tekst_lin = tekstlin
+    lista = find_names(tekst_lin, year, tick)
     info=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id','training']
     comps_infos=pd.DataFrame([],columns=info)
     word=['hill size','k-point','meter value','gate factor','wind factor']
@@ -249,6 +332,8 @@ def import_start_list(comp,pdf_name,new_data=[],block=False,tekstlin=[]):
         return([lista,comps_infos])  
     else:
         return([[],comps_infos])
+
+
 def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[]):
     if not comp.empty:
         nazwa=comp['id']+'.pdf'
@@ -259,7 +344,7 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[]):
     if nazwa[-5]=='Q':
         kwale=2
     if not names:
-        names_list=pd.DataFrame(import_start_list(comp)[0],columns=['bib','name'])
+        names_list = pd.DataFrame(import_start_list(comp, comp['id']+'.pdf')[0], columns=['bib', 'name'])
     else:
         names_list=pd.DataFrame(names,columns=['bib','codex','name'])
         names_list['name']=names_list['name'].str.lower()
@@ -293,6 +378,8 @@ def zwroc_skoki(comp=[],names=[],nazwa=[],tekstlin=[]):
         print('Warning: in '+comp['id']+' '+str(len(names_list) - len(indices))+' not found!')
     next_skoki=[conc_numbers(skok,comp) for i,skok in enumerate(skoki)]
     return([next_skoki,kwale,team,TCS])    
+
+
 def conc_numbers(skok,comp):
     if comp['type']==1:
         return(conc_numbers_coc(skok,comp))
@@ -326,6 +413,8 @@ def conc_numbers(skok,comp):
         return(new_lines)
     else:
         return(skok)
+
+
 def conc_numbers_coc(skok,comp):
     try:
         start=min([i for i,x in enumerate(skok) if x.count('.') and sum([t.isnumeric() for t in x if t.isnumeric()])])
@@ -344,6 +433,8 @@ def conc_numbers_coc(skok,comp):
         return([skok[0]]+[' '.join([skok[i] for i in pierwszy])]+[' '.join([skok[i] for i in drugi])])
     else:
         return([skok[0],skok[start]])
+
+
 def przeksztalc(comp,string,kwale=0,team=0,TCS=0):
     if comp['type']==1:
         return(przeksztalc_coc(string,kwale,comp))
@@ -356,6 +447,8 @@ def przeksztalc(comp,string,kwale=0,team=0,TCS=0):
         return(przeksztalc_rl_rlq(string,kwale,team,TCS))
     else:
         return([])
+
+
 def przeksztalc_coc(string,kwale,comp=[]):
     nq=0
     tmp=string.split(' ')
@@ -385,6 +478,8 @@ def przeksztalc_coc(string,kwale,comp=[]):
             tmp=tmp[:13]+[tmp[14]]+[tmp[13]]
         new_string=' '.join(tmp)
     return(new_string)
+
+
 def przeksztalc_rl_rlq(string,kwale,team,TCS):
     string=string.replace('pq', '0.')
     tmp=string.split(' ')
@@ -424,6 +519,8 @@ def przeksztalc_rl_rlq(string,kwale,team,TCS):
     if TCS and kwale==2:
         nofy_string=' '.join(wyrazy[0:3]) + ' ' + ' '.join(wyrazy[4:13]) + ' ' + ' '.join(wyrazy[14:])
     return(nofy_string)
+
+
 def przeksztalc_rlt(string,kwale,team,TCS,layout):
     string=string.replace('©', '')
     nowy_string=string.split()
@@ -437,6 +534,8 @@ def przeksztalc_rlt(string,kwale,team,TCS,layout):
     else:
         nofy_string=nowy_string[:2]+nowy_string[-2:]+nowy_string[4:-2]
     return(nofy_string+(8-len(nofy_string))*['0.0'])
+
+
 def column_info(comp,kwale,team,TCS):
     info=['name','wind','wind_comp','speed','dist','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points']
     if kwale and not(team):
@@ -455,6 +554,8 @@ def column_info(comp,kwale,team,TCS):
     if comp['type']==1 and nazwa.count('RTRIA'):
         info=['name','dist','speed','gate','wind_comp','dist_points','loc','wind','gate_points']
     return(info)
+
+
 def znowu_przeksztalc(comp,skok,kwale=0,team=0,TCS=0):
     exit_code=0
     output = [idx for idx, line in enumerate(skok) if line.count('.')>7] 
@@ -492,6 +593,8 @@ def znowu_przeksztalc(comp,skok,kwale=0,team=0,TCS=0):
                 print(data)
         new_jump=new_jump.append(data,ignore_index=True)
     return([new_jump,exit_code])
+
+
 def collect(comp=[],tekstlin=[]):
     if not(tekstlin):
         jumps,kwale,team,TCS=zwroc_skoki(comp)
@@ -506,78 +609,80 @@ def collect(comp=[],tekstlin=[]):
         database=database.append(new_jumps,ignore_index=True)
     return([database,exit_code])
 
-years=[2020]
-tick=1
-types=['WC','COC','GP']
-new_data=import_links(years=years,genre=types[tick],import_num=8)
 
-comps_init=new_data[3]
-comps_init['type']=tick
-to_process=['RLQ','RL','RLT','RTRIA']
-to_process=[x+'.pdf' for x in to_process]
-lista=os.listdir(os.getcwd()+'\\PDFs\\')
-comps_init['ID']=comps_init.apply(lambda x: x['season']+'JP'+x['codex'],axis=1).tolist()
-lista=[x for x in lista if any(t for t in to_process if t in x) and any(t for t in comps_init['ID'] if t in x)]
+years = [2020]
+tick = 1
+types = ['WC', 'COC', 'GP']
+new_data = import_links(years=years, genre=types[tick], import_num=4)
+
+comps_init = new_data[3]
+comps_init['type'] = tick
+to_process = ['RLQ', 'RL', 'RLT', 'RTRIA']
+to_process = [x+'.pdf' for x in to_process]
+lista = os.listdir(os.getcwd()+'\\PDFs\\')
+comps_init['ID'] = comps_init.apply(lambda x: x['season']+'JP'+x['codex'], axis=1).tolist()
+lista = [x for x in lista if any(t for t in to_process if t in x) and any(t for t in comps_init['ID'] if t in x)]
 lista.reverse()
 
-start_lists=[]
-comps=pd.DataFrame([],index=['season','codex','hill_size','k-point','meter value','gate factor','wind factor','id'])
+start_lists = []
+comps_names = ['season', 'codex', 'hill_size', 'k-point', 'meter value']+['gate factor', 'wind factor', 'id']
+comps = pd.DataFrame([], index=comps_names)
 
 for i,pdf_name in enumerate(lista):
-    comp=comps_init[comps_init['ID']==pdf_name[:10]].iloc[0]
-    [list,comps_infos]=import_start_list(comp,pdf_name[:-4])
-    comps=comps.append(comps_infos,ignore_index=True)
-    start_lists=start_lists+[[list]]
+    comp = comps_init[comps_init['ID'] == pdf_name[:10]].iloc[0]
+    [list, comps_infos] = import_start_list(comp, pdf_name[:-4])
+    comps = comps.append(comps_infos, ignore_index=True)
+    start_lists = start_lists+[[list]]
 comps_init=comps_init.drop(['ID'],axis=1)
 comps=pd.merge(comps,comps_init,on=['season','codex'],how='inner')  
-comps['date']=comps.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
+comps['date'] = comps.apply(lambda x: to_date(x['day'],x['month'],x['year']),axis=1)
 comps=comps.drop(['month','day','year'],axis=1)
-comps['type']=tick
+comps['type'] = tick
 name='_'.join([str(x) for x in years])+'_'+str(types[tick])+'.csv'
 if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name,index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name,index=False)
 
-#comps=pd.read_csv(os.getcwd()+'\\comps\\2019_COC.csv')
-#comps=comps[comps['training']==0]
-comps=comps[comps['wind factor'].notna()]
+# comps = pd.read_csv(os.getcwd()+'\\comps\\2019_COC.csv')
+# comps = comps[comps['training']==0]
+comps = comps[comps['wind factor'].notna()]
 
-exit_codes=[]
-errors=[]
-for i,comp in comps.iterrows():
-        try:
-            content=zwroc_skoki(comp)
-            [dalej,exit_code]=collect(comp) 
-            if (exit_code or dalej.empty) and not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
-                exit_codes.append(comp)
-                print(comp)
-                continue
-            if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):             
-                dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv',index=False)
-            dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp['id']+'.csv',index=False)
-        except:
-            if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
-                errors.append(comp)
-                print(comp)
+exit_codes = []
+errors = []
+for i, comp in comps.iterrows():
+    try:
+        content = zwroc_skoki(comp)
+        [dalej, exit_code] = collect(comp)
+        if (exit_code or dalej.empty) and not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
+            exit_codes.append(comp)
+            print(comp)
+            continue
+        if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
+            dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv', index=False)
+        dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp['id']+'.csv', index=False)
+    except:
+        if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
+            errors.append(comp)
+            print(comp)
 
 
-n=38
-comp=comps.loc[n]
-comp['type']=0
+n = 2
+comp = comps.loc[n]
+# comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
-tekst=parsed["content"]
-tekst=tekst.lower()
-tekst_lin=tekst.splitlines()
-tekst_lin = [i for i in tekst_lin if i] 
+tekst = parsed["content"]
+tekst = tekst.lower()
+tekst_lin = tekst.splitlines()
+tekst_lin = [i for i in tekst_lin if i]
 parsed_start = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id'][:10]+'SLR1.pdf')
-tekst_start=parsed_start["content"]
-tekst_start=tekst_start.lower()
-tekst_lin_start=tekst_start.splitlines()
-tekst_lin_start = [i for i in tekst_lin_start if i] 
-content_start=import_start_list(comp,tekstlin=tekst_lin_start)
-content=zwroc_skoki(comp,tekstlin=tekst_lin)
-dalej,exit_code=collect(comp,tekst_lin)
-dalej.to_csv(comp['id']+'.csv',index=False)
+tekst_start = parsed_start["content"]
+tekst_start = tekst_start.lower()
+tekst_lin_start = tekst_start.splitlines()
+tekst_lin_start = [i for i in tekst_lin_start if i]
+content_start = import_start_list(comp, comp['id']+'.pdf', tekstlin=tekst_lin_start)
+content = zwroc_skoki(comp, tekstlin=tekst_lin)
+dalej, exit_code = collect(comp, tekst_lin)
+dalej.to_csv(comp['id']+'.csv', index=False)
 
 
 
