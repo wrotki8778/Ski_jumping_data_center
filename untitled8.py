@@ -8,7 +8,7 @@ import os
 import pandas as pd
 import numpy as np
 os.chdir('C:/Users/kubaf/Documents/Skoki')
-def merge_names(comps,directory):
+def merge_names(comps, directory):
     names=pd.DataFrame([],columns=['bib','name'])  
     names_fis=pd.DataFrame([],columns=['bib','codex','name'])  
     for i,comp in comps.iterrows():
@@ -18,7 +18,7 @@ def merge_names(comps,directory):
             names=names.append(tmp_naz)
         except FileNotFoundError:
             pass
-        except pd.io.common.EmptyDataError:
+        except pd.errors.EmptyDataError:
             pass
         try:
             tmp_nazfis=pd.read_csv(directory+str(comp['season'])+'JP'+str(comp['codex'])+'nazfis.csv',sep=';',header=None)
@@ -29,7 +29,7 @@ def merge_names(comps,directory):
             names_fis=names_fis.append(tmp_nazfis)
         except FileNotFoundError:
             pass
-        except pd.io.common.EmptyDataError:
+        except pd.errors.EmptyDataError:
             pass
     names_fis['name']=names_fis['name'].str.lower()
     names_fis=pd.merge(names_fis,names,how='right',on=['name'])
@@ -39,7 +39,7 @@ def merge_names(comps,directory):
     names=names.drop_duplicates()
     names_fis=pd.merge(names_fis,names,how='left',on=['name'])
     return(names_fis)
-def merge_comps(names,comps,directory):
+def merge_comps(names, comps, directory):
     columns_names=['name','wind','wind_comp','dist','speed','dist_points','note_1','note_2','note_3','note_4','note_5','note_points','points','loc','gate','gate_points','id']
     results=pd.DataFrame([],columns=columns_names)
     for i,comp in comps.iterrows():
@@ -63,7 +63,7 @@ def merge_infos(directory):
         comps=comps.append(tmp)
     comps=comps.drop_duplicates(['id'])
     return(comps)
-def new_rating(ratingi,k,print_exp):
+def new_rating(ratingi, k, print_exp):
     delty=[]
     for i,ocena in enumerate(ratingi):
         if np.isnan(ocena):
@@ -90,7 +90,7 @@ def new_rating(ratingi,k,print_exp):
             print(i,ocena,exp_score,fact_score,delta)
         """print(delta,exp_score,fact_score)"""
     return(delty)
-def doklej_rating(results,i,comp,rating_db,k,print_exp):
+def doklej_rating(results, i, comp, rating_db, k, print_exp):
     ratingi=results.loc[:,'rating']
     delty=pd.DataFrame(new_rating(ratingi,k,print_exp))
     delty.columns=['rating']
@@ -102,7 +102,7 @@ def doklej_rating(results,i,comp,rating_db,k,print_exp):
     """print(pd.merge(rating_act,delty,how='left'))"""
     new_rating_db=rating_db.append(delty,ignore_index=True)
     return(new_rating_db)
-def build_rating(comps,results):
+def build_rating(comps, results):
     rating_db=pd.DataFrame(names['codex'])
     rating_db=rating_db.drop_duplicates()
     rating_db['id']='2010JP0000RL'
@@ -129,9 +129,9 @@ def build_rating(comps,results):
             part_results=pd.merge(part_results,rating_act,how='left')
             part_results['delta']=part_results['next_rating']-part_results['rating']
     return(rating_db)       
-def show_rating(comps,index,names,rating_db,take_all=True):
+def show_rating(comps, index, names, rating_db, take_all=True):
     names=names.drop_duplicates(subset=['codex']) 
-    pre_comps=list(comps.iloc[:index]['id'])+['2010JP0000RL']
+    pre_comps=comps.iloc[:index]['id'].values.tolist()+['2010JP0000RL']
     comp=comps.iloc[index]
     if take_all:
         rating_cut=rating_db[rating_db['id'].isin(pre_comps)]

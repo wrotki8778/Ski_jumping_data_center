@@ -171,11 +171,17 @@ def scraping_fis(soup, year):
             else:
                 names_list.append(tmp[-3:])
         file_name = str(year)+'JP'+str(codex)+'nazfis.csv'
-        with open(os.getcwd()+'\\nazwy\\'+file_name, 'w+') as result_file:
-            for i, line in enumerate(names_list):
-                mod_line = ';'.join(line)
-                result_file.write(mod_line)
-                result_file.write('\n')
+        if not os.path.isfile(os.getcwd()+'\\nazwy\\'+file_name):
+            with open(os.getcwd()+'\\nazwy\\'+file_name, 'w+') as result_file:
+                for i, line in enumerate(names_list):
+                    mod_line = ';'.join(line)
+                    result_file.write(mod_line)
+                    result_file.write('\n')
+        with open(os.getcwd()+'\\elastic_nazwy\\'+file_name, 'w+') as result_file:
+                for i, line in enumerate(names_list):
+                    mod_line = ';'.join(line)
+                    result_file.write(mod_line)
+                    result_file.write('\n')
         result_file.close()
         names_all = names_all+[names_list]
     return([database, names_all])
@@ -661,7 +667,14 @@ lista = [x for x in lista if any(t for t in to_process if t in x) and any(t for 
 lista.reverse()
 
 start_lists = []
-comps_names = ['season', 'codex', 'hill_size', 'k-point', 'meter value']+['gate factor', 'wind factor', 'id']
+comps_names = ['season',
+               'codex',
+               'hill_size',
+               'k-point',
+               'meter value',
+               'gate factor',
+               'wind factor', 
+               'id']
 comps = pd.DataFrame([], index=comps_names)
 
 for i, pdf_name in enumerate(lista):
@@ -679,7 +692,7 @@ if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
 
-# comps = pd.read_csv(os.getcwd()+'\\comps\\2019_COC.csv')
+comps = pd.read_csv(os.getcwd()+'\\comps\\2020_COC.csv')
 # comps = comps[comps['training']==0]
 comps = comps[comps['wind factor'].notna()]
 
@@ -689,20 +702,21 @@ for i, comp in comps.iterrows():
     try:
         content = zwroc_skoki(comp)
         [dalej, exit_code] = collect(comp)
-        if (exit_code or dalej.empty) and not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
+        file_name = os.getcwd()+'\\results\\'+comp['id']+'.csv'
+        if (exit_code or dalej.empty) and not os.path.isfile(file_name):
             exit_codes.append(comp)
             print(comp)
             continue
-        if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
-            dalej.to_csv(os.getcwd()+'\\results\\'+comp['id']+'.csv', index=False)
+        if not os.path.isfile(file_name):
+            dalej.to_csv(file_name, index=False)
         dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp['id']+'.csv', index=False)
     except:
-        if not os.path.isfile(os.getcwd()+'\\results\\'+comp['id']+'.csv'):
+        if not os.path.isfile(file_name):
             errors.append(comp)
             print(comp)
 
 
-n = 2
+n = 72
 comp = comps.loc[n]
 # comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
@@ -718,4 +732,4 @@ tekst_lin_start = [i for i in tekst_lin_start if i]
 content_start = import_start_list(comp, comp['id']+'.pdf', tekstlin=tekst_lin_start)
 content = zwroc_skoki(comp, tekstlin=tekst_lin)
 dalej, exit_code = collect(comp, tekst_lin)
-dalej.to_csv(comp['id']+'.csv', index=False)    
+dalej.to_csv(comp['id']+'.csv', index=False)
