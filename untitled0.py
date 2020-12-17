@@ -187,12 +187,12 @@ def scraping_fis(soup, year):
     return([database, names_all])
 
 
-def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR1', 'RLT', 'RTRIA'], import_data=[[], [], [], [], []], import_num=0, scrap=True):
+def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR1', 'RLT', 'RTRIA', 'SLT'], import_data=[[], [], [], [], []], import_num=0, scrap=True):
     [linki_tmp, linki, kody, database, names_list] = import_data
     if not linki_tmp:
-        for i in range(len(years)):
+        for i,year in enumerate(years):
             time.sleep(5)
-            url = 'https://www.fis-ski.com/DB/?eventselection=results&place=&sectorcode=JP&seasoncode='+str(years[i])+'&categorycode='+genre+'&disciplinecode=&gendercode=&racedate=&racecodex=&nationcode=&seasonmonth=X-'+str(years[i])+'&saveselection=-1&seasonselection='
+            url = 'https://www.fis-ski.com/DB/?eventselection=results&place=&sectorcode=JP&seasoncode='+str(year)+'&categorycode='+genre+'&disciplinecode=&gendercode=&racedate=&racecodex=&nationcode=&seasonmonth=X-'+str(year)+'&saveselection=-1&seasonselection='
             r = requests.get(url, headers={'user-agent': 'ejdzent'})
             soup = BeautifulSoup(r.text, "lxml")
             for a in soup.find_all('a', {'class': 'g-sm justify-left hidden-xs hidden-md-up bold'}, href=True):
@@ -257,20 +257,26 @@ def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR
     return([linki_tmp, linki, kody, database, names_list])
 
 
+def validate_number(line):
+    cond_1 = len(line.split(' ')) == 1
+    cond_2 = line.isnumeric()
+    cond_3 = all([line.count('-'), line[0].isdigit(), len(line) <= 4])
+    return(cond_1 and (cond_2 or cond_3))
+
+
 def find_names(tekst_lin, year, tick):
     lista = []
     if tick != 1:
         names = []
         bibs = []
         indexes = [i for i, x in enumerate(tekst_lin) if validate(x)]
-        if int(year) < 2016:
-            const = 2
-        else:
-            const = 1
-        check_club = [len(tekst_lin[x-3].split(' ')) == 1 and tekst_lin[x-3].isnumeric() for x in indexes]
+        check_club = [validate_number(tekst_lin[x-3]) for x in indexes]
         for i, x in enumerate(indexes):
-            if check_club[i]:
-                names.append(tekst_lin[x-const])
+            if int(year) < 2016:
+                names.append(tekst_lin[x-3])
+                bibs.append(tekst_lin[x-4])
+            elif check_club[i]:
+                names.append(tekst_lin[x-1])
                 bibs.append(tekst_lin[x-3])
             else:
                 tmp = tekst_lin[x-1].split(' ')
@@ -298,14 +304,27 @@ def import_start_list(comp, pdf_name, new_data=[], block=False, tekstlin=[]):
         name = comp['id'][:10]
     else:
         name = comp['ID']
-    try:
-        file_name = name+'SLQ.pdf'
-        parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
-    except FileNotFoundError:
+    if pdf_name.count('RLT') or pdf_name.count('RTRIA'):
+        try:
+            file_name = name+'SLT.pdf'
+            parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
+        except FileNotFoundError:
+            try:
+                file_name = name+'SLQ.pdf'
+                parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
+            except FileNotFoundError:
+                file_name = name+'SLR1.pdf'
+                parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
+    elif pdf_name.count('RLQ'):
+        try:
+            file_name = name+'SLT.pdf'
+            parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
+        except FileNotFoundError:
+            file_name = name+'SLQ.pdf'
+            parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
+    else:
         file_name = name+'SLR1.pdf'
         parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
-    except:
-        return([])
     tekst = parsed["content"]
     tekst = tekst.replace('* ', '')
     tekst = tekst.replace('*', '')
@@ -412,7 +431,7 @@ def conc_numbers(skok, comp):
     if not comp['training']:
         return(skok)
     try:
-        start = min([i for i, x in enumerate(skok) if x.count('.')])
+        start = min([i for i, x in enumerate(skok) if x.count('.') and sum([t.isnumeric() for t in x if t.isnumeric()])])
         end = max([i for i, x in enumerate(skok) if min(x.count('.'), sum([t.isnumeric() for t in x if t.isnumeric()]))])
     except ValueError:
         return([skok[0]])
@@ -602,9 +621,9 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
     exit_code = 0
     output = [idx for idx, line in enumerate(skok) if line.count('.') > 7]
     if len(output) > 2 and not comp['training']:
-        print('Uwaga: zawodnik '+skok[0]+' oddał '+len(output)+" skoki!")
+        print('Uwaga: zawodnik '+skok[0]+' oddał '+str(len(output))+" skoki!")
     if kwale and len(output) > 1:
-        print('Uwaga: zawodnik '+skok[0]+' oddał '+len(output)+" skoki w jednoseryjnym konkursie!")
+        print('Uwaga: zawodnik '+skok[0]+' oddał '+str(len(output))+" skoki w jednoseryjnym konkursie!")
     info = column_info(comp, kwale, team, TCS)
     new_jump = pd.DataFrame([], columns=info)
     for i in range(len(output)):
@@ -652,10 +671,10 @@ def collect(comp=[], tekstlin=[]):
     return([database, exit_code])
 
 
-years = [2020]
-tick = 1
-types = ['WC', 'COC', 'GP']
-new_data = import_links(years=years, genre=types[tick])
+take_years = [2010, 2012, 2014, 2016, 2018, 2021]
+tick = 3
+types = ['WC', 'COC', 'GP', 'SFWC', 'WSC']
+new_data = import_links(years=take_years, genre=types[tick])
 
 comps_init = new_data[3]
 comps_init['type'] = tick
@@ -687,22 +706,22 @@ comps = pd.merge(comps, comps_init, on=['season', 'codex'], how='inner')
 comps['date'] = comps.apply(lambda x: to_date(x['day'], x['month'], x['year']), axis=1)
 comps = comps.drop(['month', 'day', 'year'], axis=1)
 comps['type'] = tick
-name = '_'.join([str(x) for x in years])+'_'+str(types[tick])+'.csv'
+name = '_'.join([str(x) for x in take_years])+'_'+str(types[tick])+'.csv'
 if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
 
-comps = pd.read_csv(os.getcwd()+'\\comps\\2020_COC.csv')
+# comps = pd.read_csv(os.getcwd()+'\\comps\\2020_COC.csv')
 # comps = comps[comps['training']==0]
 comps = comps[comps['wind factor'].notna()]
 
 exit_codes = []
 errors = []
 for i, comp in comps.iterrows():
+    file_name = os.getcwd()+'\\results\\'+comp['id']+'.csv'
     try:
         content = zwroc_skoki(comp)
         [dalej, exit_code] = collect(comp)
-        file_name = os.getcwd()+'\\results\\'+comp['id']+'.csv'
         if (exit_code or dalej.empty) and not os.path.isfile(file_name):
             exit_codes.append(comp)
             print(comp)
@@ -716,7 +735,7 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 72
+n = 14
 comp = comps.loc[n]
 # comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
@@ -724,7 +743,13 @@ tekst = parsed["content"]
 tekst = tekst.lower()
 tekst_lin = tekst.splitlines()
 tekst_lin = [i for i in tekst_lin if i]
-parsed_start = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id'][:10]+'SLR1.pdf')
+try:
+    parsed_start = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id'][:10]+'SLT.pdf')
+except FileNotFoundError:
+    try:
+        parsed_start = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id'][:10]+'SLQ.pdf')
+    except FileNotFoundError:
+        parsed_start = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id'][:10]+'SLR1.pdf')
 tekst_start = parsed_start["content"]
 tekst_start = tekst_start.lower()
 tekst_lin_start = tekst_start.splitlines()
