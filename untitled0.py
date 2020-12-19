@@ -379,12 +379,11 @@ def import_start_list(comp, pdf_name, new_data=[], block=False, tekstlin=[]):
         return([[], comps_infos])
 
 
-def zwroc_skoki(comp=[], names=[], nazwa=[], tekstlin=[]):
+def zwroc_skoki(comp=[], names=[], nazwa=[], tekstlin=[], TCS=0):
     if not comp.empty:
         nazwa = comp['id']+'.pdf'
     kwale = 1
     team = 0
-    TCS = 0
     names_list = []
     if nazwa[-5] == 'Q':
         kwale = 2
@@ -526,14 +525,15 @@ def przeksztalc_coc(string, kwale, comp=[]):
 
 
 def przeksztalc_rl_rlq(string, kwale, team, TCS):
-    string = string.replace('pq', '0.')
-    tmp = string.split(' ')
+    nowy_string = string.replace('pq', '0.')
+    nowy_string = nowy_string.replace('©', '')
+    tmp = nowy_string.split(' ')
     if team and tmp[0].count('-'):
         del tmp[0]
     tmp = [x for x in tmp if not sum(i.isalpha() for i in x)]
-    string = ' '.join(tmp)
-    pozycja = string.find('.')+2
-    nowy_string = string[:pozycja]+' '+string[pozycja:]
+    nowy_string = ' '.join(tmp)
+    pozycja = nowy_string.find('.')+2
+    nowy_string = nowy_string[:pozycja]+' '+nowy_string[pozycja:]
     nowy_string = re.sub(r'[a-z]+', '', nowy_string, re.I)
     nowy_string = nowy_string.replace('©', '')
     nowy_string = nowy_string.replace('#', '')
@@ -541,7 +541,12 @@ def przeksztalc_rl_rlq(string, kwale, team, TCS):
     if znacznik:
         nowy_string = nowy_string[(znacznik+1):]
     wyrazy = nowy_string.rsplit(' ', 2)
-    nowy_string = wyrazy[1] + ' ' + wyrazy[2] + ' ' + wyrazy[0]
+    if TCS == 2:
+        string = string.replace('©', '')
+        tmp = string.split(' ')
+        tmp = [x for x in tmp if x]
+        tmp = tmp[-10:] + tmp[:-10]
+        nowy_string=' '.join(tmp)
     n = [12]
     offset = [1]
     if kwale:
@@ -553,6 +558,9 @@ def przeksztalc_rl_rlq(string, kwale, team, TCS):
     if TCS and kwale == 2:
         n = [11]
         offset = [1]
+    if TCS == 2:
+        n = [1, 12]
+        offset = [2, 1]
     kropki = [i for i, a in enumerate(nowy_string) if a == '.']
     kropki = [kropki[i] for i in n]
     if n:
@@ -561,8 +569,9 @@ def przeksztalc_rl_rlq(string, kwale, team, TCS):
         wyrazy = nofy_string.split(' ')
     else:
         nofy_string = nowy_string
-    if TCS and kwale == 2:
+    if TCS==1 and kwale == 2:
         nofy_string = ' '.join(wyrazy[0:3]) + ' ' + ' '.join(wyrazy[4:13]) + ' ' + ' '.join(wyrazy[14:])
+    print(nofy_string)
     return(nofy_string)
 
 
@@ -656,11 +665,11 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
     return([new_jump, exit_code])
 
 
-def collect(comp=[], tekstlin=[]):
+def collect(comp=[], tekstlin=[], TCS=0):
     if not(tekstlin):
-        jumps, kwale, team, TCS = zwroc_skoki(comp)
+        jumps, kwale, team, TCS = zwroc_skoki(comp, TCS)
     else:
-        jumps, kwale, team, TCS = zwroc_skoki(comp, tekstlin=tekstlin)
+        jumps, kwale, team, TCS = zwroc_skoki(comp, tekstlin=tekstlin, TCS=TCS)
     exit_code = 0
     info = column_info(comp, kwale, team, TCS)
     database = pd.DataFrame([], columns=info)
@@ -671,8 +680,8 @@ def collect(comp=[], tekstlin=[]):
     return([database, exit_code])
 
 
-take_years = [2010, 2012, 2014, 2016, 2018, 2021]
-tick = 3
+take_years = [2011,2013,2015,2017,2019]
+tick = 4
 types = ['WC', 'COC', 'GP', 'SFWC', 'WSC']
 new_data = import_links(years=take_years, genre=types[tick])
 
@@ -711,7 +720,7 @@ if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
 
-# comps = pd.read_csv(os.getcwd()+'\\comps\\2020_COC.csv')
+comps = pd.read_csv(os.getcwd()+'\\comps\\2010_2012_2014_2016_2018_2021_SFWC.csv')
 # comps = comps[comps['training']==0]
 comps = comps[comps['wind factor'].notna()]
 
@@ -735,7 +744,7 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 14
+n = 5
 comp = comps.loc[n]
 # comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
