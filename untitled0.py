@@ -405,9 +405,10 @@ def zwroc_skoki(comp=[], names=[], nazwa=[], tekstlin=[], TCS=0):
     end = []
     word = 'round'
     word2 = 'weather information'
+    word2_q = 'prequalified'
     word3 = 'large hill ko'
     for i, line in enumerate(tekst_lin):
-        if word2 in line:
+        if word2 in line or word2_q in line:
             end.append(i)
         if word in line and i <= 80:
             kwale = 0
@@ -439,7 +440,9 @@ def conc_numbers(skok, comp):
     except ValueError:
         end_2 = end
     if comp['id'].count('RTRIA'):
-        line = ' '.join([skok[start][4:]]+skok[start+1:min(end, end_2)+1])
+        line = ' '.join([skok[start]]+skok[start+2:min(end, end_2)+1])
+        if int(comp['season']) >= 2016:
+            line = line[4:]
         if skok[start].count('.') == 1:
             line = '0.0 '+line
         return([skok[0], line])
@@ -541,6 +544,7 @@ def przeksztalc_rl_rlq(string, kwale, team, TCS):
     if znacznik:
         nowy_string = nowy_string[(znacznik+1):]
     wyrazy = nowy_string.rsplit(' ', 2)
+    nowy_string = wyrazy[1] + ' ' + wyrazy[2] + ' ' + wyrazy[0]
     if TCS == 2:
         string = string.replace('©', '')
         tmp = string.split(' ')
@@ -571,7 +575,6 @@ def przeksztalc_rl_rlq(string, kwale, team, TCS):
         nofy_string = nowy_string
     if TCS==1 and kwale == 2:
         nofy_string = ' '.join(wyrazy[0:3]) + ' ' + ' '.join(wyrazy[4:13]) + ' ' + ' '.join(wyrazy[14:])
-    print(nofy_string)
     return(nofy_string)
 
 
@@ -584,7 +587,7 @@ def przeksztalc_rlt(string, kwale, team, TCS, layout):
     elif nowy_string.count('dns') and layout == 'rlt':
         return([0, 0, 0, 0, 0, 0, 0, 0])
     if layout == 'rtria':
-        nofy_string = nowy_string[:2]+nowy_string[-4:]+nowy_string[4:-4]
+        nofy_string = nowy_string[:2]+nowy_string[-4:]+nowy_string[2:-4]
     else:
         nofy_string = nowy_string[:2]+nowy_string[-2:]+nowy_string[4:-2]
     return(nofy_string+(8-len(nofy_string))*['0.0'])
@@ -628,7 +631,7 @@ def column_info(comp, kwale, team, TCS):
 
 def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
     exit_code = 0
-    output = [idx for idx, line in enumerate(skok) if line.count('.') > 7]
+    output = [idx for idx, line in enumerate(skok) if line.count('.') > 5]
     if len(output) > 2 and not comp['training']:
         print('Uwaga: zawodnik '+skok[0]+' oddał '+str(len(output))+" skoki!")
     if kwale and len(output) > 1:
@@ -680,8 +683,8 @@ def collect(comp=[], tekstlin=[], TCS=0):
     return([database, exit_code])
 
 
-take_years = [2011,2013,2015,2017,2019]
-tick = 4
+take_years = [2021]
+tick = 0
 types = ['WC', 'COC', 'GP', 'SFWC', 'WSC']
 new_data = import_links(years=take_years, genre=types[tick])
 
@@ -720,7 +723,7 @@ if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
 
-comps = pd.read_csv(os.getcwd()+'\\comps\\2010_2012_2014_2016_2018_2021_SFWC.csv')
+# comps = pd.read_csv(os.getcwd()+'\\comps\\2011_2013_2015_2017_2019_WSC.csv')
 # comps = comps[comps['training']==0]
 comps = comps[comps['wind factor'].notna()]
 
@@ -735,7 +738,7 @@ for i, comp in comps.iterrows():
             exit_codes.append(comp)
             print(comp)
             continue
-        if not os.path.isfile(file_name):
+        if not(exit_code) and not os.path.isfile(file_name):
             dalej.to_csv(file_name, index=False)
         dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp['id']+'.csv', index=False)
     except:
@@ -744,7 +747,7 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 5
+n = 0
 comp = comps.loc[n]
 # comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
