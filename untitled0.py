@@ -683,8 +683,8 @@ def collect(comp=[], tekstlin=[], TCS=0):
     return([database, exit_code])
 
 
-take_years = [2021]
-tick = 0
+take_years = [2018]
+tick = 1
 types = ['WC', 'COC', 'GP', 'SFWC', 'WSC']
 new_data = import_links(years=take_years, genre=types[tick])
 
@@ -723,7 +723,7 @@ if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
 
-# comps = pd.read_csv(os.getcwd()+'\\comps\\2011_2013_2015_2017_2019_WSC.csv')
+comps = pd.read_csv(os.getcwd()+'\\comps\\2010_2012_2014_2016_2018_2021_SFWC.csv')
 # comps = comps[comps['training']==0]
 comps = comps[comps['wind factor'].notna()]
 
@@ -747,7 +747,7 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 0
+n = 9
 comp = comps.loc[n]
 # comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
