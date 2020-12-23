@@ -188,6 +188,45 @@ def scraping_fis(soup, year):
 
 
 def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR1', 'RLT', 'RTRIA', 'SLT'], import_data=[[], [], [], [], []], import_num=0, scrap=True):
+    """
+    Return a list of information by scraping FIS sites .
+
+    Inputs:
+        years - list of numbers with corresponding seasons
+        to scrap (for example number 2019 corresponds to 2018/19 season etc.),
+        genre - type of cup/competition to scrap, 
+        with the following meaning:
+            WC - World Cup,
+            COC - Continental Cup (summer+winter edition),
+            GP - Grand Prix/Summer Grand Prix
+            WSC - World Ski Championships,
+            SFWC - Ski Flying World Championships,
+        to_download - type of file to download with the following meaning:
+            RL - official competition,
+            RLQ - qualification round,
+            RLT - training round(s),
+            RTRIA - trial round,
+            SLR1 - start list before 1st round,
+            SLQ - start list before qualification,
+            SLT - start list before training round(s),
+        import_data - depreciated/outdated option to import appropriate links
+        and directly download files from sites,
+        import_num - if non-zero, selects only n last weekends
+        from the initial FIS search results (accelerates processing),
+        scrap - if False, then no information will be downloaded
+        from the sites found (except PDFs).
+    Outputs:
+        linki_tmp - contains list of links with consequent weekends
+        (competition groups),
+        linki - contains list of links with consequent single competitions,
+        kody - contains list of unique codes for each competition found
+        (in the form xxxxJPyyyy, where xxxx is the year and yyyy is
+         a codex of a competition)
+        database - a Pandas dataframe, which includes information parsed
+        from the website (empty, if scrap is False) by scraping_fis function,
+        names_list - separate list containing athletes participating
+        in every competition (details in scraping_fis function).
+    """
     [linki_tmp, linki, kody, database, names_list] = import_data
     if not linki_tmp:
         for i,year in enumerate(years):
@@ -472,6 +511,12 @@ def conc_numbers_coc(skok, comp):
         end = start+min([i for i, x in enumerate(ciach_skok) if sum([t.isalpha() for t in x if t.isalpha()])])
     except ValueError:
         end = len(skok)
+    if comp['id'].count('RTRIA'):
+        if skok[start].count('.') == 1:
+            line = skok[start]+'0.0 0.'
+        else:
+            line = skok[start]
+        return([skok[0]]+[' '.join([line]+skok[start+1:end])])
     if comp['training']:
         return([skok[0]]+[' '.join(skok[start:end])])
     if end-start-1:
@@ -723,7 +768,7 @@ if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
 
-comps = pd.read_csv(os.getcwd()+'\\comps\\2010_2012_2014_2016_2018_2021_SFWC.csv')
+# comps = pd.read_csv(os.getcwd()+'\\comps\\2018_COC.csv')
 # comps = comps[comps['training']==0]
 comps = comps[comps['wind factor'].notna()]
 
@@ -747,7 +792,7 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 9
+n = 4
 comp = comps.loc[n]
 # comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
