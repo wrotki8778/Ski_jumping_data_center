@@ -189,7 +189,7 @@ def scraping_fis(soup, year):
 
 def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR1', 'RLT', 'RTRIA', 'SLT'], import_data=[[], [], [], [], []], import_num=0, scrap=True):
     """
-    Return a list of information by scraping FIS sites .
+    Return a list of information by scraping FIS sites.
 
     Inputs:
         years - list of numbers with corresponding seasons
@@ -229,7 +229,7 @@ def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR
     """
     [linki_tmp, linki, kody, database, names_list] = import_data
     if not linki_tmp:
-        for i,year in enumerate(years):
+        for i, year in enumerate(years):
             time.sleep(5)
             url = 'https://www.fis-ski.com/DB/?eventselection=results&place=&sectorcode=JP&seasoncode='+str(year)+'&categorycode='+genre+'&disciplinecode=&gendercode=&racedate=&racecodex=&nationcode=&seasonmonth=X-'+str(year)+'&saveselection=-1&seasonselection='
             r = requests.get(url, headers={'user-agent': 'ejdzent'})
@@ -297,6 +297,7 @@ def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR
 
 
 def validate_number(line):
+    """Check if a string is a numeric or is of the form 'number-number'."""
     cond_1 = len(line.split(' ')) == 1
     cond_2 = line.isnumeric()
     cond_3 = all([line.count('-'), line[0].isdigit(), len(line) <= 4])
@@ -304,6 +305,32 @@ def validate_number(line):
 
 
 def find_names(tekst_lin, year, tick):
+    """
+    Return a list of athletes participating in a comp. with their BIBs.
+
+    Parameters
+    ----------
+    tekst_lin : list of strings
+        A list with parsed PDF file.
+    year : integer
+        A season when the competition was held
+        (details in scraping_fis).
+    tick : integer
+        similar variable to genre - it says which type
+        of competition is considered. Typically it can
+        be encoded as:
+            0 - World Cup,
+            1 - Continental Cup (summer+winter edition),
+            2 - Grand Prix/Summer Grand Prix,
+            3 - Ski Flying World Championships,
+            4 - World Ski Championships,
+
+    Returns
+    -------
+    lista : list
+        A list containing a BIB of every athlete with his/her name,
+        which was found in a parsed PDF.
+    """
     lista = []
     if tick != 1:
         names = []
@@ -335,7 +362,47 @@ def find_names(tekst_lin, year, tick):
     return(lista)
 
 
-def import_start_list(comp, pdf_name, new_data=[], block=False, tekstlin=[]):
+def import_start_list(comp, pdf_name, block=False, tekstlin=[]):
+    """
+    Scrap information from FIS start list PDF files.
+
+    Parameters
+    ----------
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function (check "database" output for details).
+    pdf_name : string
+        Unique code for a single competition
+        (in the form xxxxJPyyyyzzzz, where xxxx is the year, yyyy is
+         a codex of a competition and zzzz is a type of competition, see
+         "to_download" section in import_links for details)
+    block : True/False, optional
+        If True, then the command does not return list of athletes,
+        only infos about a competition. The default is False.
+    tekstlin : list of strings, optional
+        If provided, function does not parse the PDF
+        and takes alternative (corrected) version in the same format.
+        The default is [].
+
+    Returns
+    -------
+    lista : list
+        list of athletes (output from find_names function)
+    comps_infos : Pandas series
+        series with the additional information parsed from PDF, like:
+            hill size - integer with a HS parameter of a given object, where
+            the competition was held,
+            k-point - integer with a K point parameter of a given object, where
+            the competition was held,
+            meter value - float with a value of every meter achieved
+            (can be 2, 1.8 or 1.2),
+            gate factor - float with a value of every meter of an inrun length,
+            wind factor - float with a value of every meter per second of
+            front wind,
+            training - a True/False variable which indicates whether a comp.
+            is from training/trial round or not,
+            remaining variables are the same as in "comp" input.
+    """
     year = comp['season']
     codex = comp['codex']
     tick = comp['type']
@@ -768,7 +835,7 @@ if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
 
-# comps = pd.read_csv(os.getcwd()+'\\comps\\2018_COC.csv')
+comps = pd.read_csv(os.getcwd()+'\\comps\\2018_COC.csv')
 # comps = comps[comps['training']==0]
 comps = comps[comps['wind factor'].notna()]
 
@@ -792,9 +859,9 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 4
+n = 111
 comp = comps.loc[n]
-# comp['type'] = 0
+comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
 tekst = parsed["content"]
 tekst = tekst.lower()
