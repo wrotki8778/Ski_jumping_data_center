@@ -485,9 +485,49 @@ def import_start_list(comp, pdf_name, block=False, tekstlin=[]):
         return([[], comps_infos])
 
 
-def zwroc_skoki(comp=[], names=[], nazwa=[], tekstlin=[], TCS=0):
-    if not comp.empty:
-        nazwa = comp['id']+'.pdf'
+def zwroc_skoki(comp, names=[], tekstlin=[], TCS=0):
+    """
+    Return a list of athletes with all single jumps made in a competition.
+
+    Parameters
+    ----------
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function (check "database" output for details).
+    names : list, optional
+        If provided, is used as a list of names of the
+        consequent athletes. Formatting should be the same as
+        "lista" output in import_start_list function.
+        The default is [].
+    tekstlin : list of strings, optional
+        If provided, function does not parse the PDF of the competition
+        and takes alternative (corrected) version in the same format.
+        The default is [].
+    TCS : integer, optional
+        Variable, which determines type of formatting in WC/WSC/SFWC
+        competitions. Standard cases are:
+            0 (default) - standard formatting,
+            1 - formatting to some 4HT competitions (example: 2018JP3059RLQ),
+            2 - formatting to some SFWC competitions (example: 2018JP3265RL).
+
+    Returns
+    -------
+    next_skoki : list
+        List of list of strings which contains chunks of parsed PDF lines
+        connected with each jumper. Information about each jump is in
+        a separate line.
+    kwale : integer
+        Variable equal to:
+            0 - if we have a competition which consists of 2 or more rounds
+            or a training/trial round,
+            1 - if we have a one-round competition (see 2019JP3090RL
+            for instance)
+            2 - if we have a qualification round
+            (i.e. file name contains 'RLQ')
+    team : True/False variable, which indicates team competitions
+    TCS : integer, the same as in input
+    """
+    nazwa = comp['id']+'.pdf'
     kwale = 1
     team = 0
     names_list = []
@@ -795,7 +835,7 @@ def collect(comp=[], tekstlin=[], TCS=0):
     return([database, exit_code])
 
 
-take_years = [2018]
+take_years = [2021]
 tick = 1
 types = ['WC', 'COC', 'GP', 'SFWC', 'WSC']
 new_data = import_links(years=take_years, genre=types[tick])
@@ -835,7 +875,7 @@ if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
 
-comps = pd.read_csv(os.getcwd()+'\\comps\\2018_COC.csv')
+# comps = pd.read_csv(os.getcwd()+'\\comps\\2018_COC.csv')
 # comps = comps[comps['training']==0]
 comps = comps[comps['wind factor'].notna()]
 
@@ -859,7 +899,7 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 111
+n = 0
 comp = comps.loc[n]
 comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
