@@ -13,6 +13,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 from datetime import datetime
+import math
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 
 
@@ -772,6 +773,8 @@ def column_info(comp, kwale, team, TCS):
         indices = [0, 3, 4, 2, 13, 14, 1, 5, 15]
     if comp['type'] == 1 and not(kwale):
         indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 2, 1, 14, 15]
+        if math.isnan(comp['wind factor']):
+            indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     if comp['type'] == 1 and kwale:
         indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1, 2, 14, 15]
     if comp['type'] == 1 and nazwa.count('RLT'):
@@ -783,7 +786,7 @@ def column_info(comp, kwale, team, TCS):
 
 def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
     exit_code = 0
-    output = [idx for idx, line in enumerate(skok) if line.count('.') > 5]
+    output = [idx for idx, line in enumerate(skok) if line.count('.') > 3 and sum[x for x in line if x.is]]
     if len(output) > 2 and not comp['training']:
         print('Uwaga: zawodnik '+skok[0]+' oddał '+str(len(output))+" skoki!")
     if kwale and len(output) > 1:
@@ -796,13 +799,17 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
         if not comp['training'] or (comp['type'] == 1 and comp['training']):
             notes_pre = [x for x in notes_pre.split(' ') if x]
         notes = [float(x) for x in notes_pre]
+        print(notes)
         passed_values = len(info)
         if(len(notes) == passed_values - 2):
             notes.append(0)
         data = pd.Series([name]+notes, index=new_jump.columns)
         if not comp['training']:
-            conds = [abs(data['wind']) > 5, abs(data['wind_comp']) > 60, data['note_points'] > 60, data['note_5'] > 20]+decimal([data['wind_comp'], data['points'], data['dist_points'], data['gate_points'], data['speed'], data['note_1'], data['note_5'], data['note_points'], data['dist'], data['gate']], [10, 10, 10, 10, 10, 2, 2, 2, 2, 1])
+            conds = [data['note_points'] > 60, data['note_5'] > 20]+decimal([data['points'], data['dist_points'], data['speed'], data['note_1'], data['note_5'], data['note_points'], data['dist']], [10, 10, 10, 2, 2, 2, 2])
             condition = any(conds)
+            if not(math.isnan(comp['wind factor'])):
+                conds_wind = [abs(data['wind']) > 5, abs(data['wind_comp']) > 60] + decimal([data['wind_comp'], data['gate_points'], data['gate']], [10, 10, 1])
+                condition = any(conds, conds_wind)
             if condition:
                 exit_code = 1
                 print(comp['id'])
@@ -835,8 +842,8 @@ def collect(comp=[], tekstlin=[], TCS=0):
     return([database, exit_code])
 
 
-take_years = [2021]
-tick = 1
+take_years = [2010]
+tick = 0
 types = ['WC', 'COC', 'GP', 'SFWC', 'WSC']
 new_data = import_links(years=take_years, genre=types[tick])
 
@@ -875,7 +882,7 @@ if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
 
-# comps = pd.read_csv(os.getcwd()+'\\comps\\2018_COC.csv')
+comps = pd.read_csv(os.getcwd()+'\\comps\\2018_COC.csv')
 # comps = comps[comps['training']==0]
 comps = comps[comps['wind factor'].notna()]
 
@@ -899,9 +906,9 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 0
+n = 20
 comp = comps.loc[n]
-comp['type'] = 0
+# comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
 tekst = parsed["content"]
 tekst = tekst.lower()
