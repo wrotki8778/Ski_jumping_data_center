@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 import time
 from datetime import datetime
 import math
-os.chdir('C:/Users/kubaf/Documents/Skoki')
+os.chdir('C:/Users/HP-PC/Documents/Skoki')
 
 
 def is_number(s):
@@ -644,7 +644,7 @@ def przeksztalc(comp, string, kwale=0, team=0, TCS=0):
     elif nazwa.count('RLT'):
         return(przeksztalc_rlt(string, kwale, team, TCS, 'rlt'))
     elif nazwa.count('RL'):
-        return(przeksztalc_rl_rlq(string, kwale, team, TCS))
+        return(przeksztalc_rl_rlq(comp, string, kwale, team, TCS))
     else:
         return([])
 
@@ -680,7 +680,8 @@ def przeksztalc_coc(string, kwale, comp=[]):
     return(new_string)
 
 
-def przeksztalc_rl_rlq(string, kwale, team, TCS):
+def przeksztalc_rl_rlq(comp, string, kwale, team, TCS):
+    no_factor = math.isnan(comp['wind factor'])
     nowy_string = string.replace('pq', '0.')
     nowy_string = nowy_string.replace('©', '')
     tmp = nowy_string.split(' ')
@@ -704,6 +705,14 @@ def przeksztalc_rl_rlq(string, kwale, team, TCS):
         tmp = [x for x in tmp if x]
         tmp = tmp[-10:] + tmp[:-10]
         nowy_string=' '.join(tmp)
+    if no_factor:
+        if comp['id'].count('RLQ'):
+           tmp = string.split(' ')
+           tmp = [x for x in tmp if x]
+           tmp = tmp[1:] + tmp[:1]
+           nowy_string=' '.join(tmp)
+        else:
+            nowy_string=string
     n = [12]
     offset = [1]
     if kwale:
@@ -718,6 +727,13 @@ def przeksztalc_rl_rlq(string, kwale, team, TCS):
     if TCS == 2:
         n = [1, 12]
         offset = [2, 1]
+    if no_factor:
+        if kwale:
+            n = [0]
+            offset = [2]
+        else:
+            n = []
+            offset = []
     kropki = [i for i, a in enumerate(nowy_string) if a == '.']
     kropki = [kropki[i] for i in n]
     if n:
@@ -747,6 +763,7 @@ def przeksztalc_rlt(string, kwale, team, TCS, layout):
 
 
 def column_info(comp, kwale, team, TCS):
+    no_factor=math.isnan(comp['wind factor'])
     names = ['name',
              'wind',
              'wind_comp',
@@ -764,8 +781,12 @@ def column_info(comp, kwale, team, TCS):
              'gate',
              'gate_points']
     indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    if no_factor:
+        indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     if kwale and not(team):
         indices = [0, 1, 2, 12, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15]
+        if no_factor:
+            indices = [0, 12, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14]
     nazwa = comp['id']
     if nazwa.count('RTRIA'):
         indices = [0, 3, 4, 1, 2, 5, 13, 14, 15]
@@ -773,7 +794,7 @@ def column_info(comp, kwale, team, TCS):
         indices = [0, 3, 4, 2, 13, 14, 1, 5, 15]
     if comp['type'] == 1 and not(kwale):
         indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 2, 1, 14, 15]
-        if math.isnan(comp['wind factor']):
+        if no_factor:
             indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     if comp['type'] == 1 and kwale:
         indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1, 2, 14, 15]
@@ -786,7 +807,7 @@ def column_info(comp, kwale, team, TCS):
 
 def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
     exit_code = 0
-    output = [idx for idx, line in enumerate(skok) if line.count('.') > 3 and sum[x for x in line if x.is]]
+    output = [idx for idx, line in enumerate(skok) if line.count('.') > 3 and sum(x.isdigit() for x in line)]
     if len(output) > 2 and not comp['training']:
         print('Uwaga: zawodnik '+skok[0]+' oddał '+str(len(output))+" skoki!")
     if kwale and len(output) > 1:
@@ -906,7 +927,7 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 20
+n = 69
 comp = comps.loc[n]
 # comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
