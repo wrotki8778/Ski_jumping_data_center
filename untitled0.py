@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 import time
 from datetime import datetime
 import math
-os.chdir('C:/Users/HP-PC/Documents/Skoki')
+os.chdir('C:/Users/kubaf/Documents/Skoki')
 
 
 def is_number(s):
@@ -594,7 +594,12 @@ def conc_numbers(skok, comp):
             line = '0.0 '+line
         return([skok[0], line])
     elif comp['id'].count('RLT'):
-        indexes = [(i, i+4) for i in range(start, min(end, end_2)) if not((i-start) % 4)]
+        no_factor = math.isnan(comp['wind factor'])
+        if no_factor:
+            shift = 2
+        else:
+            shift = 4
+        indexes = [(i, i+shift) for i in range(start, min(end, end_2)) if not((i-start) % shift)]
         lines = [' '.join(skok[i:j]) for i, j in indexes]
         new_lines = [skok[0]]
         for i, line in enumerate(lines):
@@ -640,9 +645,9 @@ def przeksztalc(comp, string, kwale=0, team=0, TCS=0):
         return(przeksztalc_coc(string, kwale, comp))
     nazwa = comp['id']
     if nazwa.count('RTRIA'):
-        return(przeksztalc_rlt(string, kwale, team, TCS, 'rtria'))
+        return(przeksztalc_rlt(comp, string, kwale, team, TCS))
     elif nazwa.count('RLT'):
-        return(przeksztalc_rlt(string, kwale, team, TCS, 'rlt'))
+        return(przeksztalc_rlt(comp, string, kwale, team, TCS))
     elif nazwa.count('RL'):
         return(przeksztalc_rl_rlq(comp, string, kwale, team, TCS))
     else:
@@ -747,23 +752,40 @@ def przeksztalc_rl_rlq(comp, string, kwale, team, TCS):
     return(nofy_string)
 
 
-def przeksztalc_rlt(string, kwale, team, TCS, layout):
+def przeksztalc_rlt(comp, string, kwale, team, TCS):
     string = string.replace('©', '')
     nowy_string = string.split()
     nowy_string = [x for x in nowy_string if x]
-    if nowy_string.count('dns') and layout == 'rtria':
+    if nowy_string.count('dns') and comp['id'].count('rtria'):
         return([0, 0, 0, 0, 0, 0, 0, 0])
-    elif nowy_string.count('dns') and layout == 'rlt':
+    elif nowy_string.count('dns') and comp['id'].count('rlt'):
         return([0, 0, 0, 0, 0, 0, 0, 0])
-    if layout == 'rtria':
+    if comp['id'].count('rtria'):
         nofy_string = nowy_string[:2]+nowy_string[-4:]+nowy_string[2:-4]
     else:
         nofy_string = nowy_string[:2]+nowy_string[-2:]+nowy_string[4:-2]
-    return(nofy_string+(8-len(nofy_string))*['0.0'])
+    if not(math.isnan(comp['wind factor'])):
+        return(nofy_string+(8-len(nofy_string))*['0.0'])
+    else:
+        if comp['id'].count('rtria'):
+            nofy_string = nowy_string[:3]
+            return(nofy_string)
+        else:
+            try:
+                limit = max([i for i, x in enumerate(string) if x.isalpha()])
+                tmp_string = string[limit+2:]
+            except ValueError:
+                tmp_string = string
+            nowy_string = tmp_string.split()
+            if nowy_string[2].count('.')==2:
+                nowy_string = nowy_string[:2] + [nowy_string[2][:4]]
+            else:
+                nowy_string = nowy_string[:2] + [nowy_string[2][:2]]
+            return(nowy_string)
 
 
 def column_info(comp, kwale, team, TCS):
-    no_factor=math.isnan(comp['wind factor'])
+    no_factor = math.isnan(comp['wind factor'])
     names = ['name',
              'wind',
              'wind_comp',
@@ -790,8 +812,12 @@ def column_info(comp, kwale, team, TCS):
     nazwa = comp['id']
     if nazwa.count('RTRIA'):
         indices = [0, 3, 4, 1, 2, 5, 13, 14, 15]
+        if no_factor:
+            indices = [0, 3, 4, 14]
     elif nazwa.count('RLT'):
         indices = [0, 3, 4, 2, 13, 14, 1, 5, 15]
+        if no_factor:
+            indices = [0, 3, 4, 14]
     if comp['type'] == 1 and not(kwale):
         indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 2, 1, 14, 15]
         if no_factor:
@@ -820,30 +846,27 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
         if not comp['training'] or (comp['type'] == 1 and comp['training']):
             notes_pre = [x for x in notes_pre.split(' ') if x]
         notes = [float(x) for x in notes_pre]
-        print(notes)
         passed_values = len(info)
         if(len(notes) == passed_values - 2):
             notes.append(0)
         data = pd.Series([name]+notes, index=new_jump.columns)
-        if not comp['training']:
-            conds = [data['note_points'] > 60, data['note_5'] > 20]+decimal([data['points'], data['dist_points'], data['speed'], data['note_1'], data['note_5'], data['note_points'], data['dist']], [10, 10, 10, 2, 2, 2, 2])
-            condition = any(conds)
-            if not(math.isnan(comp['wind factor'])):
-                conds_wind = [abs(data['wind']) > 5, abs(data['wind_comp']) > 60] + decimal([data['wind_comp'], data['gate_points'], data['gate']], [10, 10, 1])
-                condition = any(conds, conds_wind)
-            if condition:
-                exit_code = 1
-                print(comp['id'])
-                print(conds)
-                print(data)
+        if not(math.isnan(comp['wind factor'])) and comp['training']:
+            conds = decimal([data['speed'], data['dist_points'], data['dist']], [10, 10, 2])
         else:
-            conds = [abs(data['wind']) > 5, abs(data['wind_comp']) > 60] + decimal([data['wind_comp'], data['dist_points'], data['gate_points'], data['speed'], data['dist'], data['gate']], [10, 10, 10, 10, 2, 1])
-            condition = any(conds)
-            if condition:
-                exit_code = 1
-                print(comp['id'])
-                print(conds)
-                print(data)
+            conds = decimal([data['speed'], data['dist']], [10, 2])
+        conds_comp = []
+        conds_wind = []
+        if not(comp['training']):
+            conds_comp = [data['note_points'] > 60, data['note_5'] > 20]+decimal([data['points'], data['note_1'], data['note_5'], data['note_points']], [10, 2, 2, 2])
+        condition = any(conds)
+        if not(math.isnan(comp['wind factor'])):
+            conds_wind = [abs(data['wind']) > 5, abs(data['wind_comp']) > 60] + decimal([data['wind_comp'], data['gate_points'], data['gate']], [10, 10, 1])
+        condition = any(conds+conds_comp+conds_wind)
+        if condition:
+            exit_code = 1
+            print(comp['id'])
+            print(conds, conds_comp, conds_wind)
+            print(data)
         new_jump = new_jump.append(data, ignore_index=True)
     return([new_jump, exit_code])
 
@@ -927,7 +950,7 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 69
+n = 55
 comp = comps.loc[n]
 # comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
