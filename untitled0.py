@@ -305,12 +305,15 @@ def validate_number(line):
     return(cond_1 and (cond_2 or cond_3))
 
 
-def find_names(tekst_lin, year, tick):
+def find_names(comp, tekst_lin, year, tick):
     """
     Return a list of athletes participating in a comp. with their BIBs.
 
     Parameters
     ----------
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function (check "database" output for details).
     tekst_lin : list of strings
         A list with parsed PDF file.
     year : integer
@@ -336,8 +339,13 @@ def find_names(tekst_lin, year, tick):
     if tick != 1:
         names = []
         bibs = []
-        indexes = [i for i, x in enumerate(tekst_lin) if validate(x)]
-        check_club = [validate_number(tekst_lin[x-3]) for x in indexes]
+        if comp['team'] == 1 and int(year) < 2016:
+            indexes = [i for i, x in enumerate(tekst_lin) if validate_number(x)]
+            lista = [[tekst_lin[i]]+[tekst_lin[i+1]] for i in indexes]
+            return(lista)
+        else:
+            indexes = [i for i, x in enumerate(tekst_lin) if validate(x)]
+            check_club = [validate_number(tekst_lin[x-3]) for x in indexes]
         for i, x in enumerate(indexes):
             if int(year) < 2016:
                 names.append(tekst_lin[x-3])
@@ -440,7 +448,7 @@ def import_start_list(comp, pdf_name, block=False, tekstlin=[]):
     tekst_lin = [i for i in tekst_lin if i]
     if tekstlin:
         tekst_lin = tekstlin
-    lista = find_names(tekst_lin, year, tick)
+    lista = find_names(comp, tekst_lin, year, tick)
     info = ['season',
             'codex',
             'hill_size',
@@ -760,14 +768,14 @@ def przeksztalc_rlt(comp, string, kwale, team, TCS):
         return([0, 0, 0, 0, 0, 0, 0, 0])
     elif nowy_string.count('dns') and comp['id'].count('rlt'):
         return([0, 0, 0, 0, 0, 0, 0, 0])
-    if comp['id'].count('rtria'):
+    if comp['id'].count('RTRIA'):
         nofy_string = nowy_string[:2]+nowy_string[-4:]+nowy_string[2:-4]
     else:
         nofy_string = nowy_string[:2]+nowy_string[-2:]+nowy_string[4:-2]
     if not(math.isnan(comp['wind factor'])):
         return(nofy_string+(8-len(nofy_string))*['0.0'])
     else:
-        if comp['id'].count('rtria'):
+        if comp['id'].count('RTRIA'):
             nofy_string = nowy_string[:3]
             return(nofy_string)
         else:
@@ -782,6 +790,7 @@ def przeksztalc_rlt(comp, string, kwale, team, TCS):
             else:
                 nowy_string = nowy_string[:2] + [nowy_string[2][:2]]
             return(nowy_string)
+
 
 
 def column_info(comp, kwale, team, TCS):
@@ -833,7 +842,8 @@ def column_info(comp, kwale, team, TCS):
 
 def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
     exit_code = 0
-    output = [idx for idx, line in enumerate(skok) if line.count('.') > 3 and sum(x.isdigit() for x in line)]
+    output = [idx for idx, line in enumerate(skok) if line.count('.') > 4 and sum(x.isdigit() for x in line)]
+    output = [x for x in output if x <= 10]
     if len(output) > 2 and not comp['training']:
         print('Uwaga: zawodnik '+skok[0]+' oddał '+str(len(output))+" skoki!")
     if kwale and len(output) > 1:
@@ -851,9 +861,9 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
             notes.append(0)
         data = pd.Series([name]+notes, index=new_jump.columns)
         if not(math.isnan(comp['wind factor'])) and comp['training']:
-            conds = decimal([data['speed'], data['dist_points'], data['dist']], [10, 10, 2])
+            conds = [((data['speed'] > 115) or (data['speed'] < 60)) and data['speed'] != 0] + decimal([data['speed'], data['dist_points'], data['dist']], [10, 10, 2])
         else:
-            conds = decimal([data['speed'], data['dist']], [10, 2])
+            conds = [((data['speed'] > 115) or (data['speed'] < 60)) and data['speed'] != 0] + decimal([data['speed'], data['dist']], [10, 2])
         conds_comp = []
         conds_wind = []
         if not(comp['training']):
@@ -869,6 +879,7 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
             print(data)
         new_jump = new_jump.append(data, ignore_index=True)
     return([new_jump, exit_code])
+
 
 
 def collect(comp=[], tekstlin=[], TCS=0):
@@ -926,7 +937,7 @@ if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
 
-comps = pd.read_csv(os.getcwd()+'\\comps\\2018_COC.csv')
+comps = pd.read_csv(os.getcwd()+'\\comps\\2010_WC.csv')
 # comps = comps[comps['training']==0]
 comps = comps[comps['wind factor'].notna()]
 
@@ -950,7 +961,7 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 55
+n = 18
 comp = comps.loc[n]
 # comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
