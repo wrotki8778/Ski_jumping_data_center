@@ -608,7 +608,9 @@ def conc_numbers(skok, comp):
         else:
             shift = 4
         indexes = [(i, i+shift) for i in range(start, min(end, end_2)) if not((i-start) % shift)]
-        lines = [' '.join(skok[i:j]) for i, j in indexes]
+        lines = [' '.join(skok[i:i+1]+skok[i+2:j]) for i, j in indexes]
+        no_speed = [2 - skok[i].count('.') for i, j in indexes]
+        lines = [no_speed[i]*'0.0 ' + line for i, line in enumerate(lines)]
         new_lines = [skok[0]]
         for i, line in enumerate(lines):
             tmp = line.split(' ')
@@ -693,10 +695,46 @@ def przeksztalc_coc(string, kwale, comp=[]):
     return(new_string)
 
 
+def rozdziel_rl_rlq(comp, string, kwale, team, TCS):
+    no_factor = math.isnan(comp['wind factor'])
+    n = [12]
+    offset = [1]
+    if TCS and kwale == 2 and no_factor:
+        n = [0, 10]
+        offset = [2, 2]
+        return([n, offset])
+    if kwale:
+        n = []
+        offset = []
+    if kwale and team:
+        n = [12]
+        offset = [1]
+    if TCS and kwale == 2 and not(no_factor):
+        n = [11]
+        offset = [1]
+    if TCS == 2:
+        n = [1, 12]
+        offset = [2, 1]
+    if no_factor:
+        if kwale:
+            n = [0]
+            offset = [2]
+        else:
+            n = []
+            offset = []
+    return([n, offset])
+
+
 def przeksztalc_rl_rlq(comp, string, kwale, team, TCS):
     no_factor = math.isnan(comp['wind factor'])
-    nowy_string = string.replace('pq', '0.')
-    nowy_string = nowy_string.replace('©', '')
+    string = string.replace('pq', '0.')
+    string = string.replace('©', '')
+    try:
+        limit = max([i for i, x in enumerate(string) if x.isalpha()])
+        string = string[limit+2:]
+    except ValueError:
+        string = string
+    nowy_string = string.replace('©', '')
     tmp = nowy_string.split(' ')
     if team and tmp[0].count('-'):
         del tmp[0]
@@ -726,27 +764,7 @@ def przeksztalc_rl_rlq(comp, string, kwale, team, TCS):
            nowy_string=' '.join(tmp)
         else:
             nowy_string=string
-    n = [12]
-    offset = [1]
-    if kwale:
-        n = []
-        offset = []
-    if kwale and team:
-        n = [12]
-        offset = [1]
-    if TCS and kwale == 2:
-        n = [11]
-        offset = [1]
-    if TCS == 2:
-        n = [1, 12]
-        offset = [2, 1]
-    if no_factor:
-        if kwale:
-            n = [0]
-            offset = [2]
-        else:
-            n = []
-            offset = []
+    n, offset = rozdziel_rl_rlq(comp, string, kwale, team, TCS)
     kropki = [i for i, a in enumerate(nowy_string) if a == '.']
     kropki = [kropki[i] for i in n]
     if n:
@@ -755,8 +773,10 @@ def przeksztalc_rl_rlq(comp, string, kwale, team, TCS):
         wyrazy = nofy_string.split(' ')
     else:
         nofy_string = nowy_string
-    if TCS==1 and kwale == 2:
+    if TCS == 1 and kwale == 2 and not(no_factor):
         nofy_string = ' '.join(wyrazy[0:3]) + ' ' + ' '.join(wyrazy[4:13]) + ' ' + ' '.join(wyrazy[14:])
+    elif TCS == 1 and kwale == 2 and no_factor:
+        nofy_string = ' '.join(wyrazy[0:1]) + ' ' + ' '.join(wyrazy[2:11]) + ' ' + ' '.join(wyrazy[12:])
     return(nofy_string)
 
 
@@ -771,7 +791,7 @@ def przeksztalc_rlt(comp, string, kwale, team, TCS):
     if comp['id'].count('RTRIA'):
         nofy_string = nowy_string[:2]+nowy_string[-4:]+nowy_string[2:-4]
     else:
-        nofy_string = nowy_string[:2]+nowy_string[-2:]+nowy_string[4:-2]
+        nofy_string = nowy_string[:2]+nowy_string[-2:]+nowy_string[2:-2]
     if not(math.isnan(comp['wind factor'])):
         return(nofy_string+(8-len(nofy_string))*['0.0'])
     else:
@@ -790,7 +810,6 @@ def przeksztalc_rlt(comp, string, kwale, team, TCS):
             else:
                 nowy_string = nowy_string[:2] + [nowy_string[2][:2]]
             return(nowy_string)
-
 
 
 def column_info(comp, kwale, team, TCS):
@@ -881,7 +900,6 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
     return([new_jump, exit_code])
 
 
-
 def collect(comp=[], tekstlin=[], TCS=0):
     if not(tekstlin):
         jumps, kwale, team, TCS = zwroc_skoki(comp, TCS)
@@ -897,7 +915,7 @@ def collect(comp=[], tekstlin=[], TCS=0):
     return([database, exit_code])
 
 
-take_years = [2010]
+take_years = [2021]
 tick = 0
 types = ['WC', 'COC', 'GP', 'SFWC', 'WSC']
 new_data = import_links(years=take_years, genre=types[tick])
@@ -937,7 +955,7 @@ if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
     comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
 comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
 
-comps = pd.read_csv(os.getcwd()+'\\comps\\2010_WC.csv')
+comps = pd.read_csv(os.getcwd()+'\\comps\\2021_WC.csv')
 # comps = comps[comps['training']==0]
 comps = comps[comps['wind factor'].notna()]
 
@@ -961,7 +979,7 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 18
+n = 29
 comp = comps.loc[n]
 # comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')

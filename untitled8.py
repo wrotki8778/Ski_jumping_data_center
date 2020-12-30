@@ -8,6 +8,8 @@ import os
 import pandas as pd
 import numpy as np
 os.chdir('C:/Users/kubaf/Documents/Skoki')
+
+
 def merge_names(comps, directory):
     names = pd.DataFrame([], columns=['bib', 'name'])
     names_fis = pd.DataFrame([], columns=['bib', 'codex', 'name'])
@@ -116,7 +118,7 @@ def doklej_rating(results, i, comp, rating_db, k):
 def build_rating(comps, results):
     rating_db = pd.DataFrame(names['codex'])
     rating_db = rating_db.drop_duplicates()
-    rating_db['id'] = '2010JP0000RL'
+    rating_db['id'] = '2000JP0000RL'
     rating_db['rating'] = 1000
     rating_db['number'] = 0
     rating_act = rating_db[['codex', 'rating']]
@@ -144,7 +146,7 @@ def build_rating(comps, results):
 
 def show_rating(comps, index, names, rating_db, take_all=True):
     names = names.drop_duplicates(subset=['codex'])
-    pre_comps = comps.iloc[:index]['id'].values.tolist()+['2010JP0000RL']
+    pre_comps = comps.iloc[:index]['id'].values.tolist()+['2000JP0000RL']
     comp = comps.iloc[index]
     if take_all:
         rating_cut = rating_db[rating_db['id'].isin(pre_comps)]
@@ -170,7 +172,7 @@ comps = comps.reset_index()
 names = merge_names(comps, os.getcwd()+'\\nazwy\\')
 results = merge_comps(names, comps, os.getcwd()+'\\results\\')
 rating_db = build_rating(comps, results)
-results = show_rating(comps, 1339, names, rating_db, False)
-ryoyu = rating_db[rating_db['codex'] == 6288]
+results = show_rating(comps, 1613, names, rating_db, False)
+ryoyu = rating_db[rating_db['codex'] == 6698]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
 """quals_results.to_csv('new_qual_results_fix.csv')"""
