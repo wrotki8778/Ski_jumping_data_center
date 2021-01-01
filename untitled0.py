@@ -1,5 +1,5 @@
 """
-Script to download, parse and process FIS ski jumping documents.
+Script to parse and process FIS ski jumping documents.
 
 @author: wrotki8778
 """
@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 import time
 from datetime import datetime
 import math
+import glob
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 
 
@@ -616,7 +617,10 @@ def conc_numbers(skok, comp):
             tmp = line.split(' ')
             tmp = [x for x in tmp if x == 'dns' or not sum([t.isalpha() for t in x])]
             while(tmp[0] == 'dns'):
-                new_lines.append(10 * '0.0 ')
+                if comp['training']:
+                    new_lines.append(8 * '0.0 ')
+                else:
+                    new_lines.append(10 * '0.0 ')
                 tmp = tmp[1:]
             new_lines.append(' '.join(tmp))
         return(new_lines)
@@ -854,8 +858,12 @@ def column_info(comp, kwale, team, TCS):
         indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1, 2, 14, 15]
     if comp['type'] == 1 and nazwa.count('RLT'):
         indices = [0, 3, 4, 14, 2, 5, 13, 1, 15]
+        if no_factor:
+            indices = [0, 3, 4, 14, 13]
     if comp['type'] == 1 and nazwa.count('RTRIA'):
         indices = [0, 4, 3, 14, 2, 5, 13, 1, 15]
+        if no_factor:
+            indices = [0, 4, 3, 14, 13]
     return([names[k] for k in indices])
 
 
@@ -915,50 +923,9 @@ def collect(comp=[], tekstlin=[], TCS=0):
     return([database, exit_code])
 
 
-take_years = [2021]
-tick = 0
-types = ['WC', 'COC', 'GP', 'SFWC', 'WSC']
-new_data = import_links(years=take_years, genre=types[tick])
-
-comps_init = new_data[3]
-comps_init['type'] = tick
-to_process = ['RLQ', 'RL', 'RLT', 'RTRIA']
-to_process = [x+'.pdf' for x in to_process]
-lista = os.listdir(os.getcwd()+'\\PDFs\\')
-comps_init['ID'] = comps_init.apply(lambda x: x['season']+'JP'+x['codex'], axis=1).tolist()
-lista = [x for x in lista if any(t for t in to_process if t in x) and any(t for t in comps_init['ID'] if t in x)]
-lista.reverse()
-
-start_lists = []
-comps_names = ['season',
-               'codex',
-               'hill_size',
-               'k-point',
-               'meter value',
-               'gate factor',
-               'wind factor', 
-               'id']
-comps = pd.DataFrame([], index=comps_names)
-
-for i, pdf_name in enumerate(lista):
-    comp = comps_init[comps_init['ID'] == pdf_name[:10]].iloc[0]
-    [list, comps_infos] = import_start_list(comp, pdf_name[:-4])
-    comps = comps.append(comps_infos, ignore_index=True)
-    start_lists = start_lists+[[list]]
-comps_init = comps_init.drop(['ID'], axis=1)
-comps = pd.merge(comps, comps_init, on=['season', 'codex'], how='inner')
-comps['date'] = comps.apply(lambda x: to_date(x['day'], x['month'], x['year']), axis=1)
-comps = comps.drop(['month', 'day', 'year'], axis=1)
-comps['type'] = tick
-name = '_'.join([str(x) for x in take_years])+'_'+str(types[tick])+'.csv'
-if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
-    comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
-comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
-
-comps = pd.read_csv(os.getcwd()+'\\comps\\2021_WC.csv')
-# comps = comps[comps['training']==0]
-comps = comps[comps['wind factor'].notna()]
-
+list_of_files = glob.glob(os.getcwd()+'/comps/*') # * means all if need specific format then *.csv
+comps = max(list_of_files, key=os.path.getctime)
+comps = pd.read_csv(comps)
 exit_codes = []
 errors = []
 for i, comp in comps.iterrows():
@@ -979,7 +946,7 @@ for i, comp in comps.iterrows():
             print(comp)
 
 
-n = 29
+n = 92
 comp = comps.loc[n]
 # comp['type'] = 0
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')

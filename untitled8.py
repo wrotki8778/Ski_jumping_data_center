@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """
-Created on Fri Oct 23 16:05:01 2020
+Script to analyze results from untitled0.py and untitled6.py.
 
-@author: kubaf
+@author: wrotki8778
 """
 import os
 import pandas as pd
@@ -172,7 +171,7 @@ comps = comps.reset_index()
 names = merge_names(comps, os.getcwd()+'\\nazwy\\')
 results = merge_comps(names, comps, os.getcwd()+'\\results\\')
 rating_db = build_rating(comps, results)
-results = show_rating(comps, 1613, names, rating_db, False)
-ryoyu = rating_db[rating_db['codex'] == 6698]
+results = show_rating(comps, 1615, names, rating_db, False)
+ryoyu = rating_db[rating_db['codex'] == 6996]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
 """quals_results.to_csv('new_qual_results_fix.csv')"""
