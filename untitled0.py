@@ -577,13 +577,13 @@ def zwroc_skoki(comp, names=[], tekstlin=[], TCS=0):
     skoki = [[x]+tekst_lin[s:e] for s, e, x in indices]
     if len(indices) < len(names_list):
         print('Warning: in '+comp['id']+' '+str(len(names_list) - len(indices))+' not found!')
-    next_skoki = [conc_numbers(skok, comp) for i, skok in enumerate(skoki)]
+    next_skoki = [conc_numbers(skok, comp, TCS) for i, skok in enumerate(skoki)]
     return([next_skoki, kwale, team, TCS])
 
 
-def conc_numbers(skok, comp):
+def conc_numbers(skok, comp, TCS=0):
     if comp['type'] == 1:
-        return(conc_numbers_coc(skok, comp))
+        return(conc_numbers_coc(skok, comp, TCS))
     if not comp['training']:
         return(skok)
     try:
@@ -628,7 +628,7 @@ def conc_numbers(skok, comp):
         return(skok)
 
 
-def conc_numbers_coc(skok, comp):
+def conc_numbers_coc(skok, comp, TCS=0):
     try:
         start = min([i for i, x in enumerate(skok) if x.count('.') and sum([t.isnumeric() for t in x if t.isnumeric()])])
     except ValueError:
@@ -645,6 +645,16 @@ def conc_numbers_coc(skok, comp):
             line = skok[start]
         return([skok[0]]+[' '.join([line]+skok[start+1:end])])
     if comp['training']:
+        if TCS == 1:
+            if end-start < 7:
+                return([skok[0]]+[' '.join(skok[start:end])])
+            elif skok[end-1].count('.') == 1:
+                if skok[end-1][0] == ' ':
+                    skok[end-1] = '0.0 '+skok[end-1]
+                else:
+                    skok[end-1] = skok[end-1]+' 0.0'
+            elif end-start == 7:
+                skok[end-1] = skok[end-1] + ' 0.0 0.0'
         return([skok[0]]+[' '.join(skok[start:end])])
     if end-start-1:
         pierwszy = [i for i in range(start, end) if not((i-start) % 2)]
@@ -655,6 +665,8 @@ def conc_numbers_coc(skok, comp):
 
 
 def przeksztalc(comp, string, kwale=0, team=0, TCS=0):
+    if comp['type'] == 1 and TCS == 1:
+        return(przeksztalc_coc_tr(string, kwale, comp))
     if comp['type'] == 1:
         return(przeksztalc_coc(string, kwale, comp))
     nazwa = comp['id']
@@ -666,6 +678,43 @@ def przeksztalc(comp, string, kwale=0, team=0, TCS=0):
         return(przeksztalc_rl_rlq(comp, string, kwale, team, TCS))
     else:
         return([])
+
+
+def przeksztalc_coc_tr(string, kwale, comp=[]):
+    string = rozdziel(string)
+    if string.count('.') < 10 and string[2] != '.':
+        n = [0]
+        offset = [-2]
+    elif string.count('.') < 10:
+        n = []
+        offset = []
+    else:
+        n = [2,7]
+        offset = [-2,1]
+    kropki = [i for i, a in enumerate(string) if a == '.']
+    kropki = [kropki[i] for i in n]
+    if n:
+        nofy_string = [string[0:kropki[0]+offset[0]]]+[string[kropki[i]+offset[i]:kropki[i+1]+offset[i+1]] for i in range(len(kropki)-1)]+[string[kropki[-1]+offset[-1]:]]
+        nofy_string = ' '.join(nofy_string)
+        wyrazy = nofy_string.split(' ')
+        wyrazy = [x for x in wyrazy if x]
+    else:
+        wyrazy = string.split(' ')
+        wyrazy = [x for x in wyrazy if x]
+    if string.count('.') < 10 and string[2] != '.':
+        filter_1 = [1, 2, 0, 7, 5, 6, 8]
+        string_1 = [wyrazy[i] for i in filter_1]
+        return([string_1])
+    elif string.count('.') < 10:
+        filter_1 = [0, 1, 2, 4, 5, 6, 7]
+        string_1 = [wyrazy[i] for i in filter_1]
+        return([string_1])
+    else:
+        filter_1 = [0, 1, 2, 9, 10, 11, 15, 17]
+        filter_2 = [4, 5, 3, 14, 12, 13, 16, 18]
+        string_1 = [wyrazy[i] for i in filter_1]
+        string_2 = [wyrazy[i] for i in filter_2]
+        return([string_1, string_2])
 
 
 def przeksztalc_coc(string, kwale, comp=[]):
@@ -871,6 +920,10 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
     exit_code = 0
     output = [idx for idx, line in enumerate(skok) if line.count('.') > 4 and sum(x.isdigit() for x in line)]
     output = [x for x in output if x <= 10]
+    if TCS == 1 and comp['type'] == 1:
+        if len(skok) > 1:
+            skok = [skok[0]]+przeksztalc(comp, skok[1], kwale, team, TCS)
+            output = list(range(1,len(skok)))
     if len(output) > 2 and not comp['training']:
         print('Uwaga: zawodnik '+skok[0]+' oddał '+str(len(output))+" skoki!")
     if kwale and len(output) > 1:
@@ -879,9 +932,12 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0):
     new_jump = pd.DataFrame([], columns=info)
     for i in range(len(output)):
         name = skok[0]
-        notes_pre = przeksztalc(comp, skok[output[i]], kwale, team, TCS)
-        if not comp['training'] or (comp['type'] == 1 and comp['training']):
-            notes_pre = [x for x in notes_pre.split(' ') if x]
+        if TCS == 1 and comp['type'] == 1:
+            notes_pre = skok[output[i]]
+        else:
+            notes_pre = przeksztalc(comp, skok[output[i]], kwale, team, TCS)
+            if not comp['training'] or (comp['type'] == 1 and comp['training']):
+                notes_pre = [x for x in notes_pre.split(' ') if x]
         notes = [float(x) for x in notes_pre]
         passed_values = len(info)
         if(len(notes) == passed_values - 2):
@@ -923,9 +979,11 @@ def collect(comp=[], tekstlin=[], TCS=0):
     return([database, exit_code])
 
 
-list_of_files = glob.glob(os.getcwd()+'/comps/*') # * means all if need specific format then *.csv
+list_of_files = glob.glob(os.getcwd()+'/comps/*')  # * means all if need specific format then *.csv
 comps = max(list_of_files, key=os.path.getctime)
-comps = pd.read_csv(comps)
+# comps = pd.read_csv(comps)
+comps = pd.read_csv(os.getcwd()+'/comps/2019_COC.csv')
+
 exit_codes = []
 errors = []
 for i, comp in comps.iterrows():
@@ -945,10 +1003,10 @@ for i, comp in comps.iterrows():
             errors.append(comp)
             print(comp)
 
-
-n = 92
+n = 43
 comp = comps.loc[n]
 # comp['type'] = 0
+TCS = 1
 parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp['id']+'.pdf')
 tekst = parsed["content"]
 tekst = tekst.lower()
@@ -966,6 +1024,10 @@ tekst_start = tekst_start.lower()
 tekst_lin_start = tekst_start.splitlines()
 tekst_lin_start = [i for i in tekst_lin_start if i]
 content_start = import_start_list(comp, comp['id']+'.pdf', tekstlin=tekst_lin_start)
-content = zwroc_skoki(comp, tekstlin=tekst_lin)
-dalej, exit_code = collect(comp, tekst_lin)
+content = zwroc_skoki(comp, tekstlin=tekst_lin, TCS=TCS)
+dalej, exit_code = collect(comp, tekst_lin, TCS=TCS)
+if TCS == 1 and comp['type'] == 1:
+    dalej = dalej.drop(['gate_points'],axis=1)
 dalej.to_csv(comp['id']+'.csv', index=False)
+
+
