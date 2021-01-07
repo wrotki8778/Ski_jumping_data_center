@@ -13,6 +13,7 @@ def merge_names(comps, directory):
     names = pd.DataFrame([], columns=['bib', 'name'])
     names_fis = pd.DataFrame([], columns=['bib', 'codex', 'name'])
     for i, comp in comps.iterrows():
+        print(i)
         file_name = directory+str(comp['season'])+'JP'+str(comp['codex'])
         try:
             tmp_naz = pd.read_csv(file_name+'naz.csv', sep=';', header=None)
@@ -171,7 +172,7 @@ comps = comps.reset_index()
 names = merge_names(comps, os.getcwd()+'\\nazwy\\')
 results = merge_comps(names, comps, os.getcwd()+'\\results\\')
 rating_db = build_rating(comps, results)
-results = show_rating(comps, 1615, names, rating_db, False)
+results = show_rating(comps, 1739, names, rating_db, False)
 ryoyu = rating_db[rating_db['codex'] == 6996]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
 """quals_results.to_csv('new_qual_results_fix.csv')"""

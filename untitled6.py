@@ -492,9 +492,10 @@ def import_start_list(comp, pdf_name, block=False, tekstlin=[]):
     else:
         return([[], comps_infos])
 
+
 take_years = [2021]
 tick = 0
-types = ['WC', 'COC', 'GP', 'SFWC', 'WSC']
+types = ['WC', 'COC', 'GP', 'FC', 'SFWC', 'WSC']
 new_data = import_links(years=take_years, genre=types[tick], import_num=3)
 
 comps_init = new_data[3]
@@ -519,9 +520,9 @@ comps = pd.DataFrame([], index=comps_names)
 
 for i, pdf_name in enumerate(lista):
     comp = comps_init[comps_init['ID'] == pdf_name[:10]].iloc[0]
-    [list, comps_infos] = import_start_list(comp, pdf_name[:-4])
+    [names_list, comps_infos] = import_start_list(comp, pdf_name[:-4])
     comps = comps.append(comps_infos, ignore_index=True)
-    start_lists = start_lists+[[list]]
+    start_lists = start_lists+[[names_list]]
 comps_init = comps_init.drop(['ID'], axis=1)
 comps = pd.merge(comps, comps_init, on=['season', 'codex'], how='inner')
 comps['date'] = comps.apply(lambda x: to_date(x['day'], x['month'], x['year']), axis=1)
