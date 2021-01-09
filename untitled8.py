@@ -59,7 +59,7 @@ def merge_comps(names, comps, directory):
             results = results.append(tmp)
         except FileNotFoundError:
             pass
-        except pd.io.common.EmptyDataError:
+        except pd.errors.EmptyDataError:
             pass
     results = pd.merge(results, names, how='left', on=['name'])
     results = results.drop(['name', 'Unnamed: 0'], axis=1)
@@ -144,7 +144,7 @@ def build_rating(comps, results):
     return(rating_db)
 
 
-def show_rating(comps, index, names, rating_db, take_all=True):
+def show_rating(comps, index = len(comps)-1, names, rating_db, take_all=True):
     names = names.drop_duplicates(subset=['codex'])
     pre_comps = comps.iloc[:index]['id'].values.tolist()+['2000JP0000RL']
     comp = comps.iloc[index]
@@ -172,7 +172,7 @@ comps = comps.reset_index()
 names = merge_names(comps, os.getcwd()+'\\nazwy\\')
 results = merge_comps(names, comps, os.getcwd()+'\\results\\')
 rating_db = build_rating(comps, results)
-results = show_rating(comps, 1739, names, rating_db, False)
+results = show_rating(comps, 1368, names, rating_db, False)
 ryoyu = rating_db[rating_db['codex'] == 6996]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
 """quals_results.to_csv('new_qual_results_fix.csv')"""
