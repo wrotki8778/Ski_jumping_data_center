@@ -6,15 +6,12 @@ Script to parse and process FIS ski jumping documents.
 import os
 import os.path
 import re
-import time
 from datetime import datetime
 import math
 import glob
 import pandas as pd
 import numpy as np
 from tika import parser
-import requests
-from bs4 import BeautifulSoup
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 
 
@@ -100,197 +97,6 @@ def rozdziel(string):
         index = min([i for i, x in enumerate(new_string) if x == '.'])+2
         return new_string[:index]+' ' + new_string[index:]
     return new_string
-
-
-def scraping_fis(soup, year):
-    """
-    Return a list of information from a scrapped FIS site.
-
-    Inputs:
-        soup - FIS site of a competition parsed by a BeautifulSoup module,
-        year - number (1000-9999) representing a given season,
-
-    Outputs:
-        database - a Pandas Series with:
-            codex - number (1000-9999) representing a given competition,
-            place - string with a city where the competition was held,
-            date - list with a date when the competition was held
-            when a month, day and a year are written separately,
-            gender - 'Men'/'Women' variable saying whether it was a mens' race
-            or not,
-            hill_size - HS of a hill where the competition was held,
-            team - 0/1 variable saying whether it was a team race
-            or not,
-            year - same as input.
-        names_list - a list with names of athletes starting in
-        a competition, where we have:
-            bib - number connected with a given athlete
-            (not provided if team variable is 1),
-            fis_code - number representing a given athlete in a FIS database,
-            name - full name of an athlete.
-        Moreover names_list is exported to a separate folder in a .csv file.
-    """
-    info = ['codex', 'place', 'month', 'day', 'year']+['gender', 'hill_size', 'team', 'season']
-    database = pd.DataFrame([], columns=info)
-    names_all = []
-    for a in soup.find_all('span', {'class': 'event-details__field'}):
-        codex = a.text[-4:]
-    for a in soup.find_all('h1', {'class': 'heading heading_l2 heading_white heading_off-sm-style'}):
-        place = a.text
-    for a in soup.find_all('span', {'class': 'date__full'}):
-        date = a.text
-        date = a.text.replace(',', '').split()
-    for a in soup.find_all('div', {'class': 'event-header__kind'}):
-        tmp = a.text.replace('', '').split()
-        gender = tmp[0][:-2]
-        hill_size = tmp[-1][2:]
-        if len(tmp) >= 3:
-            team = 1
-        else:
-            team = 0
-        infos = [codex]+[place]+date+[gender]+[hill_size]+[team]+[year]
-        new_comp = pd.Series(infos, index=database.columns)
-        database = database.append(new_comp, ignore_index=True)
-        names_list = []
-        if team:
-            klas = 'table-row table-row_theme_additional'
-        else:
-            klas = 'table-row'
-        for a in soup.find_all('a', {'class': klas}):
-            tmp = a.text.replace('\n', '<')
-            tmp = tmp.split('<')
-            tmp = [x for x in tmp if x]
-            for i, line in enumerate(tmp):
-                nazwa = line.split(' ')
-                nazwa = [x for x in nazwa if x]
-                tmp[i] = ' '.join(nazwa)
-                if len(nazwa) > 1:
-                    tmp[i+1:] = []
-                    break
-            if team:
-                names_list.append(tmp[-4:])
-            else:
-                names_list.append(tmp[-3:])
-        file_name = str(year)+'JP'+str(codex)+'nazfis.csv'
-        if not os.path.isfile(os.getcwd()+'\\nazwy\\'+file_name):
-            with open(os.getcwd()+'\\nazwy\\'+file_name, 'w+') as result_file:
-                for i, line in enumerate(names_list):
-                    mod_line = ';'.join(line)
-                    result_file.write(mod_line)
-                    result_file.write('\n')
-        with open(os.getcwd()+'\\elastic_nazwy\\'+file_name, 'w+') as result_file:
-            for i, line in enumerate(names_list):
-                mod_line = ';'.join(line)
-                result_file.write(mod_line)
-                result_file.write('\n')
-        result_file.close()
-        names_all = names_all+[names_list]
-    return([database, names_all])
-
-
-def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR1', 'RLT', 'RTRIA', 'SLT'], import_num=0, scrap=True):
-    """
-    Return a list of information by scraping FIS sites.
-
-    Inputs:
-        years - list of numbers with corresponding seasons
-        to scrap (for example number 2019 corresponds to 2018/19 season etc.),
-        genre - type of cup/competition to scrap,
-        with the following meaning:
-            WC - World Cup,
-            COC - Continental Cup (summer+winter edition),
-            GP - Grand Prix/Summer Grand Prix
-            WSC - World Ski Championships,
-            SFWC - Ski Flying World Championships,
-        to_download - type of file to download with the following meaning:
-            RL - official competition,
-            RLQ - qualification round,
-            RLT - training round(s),
-            RTRIA - trial round,
-            SLR1 - start list before 1st round,
-            SLQ - start list before qualification,
-            SLT - start list before training round(s),
-        import_num - if non-zero, selects only n last weekends
-        from the initial FIS search results (accelerates processing),
-        scrap - if False, then no information will be downloaded
-        from the sites found (except PDFs).
-    Outputs:
-        linki_tmp - contains list of links with consequent weekends
-        (competition groups),
-        linki - contains list of links with consequent single competitions,
-        kody - contains list of unique codes for each competition found
-        (in the form xxxxJPyyyy, where xxxx is the year and yyyy is
-         a codex of a competition)
-        database - a Pandas dataframe, which includes information parsed
-        from the website (empty, if scrap is False) by scraping_fis function,
-        names_list - separate list containing athletes participating
-        in every competition (details in scraping_fis function).
-    """
-    info = ['codex',
-            'place',
-            'month',
-            'day',
-            'year',
-            'gender',
-            'hill_size',
-            'team',
-            'season']
-    linki = []
-    linki_tmp = []
-    database = pd.DataFrame([], columns=info)
-    names_list = []
-    kody = []
-    for year in years:
-        time.sleep(5)
-        url = 'https://www.fis-ski.com/DB/?eventselection=results&place=&sectorcode=JP&seasoncode='+str(year)+'&categorycode='+genre+'&disciplinecode=&gendercode=&racedate=&racecodex=&nationcode=&seasonmonth=X-'+str(year)+'&saveselection=-1&seasonselection='
-        r = requests.get(url, headers={'user-agent': 'ejdzent'})
-        soup = BeautifulSoup(r.text, "lxml")
-        for a in soup.find_all('a', {'class': 'g-sm justify-left hidden-xs hidden-md-up bold'}, href=True):
-            linki_tmp.append(a['href'])
-    if import_num:
-        linki_tmp = linki_tmp[:import_num]
-    for url in linki_tmp:
-        time.sleep(4)
-        year = url[-4:]
-        r = requests.get(url, headers={'user-agent': 'ejdzent'})
-        soup = BeautifulSoup(r.text, "lxml")
-        for a in soup.find_all('a', {'class': 'px-1 g-lg-3 g-md-3 g-sm-4 g-xs-4 justify-left'}, href=True):
-            linki.append([a['href'], year])
-    for item in linki:
-        time.sleep(4)
-        url = item[0]
-        year = item[1]
-        r = requests.get(url, headers={'user-agent': 'ejdzent'})
-        soup = BeautifulSoup(r.text, "lxml")
-        for a in soup.find_all('span', {'class': 'event-details__field'}):
-            codex = a.text[-4:]
-            print(year+'JP'+codex)
-        for suffix in to_download:
-            tmp_file_name = year+'JP'+codex+suffix
-            kody.append(tmp_file_name)
-        if scrap:
-            tmp, tmp_2 = scraping_fis(soup, year)
-            database = database.append(tmp)
-            names_list.append(tmp_2)
-    for kod in kody:
-        data = kod[0:4]
-        cc = kod[6:10]
-        url = 'http://medias3.fis-ski.com/pdf/'+data+'/JP/'+cc+'/'+kod+'.pdf'
-        if not os.path.isfile(os.getcwd()+'\\PDFs\\'+kod+'.pdf'):
-            time.sleep(1)
-            r = requests.get(url, allow_redirects=True)
-        else:
-            print('Pominięto konkurs: '+kod+'.pdf')
-            continue
-        if r.status_code == 404:
-            continue
-        time.sleep(4)
-        open(os.getcwd()+'\\PDFs\\'+kod+'.pdf', 'wb').write(r.content)
-        if os.path.getsize(os.getcwd()+'\\PDFs\\'+kod+'.pdf') < 15:
-            os.remove(os.getcwd()+'\\PDFs\\'+kod+'.pdf')
-        else:
-            print('Pobrano konkurs: '+kod+'.pdf')
-    return [linki_tmp, linki, kody, database, names_list]
 
 
 def validate_number(line):
@@ -536,7 +342,6 @@ def zwroc_skoki(comp, names=False, tekstlin=False, TCS=0):
     names_list = []
     if nazwa[-5] == 'Q':
         kwale = 2
-        print(names)
     if not names:
         names_list = pd.DataFrame(import_start_list(comp, comp['id']+'.pdf')[0], columns=['bib', 'name'])
     else:
@@ -928,12 +733,12 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0, show_all=0):
         print('Uwaga: zawodnik '+skok[0]+' oddał '+str(len(output))+" skoki w jednoseryjnym konkursie!")
     info = column_info(comp, kwale, team)
     new_jump = pd.DataFrame([], columns=info)
-    for i in range(len(output)):
+    for line in output:
         name = skok[0]
         if TCS == 1 and (comp['type'] == 1 or comp['type'] == 3):
-            notes_pre = skok[output[i]]
+            notes_pre = skok[line]
         else:
-            notes_pre = przeksztalc(comp, skok[output[i]], kwale, team, TCS)
+            notes_pre = przeksztalc(comp, skok[line], kwale, team, TCS)
             if not comp['training'] or ((comp['type'] == 1 or comp['type'] == 3) and comp['training']):
                 notes_pre = [x for x in notes_pre.split(' ') if x]
         notes = [float(x) for x in notes_pre]
@@ -975,8 +780,8 @@ def collect(comp, tekstlin=False, TCS=0, show_all=0):
     exit_code = 0
     info = column_info(comp, kwale, team)
     database = pd.DataFrame([], columns=info)
-    for i in range(len(jumps)):
-        new_jumps, exit_code_tmp = znowu_przeksztalc(comp, jumps[i], kwale, team, TCS, show_all)
+    for jump in jumps:
+        new_jumps, exit_code_tmp = znowu_przeksztalc(comp, jump, kwale, team, TCS, show_all)
         exit_code = exit_code+exit_code_tmp
         database = database.append(new_jumps, ignore_index=True)
     return([database, exit_code])

@@ -5,13 +5,14 @@ Script to download FIS ski jumping documents.
 """
 import os
 import os.path
+import time
+from datetime import datetime, date
 import pandas as pd
 import numpy as np
 from tika import parser
 import requests
 from bs4 import BeautifulSoup
-import time
-from datetime import datetime, date
+
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 
 
@@ -24,12 +25,12 @@ def is_number(s):
         return False
 
 
-def decimal(list, list_k):
+def decimal(list_num, list_k):
     """
     Check that a list of numbers are multiples of corresponding values.
 
     Inputs:
-        list - a list of numbers to check,
+        list_num - a list of numbers to check,
         list_k - a list of integers (1,2,5,10)
         which corresponds to the multiples of
         1, 0.5, 0.2 and 0.1 respectively
@@ -41,7 +42,7 @@ def decimal(list, list_k):
         quantity in list_k.
     """
     output = []
-    for i, number in enumerate(list):
+    for i, number in enumerate(list_num):
         output = output + [abs(list_k[i]*number - int(list_k[i]*number)) > 0]
     return output
 
@@ -67,7 +68,7 @@ def to_date(day, month, year):
         a date-time expression
     """
     string = str(day)+' '+month+' '+str(year)
-    return(datetime.strptime(string, '%d %B %Y'))
+    return datetime.strptime(string, '%d %B %Y')
 
 
 def validate(date_text):
@@ -91,13 +92,12 @@ def rozdziel(string):
     if string.count('-'):
         new_string = string.split('-')[0]+' '+' '.join(['-'+e for e in string.split('-')[1:] if e])
     tmp = new_string.split(' ')
-    if not([i for i in tmp if i.count('.') > 1]):
-        return(new_string)
+    if not [i for i in tmp if i.count('.') > 1]:
+        return new_string
     if new_string.count('.') > 1:
         index = min([i for i, x in enumerate(new_string) if x == '.'])+2
-        return(new_string[:index]+' ' + new_string[index:])
-    else:
-        return(new_string)
+        return new_string[:index]+' ' + new_string[index:]
+    return new_string
 
 
 def scraping_fis(soup, year):
@@ -162,7 +162,7 @@ def scraping_fis(soup, year):
                 nazwa = line.split(' ')
                 nazwa = [x for x in nazwa if x]
                 tmp[i] = ' '.join(nazwa)
-                if(len(nazwa) > 1):
+                if len(nazwa) > 1:
                     tmp[i+1:] = []
                     break
             if team:
@@ -177,23 +177,23 @@ def scraping_fis(soup, year):
                     result_file.write(mod_line)
                     result_file.write('\n')
         with open(os.getcwd()+'\\elastic_nazwy\\'+file_name, 'w+') as result_file:
-                for i, line in enumerate(names_list):
-                    mod_line = ';'.join(line)
-                    result_file.write(mod_line)
-                    result_file.write('\n')
+            for i, line in enumerate(names_list):
+                mod_line = ';'.join(line)
+                result_file.write(mod_line)
+                result_file.write('\n')
         result_file.close()
         names_all = names_all+[names_list]
     return([database, names_all])
 
 
-def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR1', 'RLT', 'RTRIA', 'SLT'], import_data=[[], [], [], [], []], import_num=0, scrap=True):
+def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR1', 'RLT', 'RTRIA', 'SLT'], import_num=0, scrap=True):
     """
     Return a list of information by scraping FIS sites.
 
     Inputs:
         years - list of numbers with corresponding seasons
         to scrap (for example number 2019 corresponds to 2018/19 season etc.),
-        genre - type of cup/competition to scrap, 
+        genre - type of cup/competition to scrap,
         with the following meaning:
             WC - World Cup,
             COC - Continental Cup (summer+winter edition),
@@ -208,8 +208,6 @@ def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR
             SLR1 - start list before 1st round,
             SLQ - start list before qualification,
             SLT - start list before training round(s),
-        import_data - depreciated/outdated option to import appropriate links
-        and directly download files from sites,
         import_num - if non-zero, selects only n last weekends
         from the initial FIS search results (accelerates processing),
         scrap - if False, then no information will be downloaded
@@ -226,53 +224,52 @@ def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR
         names_list - separate list containing athletes participating
         in every competition (details in scraping_fis function).
     """
-    [linki_tmp, linki, kody, database, names_list] = import_data
-    if not linki_tmp:
-        for i, year in enumerate(years):
-            time.sleep(5)
-            url = 'https://www.fis-ski.com/DB/?eventselection=results&place=&sectorcode=JP&seasoncode='+str(year)+'&categorycode='+genre+'&disciplinecode=&gendercode=&racedate=&racecodex=&nationcode=&seasonmonth=X-'+str(year)+'&saveselection=-1&seasonselection='
-            r = requests.get(url, headers={'user-agent': 'ejdzent'})
-            soup = BeautifulSoup(r.text, "lxml")
-            for a in soup.find_all('a', {'class': 'g-sm justify-left hidden-xs hidden-md-up bold'}, href=True):
-                linki_tmp.append(a['href'])
-        if import_num:
-            linki_tmp = linki_tmp[:import_num]
-    if not linki:
-        for url in linki_tmp:
-            time.sleep(4)
-            year = url[-4:]
-            r = requests.get(url, headers={'user-agent': 'ejdzent'})
-            soup = BeautifulSoup(r.text, "lxml")
-            for a in soup.find_all('a', {'class': 'px-1 g-lg-3 g-md-3 g-sm-4 g-xs-4 justify-left'}, href=True):
-                linki.append([a['href'], year])
-    if not kody:
-        info = ['codex',
-                'place',
-                'month',
-                'day',
-                'year',
-                'gender',
-                'hill_size',
-                'team',
-                'season']
-        database = pd.DataFrame([], columns=info)
-        names_list = []
-        for item in linki:
-            time.sleep(4)
-            url = item[0]
-            year = item[1]
-            r = requests.get(url, headers={'user-agent': 'ejdzent'})
-            soup = BeautifulSoup(r.text, "lxml")
-            for a in soup.find_all('span', {'class': 'event-details__field'}):
-                codex = a.text[-4:]
-                print(year+'JP'+codex)
-            for suffix in to_download:
-                tmp_file_name = year+'JP'+codex+suffix
-                kody.append(tmp_file_name)
-            if scrap:
-                tmp, tmp_2 = scraping_fis(soup, year)
-                database = database.append(tmp)
-                names_list.append(tmp_2)
+    info = ['codex',
+            'place',
+            'month',
+            'day',
+            'year',
+            'gender',
+            'hill_size',
+            'team',
+            'season']
+    linki = []
+    linki_tmp = []
+    database = pd.DataFrame([], columns=info)
+    names_list = []
+    kody = []
+    for year in years:
+        time.sleep(5)
+        url = 'https://www.fis-ski.com/DB/?eventselection=results&place=&sectorcode=JP&seasoncode='+str(year)+'&categorycode='+genre+'&disciplinecode=&gendercode=&racedate=&racecodex=&nationcode=&seasonmonth=X-'+str(year)+'&saveselection=-1&seasonselection='
+        r = requests.get(url, headers={'user-agent': 'ejdzent'})
+        soup = BeautifulSoup(r.text, "lxml")
+        for a in soup.find_all('a', {'class': 'g-sm justify-left hidden-xs hidden-md-up bold'}, href=True):
+            linki_tmp.append(a['href'])
+    if import_num:
+        linki_tmp = linki_tmp[:import_num]
+    for url in linki_tmp:
+        time.sleep(4)
+        year = url[-4:]
+        r = requests.get(url, headers={'user-agent': 'ejdzent'})
+        soup = BeautifulSoup(r.text, "lxml")
+        for a in soup.find_all('a', {'class': 'px-1 g-lg-3 g-md-3 g-sm-4 g-xs-4 justify-left'}, href=True):
+            linki.append([a['href'], year])
+    for item in linki:
+        time.sleep(4)
+        url = item[0]
+        year = item[1]
+        r = requests.get(url, headers={'user-agent': 'ejdzent'})
+        soup = BeautifulSoup(r.text, "lxml")
+        for a in soup.find_all('span', {'class': 'event-details__field'}):
+            codex = a.text[-4:]
+            print(year+'JP'+codex)
+        for suffix in to_download:
+            tmp_file_name = year+'JP'+codex+suffix
+            kody.append(tmp_file_name)
+        if scrap:
+            tmp, tmp_2 = scraping_fis(soup, year)
+            database = database.append(tmp)
+            names_list.append(tmp_2)
     for kod in kody:
         data = kod[0:4]
         cc = kod[6:10]
@@ -285,14 +282,13 @@ def import_links(years=[2021], genre='GP', to_download=['RL', 'RLQ', 'SLQ', 'SLR
             continue
         if r.status_code == 404:
             continue
+        time.sleep(4)
+        open(os.getcwd()+'\\PDFs\\'+kod+'.pdf', 'wb').write(r.content)
+        if os.path.getsize(os.getcwd()+'\\PDFs\\'+kod+'.pdf') < 15:
+            os.remove(os.getcwd()+'\\PDFs\\'+kod+'.pdf')
         else:
-            time.sleep(4)
-            open(os.getcwd()+'\\PDFs\\'+kod+'.pdf', 'wb').write(r.content)
-            if os.path.getsize(os.getcwd()+'\\PDFs\\'+kod+'.pdf') < 15:
-                os.remove(os.getcwd()+'\\PDFs\\'+kod+'.pdf')
-            else:
-                print('Pobrano konkurs: '+kod+'.pdf')
-    return([linki_tmp, linki, kody, database, names_list])
+            print('Pobrano konkurs: '+kod+'.pdf')
+    return [linki_tmp, linki, kody, database, names_list]
 
 
 def validate_number(line):
@@ -300,7 +296,7 @@ def validate_number(line):
     cond_1 = len(line.split(' ')) == 1
     cond_2 = line.isnumeric()
     cond_3 = all([line.count('-'), line[0].isdigit(), len(line) <= 4])
-    return(cond_1 and (cond_2 or cond_3))
+    return cond_1 and (cond_2 or cond_3)
 
 
 def find_names(comp, tekst_lin, year, tick):
@@ -340,10 +336,9 @@ def find_names(comp, tekst_lin, year, tick):
         if comp['team'] == 1 and int(year) < 2016:
             indexes = [i for i, x in enumerate(tekst_lin) if validate_number(x)]
             lista = [[tekst_lin[i]]+[tekst_lin[i+1]] for i in indexes]
-            return(lista)
-        else:
-            indexes = [i for i, x in enumerate(tekst_lin) if validate(x)]
-            check_club = [validate_number(tekst_lin[x-3]) for x in indexes]
+            return lista
+        indexes = [i for i, x in enumerate(tekst_lin) if validate(x)]
+        check_club = [validate_number(tekst_lin[x-3]) for x in indexes]
         for i, x in enumerate(indexes):
             if int(year) < 2016:
                 names.append(tekst_lin[x-3])
@@ -366,11 +361,11 @@ def find_names(comp, tekst_lin, year, tick):
             else:
                 names.append(tekst_lin[x-3])
         lista = [[tekst_lin[x+1]]+[names[i]] for i, x in enumerate(indexes)]
-    return(lista)
+    return lista
 
 
 
-def import_start_list(comp, pdf_name, block=False, tekstlin=[]):
+def import_start_list(comp, pdf_name, block=False, tekstlin=False):
     """
     Scrap information from FIS start list PDF files.
 
@@ -489,23 +484,22 @@ def import_start_list(comp, pdf_name, block=False, tekstlin=[]):
     result_file.close()
     if not block:
         return([lista, comps_infos])
-    else:
-        return([[], comps_infos])
+    return([[], comps_infos])
 
 
 take_years = [2021]
-tick = 0
+type_indice = 0
 types = ['WC', 'COC', 'GP', 'FC', 'SFWC', 'WSC']
-new_data = import_links(years=take_years, genre=types[tick], import_num=3)
+new_data = import_links(years=take_years, genre=types[type_indice], import_num=3)
 
 comps_init = new_data[3]
-comps_init['type'] = tick
+comps_init['type'] = type_indice
 to_process = ['RLQ', 'RL', 'RLT', 'RTRIA']
 to_process = [x+'.pdf' for x in to_process]
-lista = os.listdir(os.getcwd()+'\\PDFs\\')
+list_of_pdfs = os.listdir(os.getcwd()+'\\PDFs\\')
 comps_init['ID'] = comps_init.apply(lambda x: x['season']+'JP'+x['codex'], axis=1).tolist()
-lista = [x for x in lista if any(t for t in to_process if t in x) and any(t for t in comps_init['ID'] if t in x)]
-lista.reverse()
+list_of_pdfs = [x for x in list_of_pdfs if any(t for t in to_process if t in x) and any(t for t in comps_init['ID'] if t in x)]
+list_of_pdfs.reverse()
 
 start_lists = []
 comps_names = ['season',
@@ -514,21 +508,21 @@ comps_names = ['season',
                'k-point',
                'meter value',
                'gate factor',
-               'wind factor', 
+               'wind factor',
                'id']
-comps = pd.DataFrame([], index=comps_names)
+competitions = pd.DataFrame([], index=comps_names)
 
-for i, pdf_name in enumerate(lista):
-    comp = comps_init[comps_init['ID'] == pdf_name[:10]].iloc[0]
-    [names_list, comps_infos] = import_start_list(comp, pdf_name[:-4])
-    comps = comps.append(comps_infos, ignore_index=True)
-    start_lists = start_lists+[[names_list]]
+for pdf_file in list_of_pdfs:
+    competition = comps_init[comps_init['ID'] == pdf_file[:10]].iloc[0]
+    [list_of_names, info_comp] = import_start_list(competition, pdf_file[:-4])
+    competitions = competitions.append(info_comp, ignore_index=True)
+    start_lists = start_lists+[[list_of_names]]
 comps_init = comps_init.drop(['ID'], axis=1)
-comps = pd.merge(comps, comps_init, on=['season', 'codex'], how='inner')
-comps['date'] = comps.apply(lambda x: to_date(x['day'], x['month'], x['year']), axis=1)
-comps = comps.drop(['month', 'day', 'year'], axis=1)
-comps['type'] = tick
-name = '_'.join([str(x) for x in take_years])+'_'+str(types[tick])+'_'+str(date.today())+'.csv'
-if not os.path.isfile(os.getcwd()+'\\comps\\'+name):
-    comps.to_csv(os.getcwd()+'\\comps\\'+name, index=False)
-comps.to_csv(os.getcwd()+'\\elastic_comps\\'+name, index=False)
+competitions = pd.merge(competitions, comps_init, on=['season', 'codex'], how='inner')
+competitions['date'] = competitions.apply(lambda x: to_date(x['day'], x['month'], x['year']), axis=1)
+competitions = competitions.drop(['month', 'day', 'year'], axis=1)
+competitions['type'] = type_indice
+save_name = '_'.join([str(x) for x in take_years])+'_'+str(types[type_indice])+'_'+str(date.today())+'.csv'
+if not os.path.isfile(os.getcwd()+'\\comps\\'+save_name):
+    competitions.to_csv(os.getcwd()+'\\comps\\'+save_name, index=False)
+competitions.to_csv(os.getcwd()+'\\elastic_comps\\'+save_name, index=False)
