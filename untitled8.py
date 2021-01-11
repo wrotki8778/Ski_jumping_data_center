@@ -168,12 +168,13 @@ def show_rating(comps, names, rating_db, take_all=True, index = False):
 
 
 actual_comps = merge_infos(os.getcwd()+'\\comps\\')
+actual_comps.to_csv(os.getcwd()+'\\comps\\all_comps.csv')
 actual_comps = actual_comps[actual_comps['training'] != 1]
 actual_comps = actual_comps.sort_values(['date', 'id'], ascending=[True, False])
 actual_comps = actual_comps.reset_index()
 actual_names = merge_names(actual_comps, os.getcwd()+'\\nazwy\\')
 actual_results = merge_comps(actual_names, actual_comps, os.getcwd()+'\\results\\')
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
-actual_results = show_rating(actual_comps, actual_names, actual_rating, False)
-ryoyu = actual_rating[actual_rating['codex'] == 6996]
+actual_results = show_rating(actual_comps, actual_names, actual_rating, True)
+ryoyu = actual_rating[actual_rating['codex'] == 2067]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
