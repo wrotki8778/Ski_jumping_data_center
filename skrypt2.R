@@ -73,6 +73,19 @@ results$column_label = NULL
 dir_c = paste(getwd(), '/comps/all_comps.csv', sep = '')
 competitions <- read.csv2(dir_c, header = TRUE, sep = ',')
 
-area = 'Wisla (POL)'
-filtered_competition <- filter(competitions, place == area)
-filtered_results <- filter(results, results$comp_name %in% filtered_competition$id)
+area = 'Oslo'
+min_size = 115
+max_size = 155
+filtered_competition <-
+  filter(competitions, str_detect(place, area) & as.double(hill_size_x) > min_size & as.double(hill_size_x) < max_size)[-c(42,43),]
+filtered_results <-
+  filter(results, comp_name %in% filtered_competition$id)
+filtered_results <- filter(filtered_results, gate != 0 & speed != 0)
+boxplot(
+  speed ~ gate,
+  data = filtered_results ,
+  main = "Correlation of speed with inrun length in Garmisch",
+  xlab = "Gate",
+  ylab = "Speed (km/h)",
+  varwidth = TRUE
+)

@@ -566,8 +566,8 @@ def rozdziel_rl_rlq(comp, kwale, team, TCS):
         n = [12]
         offset = [1]
     if TCS and kwale == 2 and not no_factor:
-        n = [11]
-        offset = [1]
+        n = [12]
+        offset = [2]
     if TCS == 2:
         n = [1, 12]
         offset = [2, 1]
@@ -689,8 +689,10 @@ def column_info(comp, kwale, team):
         indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
     if kwale and not team:
         indices = [0, 1, 2, 12, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15]
-        if no_factor:
+        if no_factor and kwale == 2:
             indices = [0, 12, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14]
+        if no_factor and kwale == 1:
+            indices = [0, 12, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     nazwa = comp['id']
     if nazwa.count('RTRIA'):
         indices = [0, 3, 4, 1, 2, 5, 13, 14, 15]
@@ -790,8 +792,8 @@ def collect(comp, tekstlin=False, TCS=0, show_all=0):
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 comps = max(list_of_files, key=os.path.getctime)
 comps = pd.read_csv(comps)
-# comps = pd.read_csv(os.getcwd()+'/comps/2020_FC_2021-01-04.csv')
-
+# comps = pd.read_csv(os.getcwd()+'/comps/2011_WC.csv')
+comps = comps[comps['id'].str.contains('Q')]
 exit_codes = []
 errors = []
 for k, comp_to_process in comps.iterrows():
@@ -832,8 +834,8 @@ for comp_to_fix in to_fix[:3]:
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-"""
-n = 10
+
+n = 48
 comp_manual = comps.loc[n]
 # comp_manual['type'] = 0
 template = 0
@@ -860,4 +862,3 @@ old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3) and not old_comp:
     dalej = dalej.drop(['gate_points'], axis=1)
 dalej.to_csv(comp_manual['id']+'.csv', index=False)
-"""
