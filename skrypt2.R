@@ -70,6 +70,8 @@ results$X = NULL
 results$Unnamed..0 = NULL
 results$column_label = NULL
 
+write.csv2(results,'all_results.csv')
+
 dir_c = paste(getwd(), '/comps/all_comps.csv', sep = '')
 competitions <- read.csv2(dir_c, header = TRUE, sep = ',')
 

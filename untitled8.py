@@ -173,8 +173,9 @@ actual_comps = actual_comps[actual_comps['training'] != 1]
 actual_comps = actual_comps.sort_values(['date', 'id'], ascending=[True, False])
 actual_comps = actual_comps.reset_index()
 actual_names = merge_names(actual_comps, os.getcwd()+'\\nazwy\\')
+actual_comps.to_csv(os.getcwd()+'\\nazwy\\all_names.csv')
 actual_results = merge_comps(actual_names, actual_comps, os.getcwd()+'\\results\\')
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
-actual_results = show_rating(actual_comps, actual_names, actual_rating, True)
+actual_results = show_rating(actual_comps, actual_names, actual_rating, False, 807)
 ryoyu = actual_rating[actual_rating['codex'] == 2067]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])

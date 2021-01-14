@@ -294,7 +294,7 @@ def import_start_list(comp, pdf_name, block=False, tekstlin=False):
     return([[], comps_infos])
 
 
-def zwroc_skoki(comp, names=False, tekstlin=False, TCS=0):
+def zwroc_skoki(comp, tekstlin=False, tekst_import=False, TCS=0):
     """
     Return a list of athletes with all single jumps made in a competition.
 
@@ -303,15 +303,14 @@ def zwroc_skoki(comp, names=False, tekstlin=False, TCS=0):
     comp : Pandas series
         Infos about competition gathered in a way provided by import_links
         function (check "database" output for details).
-    names : list, optional
-        If provided, is used as a list of names of the
-        consequent athletes. Formatting should be the same as
-        "lista" output in import_start_list function.
-        The default is [].
     tekstlin : list of strings, optional
         If provided, function does not parse the PDF of the competition
         and takes alternative (corrected) version in the same format.
         The default is [].
+    tekst_import : list of strings, optional
+        If provided, is used as a list of names of the
+        consequent athletes. Formatting should be compatible with 
+        the import_start_list function. The default is False.
     TCS : integer, optional
         Variable, which determines type of formatting in WC/WSC/SFWC
         competitions. Standard cases are:
@@ -342,11 +341,7 @@ def zwroc_skoki(comp, names=False, tekstlin=False, TCS=0):
     names_list = []
     if nazwa[-5] == 'Q':
         kwale = 2
-    if not names:
-        names_list = pd.DataFrame(import_start_list(comp, comp['id']+'.pdf')[0], columns=['bib', 'name'])
-    else:
-        names_list = pd.DataFrame(names, columns=['bib', 'codex', 'name'])
-        names_list['name'] = names_list['name'].str.lower()
+    names_list = pd.DataFrame(import_start_list(comp, comp['id']+'.pdf', tekstlin=tekst_import)[0], columns=['bib', 'name'])
     parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+nazwa)
     tekst = parsed["content"]
     tekst = tekst.lower()
@@ -725,7 +720,7 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0, show_all=0):
     exit_code = 0
     output = [idx for idx, line in enumerate(skok) if line.count('.') > 4 and sum(x.isdigit() for x in line)]
     output = [x for x in output if x <= 10]
-    if TCS == 1 and (comp['type'] == 1 or comp['type'] == 3):
+    if TCS == 1 and (comp['type'] in (1,3)):
         if len(skok) > 1:
             skok = [skok[0]]+przeksztalc(comp, skok[1], kwale, team, TCS)
             output = list(range(1,len(skok)))
@@ -774,11 +769,8 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0, show_all=0):
     return [new_jump, exit_code]
 
 
-def collect(comp, tekstlin=False, TCS=0, show_all=0):
-    if not tekstlin:
-        jumps, kwale, team, TCS = zwroc_skoki(comp, TCS=TCS)
-    else:
-        jumps, kwale, team, TCS = zwroc_skoki(comp, tekstlin=tekstlin, TCS=TCS)
+def collect(comp, tekstlin=False, tekst_start=False, TCS=0, show_all=0):
+    jumps, kwale, team, TCS = zwroc_skoki(comp, tekstlin=tekstlin, tekst_import=tekst_start, TCS=TCS)
     exit_code = 0
     info = column_info(comp, kwale, team)
     database = pd.DataFrame([], columns=info)
@@ -788,12 +780,11 @@ def collect(comp, tekstlin=False, TCS=0, show_all=0):
         database = database.append(new_jumps, ignore_index=True)
     return([database, exit_code])
 
-
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 comps = max(list_of_files, key=os.path.getctime)
 comps = pd.read_csv(comps)
 # comps = pd.read_csv(os.getcwd()+'/comps/2011_WC.csv')
-comps = comps[comps['id'].str.contains('Q')]
+
 exit_codes = []
 errors = []
 for k, comp_to_process in comps.iterrows():
@@ -817,7 +808,7 @@ to_fix = errors
 
 exit_codes = []
 errors = []
-for comp_to_fix in to_fix[:3]:
+for comp_to_fix in to_fix:
     print(comp_to_fix)
     file_name = os.getcwd()+'\\results\\'+comp_to_fix['id']+'.csv'
     template = 1
@@ -835,9 +826,9 @@ for comp_to_fix in to_fix[:3]:
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
 
-n = 48
+n = 85
 comp_manual = comps.loc[n]
-# comp_manual['type'] = 0
+comp_manual['type'] = 0
 template = 0
 parsed_manual = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_manual['id']+'.pdf')
 tekst_manual = parsed_manual["content"]
@@ -856,8 +847,8 @@ tekst_start = tekst_start.lower()
 tekst_start = tekst_start.splitlines()
 tekst_start = [i for i in tekst_start if i]
 content_start = import_start_list(comp_manual, comp_manual['id']+'.pdf', tekstlin=tekst_start)
-content = zwroc_skoki(comp_manual, tekstlin=tekst_manual, TCS=template)
-dalej, warn = collect(comp_manual, tekst_manual, TCS=template, show_all=True)
+content = zwroc_skoki(comp_manual, tekst_manual, tekst_start, TCS=template)
+dalej, warn = collect(comp_manual, tekst_manual, tekst_start, TCS=template, show_all=True)
 old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3) and not old_comp:
     dalej = dalej.drop(['gate_points'], axis=1)
