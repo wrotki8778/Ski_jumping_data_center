@@ -73,6 +73,7 @@ def merge_infos(directory):
                      'type', 'date', 'id', 'training']
     comps = pd.DataFrame([], columns=columns_names)
     list_of_files = os.listdir(directory)
+    list_of_files.remove('all_comps.csv')
     for item in list_of_files:
         tmp = pd.read_csv(directory+'\\'+item, sep=',')
         comps = comps.append(tmp)
@@ -168,7 +169,7 @@ def show_rating(comps, names, rating_db, take_all=True, index = False):
 
 
 actual_comps = merge_infos(os.getcwd()+'\\comps\\')
-actual_comps.to_csv(os.getcwd()+'\\comps\\all_comps.csv')
+actual_comps.to_csv(os.getcwd()+'\\comps\\all_comps.csv',index=False)
 actual_comps = actual_comps[actual_comps['training'] != 1]
 actual_comps = actual_comps.sort_values(['date', 'id'], ascending=[True, False])
 actual_comps = actual_comps.reset_index()

@@ -803,7 +803,7 @@ for k, comp_to_process in comps.iterrows():
         if not os.path.isfile(directory):
             errors.append(comp_to_process)
             print(comp_to_process)
-
+"""
 to_fix = errors
 
 exit_codes = []
@@ -825,10 +825,10 @@ for comp_to_fix in to_fix:
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-
-n = 85
+"""
+n = 34
 comp_manual = comps.loc[n]
-comp_manual['type'] = 0
+# comp_manual['type'] = 0
 template = 0
 parsed_manual = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_manual['id']+'.pdf')
 tekst_manual = parsed_manual["content"]
