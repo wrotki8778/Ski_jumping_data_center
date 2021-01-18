@@ -53,7 +53,11 @@ def take_number(string):
     string = string.replace('/', ' ')
     tmp = string.split(' ')
     take = [x for x in tmp if is_number(x)]
-    return float(take[0])
+    try:
+        return float(take[0])
+    except IndexError:
+        return np.nan
+    return np.nan
 
 
 def to_date(day, month, year):
@@ -487,19 +491,20 @@ def import_start_list(comp, pdf_name, block=False, tekstlin=False):
     return([[], comps_infos])
 
 
-take_years = [2011,2012,2013,2014,2015]
-type_indice = 0
+take_years = [2021]
+type_indice = 1
 types = ['WC', 'COC', 'GP', 'FC', 'SFWC', 'WSC']
-new_data = import_links(years=take_years, genre=types[type_indice], import_num=0)
+new_data = import_links(years=take_years, genre=types[type_indice], import_num=3)
 
 comps_init = new_data[3]
 comps_init['type'] = type_indice
 to_process = ['RLQ', 'RL', 'RLT', 'RTRIA']
 to_process = [x+'.pdf' for x in to_process]
 list_of_pdfs = os.listdir(os.getcwd()+'\\PDFs\\')
-comps_init['ID'] = comps_init.apply(lambda x: x['season']+'JP'+x['codex'], axis=1).tolist()
+comps_init['ID'] = comps_init.apply(lambda x: str(x['season'])+'JP'+str(x['codex']), axis=1).tolist()
 list_of_pdfs = [x for x in list_of_pdfs if any(t for t in to_process if t in x) and any(t for t in comps_init['ID'] if t in x)]
 list_of_pdfs.reverse()
+
 
 start_lists = []
 comps_names = ['season',
