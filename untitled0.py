@@ -803,7 +803,7 @@ for k, comp_to_process in comps.iterrows():
         if not os.path.isfile(directory):
             errors.append(comp_to_process)
             print(comp_to_process)
-"""
+
 to_fix = errors
 
 exit_codes = []
@@ -811,6 +811,8 @@ errors = []
 for comp_to_fix in to_fix:
     print(comp_to_fix)
     file_name = os.getcwd()+'\\results\\'+comp_to_fix['id']+'.csv'
+    if os.path.isfile(file_name) or comp_to_fix.name in (214, 243, 336, 390):
+        continue
     template = 1
     content = zwroc_skoki(comp_to_fix, TCS=template)
     [dalej, warn] = collect(comp_to_fix, TCS=template)
@@ -824,8 +826,8 @@ for comp_to_fix in to_fix:
     if not warn and not os.path.isfile(file_name):
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
-    
-n = 60
+
+n = 390
 comp_manual = comps.loc[n]
 # comp_manual['type'] = 0
 template = 1
@@ -852,4 +854,3 @@ old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3) and not old_comp:
     dalej = dalej.drop(['gate_points'], axis=1)
 dalej.to_csv(comp_manual['id']+'.csv', index=False)
-"""
