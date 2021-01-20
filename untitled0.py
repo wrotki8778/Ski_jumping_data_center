@@ -147,10 +147,15 @@ def find_names(comp, tekst_lin, year, tick):
             return lista
         indexes = [i for i, x in enumerate(tekst_lin) if validate(x)]
         check_club = [validate_number(tekst_lin[x-3]) for x in indexes]
+        check_club_two = [bool(len(tekst_lin[x-1].split(' '))-1) for x in indexes]
         for i, x in enumerate(indexes):
             if int(year) < 2016:
-                names.append(tekst_lin[x-3])
-                bibs.append(tekst_lin[x-4])
+                if 1-check_club_two[i]:
+                    names.append(tekst_lin[x-3])
+                    bibs.append(tekst_lin[x-4])
+                else:
+                    names.append(tekst_lin[x-1][:-4])
+                    bibs.append(tekst_lin[x-2])
             elif check_club[i]:
                 names.append(tekst_lin[x-1])
                 bibs.append(tekst_lin[x-3])
@@ -783,7 +788,7 @@ def collect(comp, tekstlin=False, tekst_start=False, TCS=0, show_all=0):
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 comps = max(list_of_files, key=os.path.getctime)
 # comps = pd.read_csv(comps)
-comps = pd.read_csv(os.getcwd()+'/comps/2011_2012_2013_2014_2015_COC.csv')
+comps = pd.read_csv(os.getcwd()+'/comps/2011_2012_2013_2014_2015_FC.csv')
 comps = comps[comps['k-point'].notnull()]
 exit_codes = []
 errors = []
@@ -811,7 +816,7 @@ errors = []
 for comp_to_fix in to_fix:
     print(comp_to_fix)
     file_name = os.getcwd()+'\\results\\'+comp_to_fix['id']+'.csv'
-    if os.path.isfile(file_name) or comp_to_fix.name in (214, 243, 336, 390):
+    if os.path.isfile(file_name) or comp_to_fix.name in (115, 187):
         continue
     template = 1
     content = zwroc_skoki(comp_to_fix, TCS=template)
@@ -827,10 +832,10 @@ for comp_to_fix in to_fix:
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-n = 390
+n = 257
 comp_manual = comps.loc[n]
-# comp_manual['type'] = 0
-template = 1
+comp_manual['type'] = 0
+template = 0
 parsed_manual = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_manual['id']+'.pdf')
 tekst_manual = parsed_manual["content"]
 tekst_manual = tekst_manual.lower()
