@@ -132,7 +132,13 @@ def build_rating(comps, results, names):
             print(comp)
             part_results = results[results['id'] == comp['id']]
             if part_results.empty:
-                continue
+                try:
+                    file_name = os.getcwd()+'\\nazwy\\'+comp['id'][:10]+'nazfis.csv'
+                    part_results = pd.read_csv(file_name, sep=';', header=None)
+                    part_results.columns = ['bib', 'codex', 'name']
+                    print('imported from nazfis.csv file')
+                except pd.errors.EmptyDataError:
+                    continue
             part_results = pd.DataFrame(part_results['codex'])
             part_results = part_results.drop_duplicates()
             part_results = pd.merge(part_results, rating_act, how='left')
@@ -177,6 +183,6 @@ actual_names = merge_names(actual_comps, os.getcwd()+'\\nazwy\\')
 actual_names.to_csv(os.getcwd()+'\\nazwy\\all_names.csv')
 actual_results = merge_comps(actual_names, actual_comps, os.getcwd()+'\\results\\')
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
-actual_results = show_rating(actual_comps, actual_names, actual_rating, True)
-ryoyu = actual_rating[actual_rating['codex'] == 5168]
+actual_results = show_rating(actual_comps, actual_names, actual_rating, False, 1779)
+ryoyu = actual_rating[actual_rating['codex'] == 7147]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])

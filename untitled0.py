@@ -787,9 +787,10 @@ def collect(comp, tekstlin=False, tekst_start=False, TCS=0, show_all=0):
 
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 comps = max(list_of_files, key=os.path.getctime)
-# comps = pd.read_csv(comps)
-comps = pd.read_csv(os.getcwd()+'/comps/2011_2012_2013_2014_2015_FC.csv')
+comps = pd.read_csv(comps)
+# comps = pd.read_csv(os.getcwd()+'/comps/2011_2012_2013_2014_2015_FC.csv')
 comps = comps[comps['k-point'].notnull()]
+
 exit_codes = []
 errors = []
 for k, comp_to_process in comps.iterrows():
@@ -808,7 +809,7 @@ for k, comp_to_process in comps.iterrows():
         if not os.path.isfile(directory):
             errors.append(comp_to_process)
             print(comp_to_process)
-
+"""
 to_fix = errors
 
 exit_codes = []
@@ -859,3 +860,4 @@ old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3) and not old_comp:
     dalej = dalej.drop(['gate_points'], axis=1)
 dalej.to_csv(comp_manual['id']+'.csv', index=False)
+"""
