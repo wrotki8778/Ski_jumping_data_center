@@ -183,6 +183,6 @@ actual_names = merge_names(actual_comps, os.getcwd()+'\\nazwy\\')
 actual_names.to_csv(os.getcwd()+'\\nazwy\\all_names.csv')
 actual_results = merge_comps(actual_names, actual_comps, os.getcwd()+'\\results\\')
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
-actual_results = show_rating(actual_comps, actual_names, actual_rating, False, 1779)
+actual_results = show_rating(actual_comps, actual_names, actual_rating, True)
 ryoyu = actual_rating[actual_rating['codex'] == 7147]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])

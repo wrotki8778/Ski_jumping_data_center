@@ -160,9 +160,11 @@ def find_names(comp, tekst_lin, year, tick):
                 names.append(tekst_lin[x-1])
                 bibs.append(tekst_lin[x-3])
             else:
-                tmp = tekst_lin[x-1].split(' ')
-                names.append(' '.join(tmp[1:]))
-                bibs.append(tmp[0])
+                # tmp = tekst_lin[x-1].split(' ')
+                # names.append(' '.join(tmp[1:]))
+                # bibs.append(tmp[0])
+                names.append(tekst_lin[x-1])
+                bibs.append(tekst_lin[x-2])
         lista = [[bibs[i]]+[names[i]] for i, x in enumerate(indexes)]
     else:
         indexes = [i for i, x in enumerate(tekst_lin) if validate(x)]
@@ -247,6 +249,7 @@ def import_start_list(comp, pdf_name, block=False, tekstlin=False):
         file_name = name+'SLR1.pdf'
         parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
     tekst = parsed["content"]
+    tekst = tekst.replace(' *', '')
     tekst = tekst.replace('* ', '')
     tekst = tekst.replace('*', '')
     tekst = tekst.lower()
@@ -405,10 +408,12 @@ def conc_numbers(skok, comp, TCS=0):
         no_factor = math.isnan(comp['wind factor'])
         if no_factor:
             shift = 2
+            indexes = [(i, i+shift) for i in range(start, min(end, end_2)) if not (i-start) % shift]
+            lines = [' '.join(skok[i:j]) for i, j in indexes]
         else:
             shift = 4
-        indexes = [(i, i+shift) for i in range(start, min(end, end_2)) if not (i-start) % shift]
-        lines = [' '.join(skok[i:i+1]+skok[i+2:j]) for i, j in indexes]
+            indexes = [(i, i+shift) for i in range(start, min(end, end_2)) if not (i-start) % shift]
+            lines = [' '.join(skok[i:i+1]+skok[i+2:j]) for i, j in indexes]
         no_speed = [2 - skok[i].count('.') for i, j in indexes]
         lines = [no_speed[i]*'0.0 ' + line for i, line in enumerate(lines)]
         new_lines = [skok[0]]
@@ -737,18 +742,17 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0, show_all=0):
     new_jump = pd.DataFrame([], columns=info)
     for line in output:
         name = skok[0]
-        if TCS == 1 and (comp['type'] == 1 or comp['type'] == 3):
+        if TCS == 1 and comp['type'] in (1, 3):
             notes_pre = skok[line]
         else:
             notes_pre = przeksztalc(comp, skok[line], kwale, team, TCS)
             if not comp['training'] or ((comp['type'] == 1 or comp['type'] == 3) and comp['training']):
                 notes_pre = [x for x in notes_pre.split(' ') if x]
+        if show_all:
+            print(notes_pre)
         notes = [float(x) for x in notes_pre]
         if show_all:
-            try:
-                print(notes, notes_pre)
-            except ValueError:
-                print(notes_pre)
+            print(notes)
         passed_values = len(info)
         if len(notes) == passed_values - 2:
             notes.append(0)
@@ -788,13 +792,14 @@ def collect(comp, tekstlin=False, tekst_start=False, TCS=0, show_all=0):
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 comps = max(list_of_files, key=os.path.getctime)
 comps = pd.read_csv(comps)
-# comps = pd.read_csv(os.getcwd()+'/comps/2011_2012_2013_2014_2015_FC.csv')
+comps = pd.read_csv(os.getcwd()+'/comps/2010_2011_2012_2013_2014_2015_GP.csv')
 comps = comps[comps['k-point'].notnull()]
-
 exit_codes = []
 errors = []
 for k, comp_to_process in comps.iterrows():
     directory = os.getcwd()+'\\results\\'+comp_to_process['id']+'.csv'
+    if os.path.isfile(directory):
+        continue
     try:
         content = zwroc_skoki(comp_to_process)
         [dalej, warn] = collect(comp_to_process)
@@ -809,7 +814,7 @@ for k, comp_to_process in comps.iterrows():
         if not os.path.isfile(directory):
             errors.append(comp_to_process)
             print(comp_to_process)
-"""
+          
 to_fix = errors
 
 exit_codes = []
@@ -833,9 +838,9 @@ for comp_to_fix in to_fix:
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-n = 257
+n = 249
 comp_manual = comps.loc[n]
-comp_manual['type'] = 0
+# comp_manual['type'] = 0
 template = 0
 parsed_manual = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_manual['id']+'.pdf')
 tekst_manual = parsed_manual["content"]
@@ -853,11 +858,10 @@ tekst_start = parsed_start["content"]
 tekst_start = tekst_start.lower()
 tekst_start = tekst_start.splitlines()
 tekst_start = [i for i in tekst_start if i]
-content_start = import_start_list(comp_manual, comp_manual['id']+'.pdf', tekstlin=tekst_start)
+content_start = import_start_list(comp_manual, comp_manual['id']+'.pdf')
 content = zwroc_skoki(comp_manual, tekst_manual, tekst_start, TCS=template)
 dalej, warn = collect(comp_manual, tekst_manual, tekst_start, TCS=template, show_all=True)
 old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3) and not old_comp:
     dalej = dalej.drop(['gate_points'], axis=1)
 dalej.to_csv(comp_manual['id']+'.csv', index=False)
-"""
