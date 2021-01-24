@@ -183,6 +183,14 @@ actual_names = merge_names(actual_comps, os.getcwd()+'\\nazwy\\')
 actual_names.to_csv(os.getcwd()+'\\nazwy\\all_names.csv')
 actual_results = merge_comps(actual_names, actual_comps, os.getcwd()+'\\results\\')
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
-actual_results = show_rating(actual_comps, actual_names, actual_rating, True)
+actual_standings = show_rating(actual_comps, actual_names, actual_rating, False)
 ryoyu = actual_rating[actual_rating['codex'] == 7147]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
+
+team_results = actual_results[actual_results['id'] == '2015JP3828RL']
+second_round = [i for i,x in team_results.iloc[1:].iterrows() if team_results.loc[i-1]['codex'] == x['codex']]
+first_round = [i for i,x in team_results.iterrows() if i not in second_round]
+first_round_results = team_results.loc[first_round]
+second_round_results = team_results.loc[second_round]
+second_round_results = second_round_results.sort_values(['points'], ascending=[False])
+first_round_results = first_round_results.sort_values(['points'], ascending=[False])
