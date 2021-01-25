@@ -129,7 +129,6 @@ def build_rating(comps, results, names):
             k = k/2
         print(k)
         if not comp['team']:
-            print(comp)
             part_results = results[results['id'] == comp['id']]
             if part_results.empty:
                 try:
@@ -140,14 +139,38 @@ def build_rating(comps, results, names):
                 except pd.errors.EmptyDataError:
                     continue
             part_results = pd.DataFrame(part_results['codex'])
-            part_results = part_results.drop_duplicates()
-            part_results = pd.merge(part_results, rating_act, how='left')
-            part_results.columns = ['codex', 'rating']
-            rating_db = doklej_rating(part_results, i, comp, rating_db, k)
+            part_results = [part_results.drop_duplicates()]
+        else:
+            k = k/2
+            print(comp)
+            team_results = actual_results[actual_results['id'] == comp['id']]
+            second_round = [i for i, x in team_results.iloc[1:].iterrows() 
+                            if team_results.loc[i-1]['codex'] == x['codex']]
+            first_round = [i for i, x in team_results.iterrows() 
+                           if i not in second_round]
+            first_round_results = team_results.loc[first_round]
+            second_round_results = team_results.loc[second_round]
+            first_round_results = first_round_results.sort_values(['points'], ascending=[False])
+            second_round_results = second_round_results.sort_values(['points'], ascending=[False])
+            part_results = [pd.DataFrame(first_round_results['codex'])] + \
+                           [pd.DataFrame(second_round_results['codex'])]
+            if second_round_results.empty:
+                part_results = [pd.DataFrame(first_round_results['codex'])]
+        for result in part_results:
+            if result.empty:
+                print('omitted')
+                continue
+            result = result.drop_duplicates()
+            result = pd.merge(result, rating_act, how='left')
+            result.columns = ['codex', 'rating']
+            rating_db = doklej_rating(result, i, comp, rating_db, k)
             rating_act = rating_db.groupby('codex')['rating'].sum().reset_index()[['codex', 'rating']]
             rating_act.columns = ['codex', 'next_rating']
-            part_results = pd.merge(part_results, rating_act, how='left')
-            part_results['delta'] = part_results['next_rating']-part_results['rating']
+            result = pd.merge(result, rating_act, how='left')
+            result['delta'] = result['next_rating']-result['rating']
+            if comp['team']:
+                print(comp)
+                print(result)
     return rating_db
 
 
@@ -170,7 +193,8 @@ def show_rating(comps, names, rating_db, take_all=True, index = False):
         rating_after = rating_db[(rating_db['id'] == comp['id']) & (rating_db['codex'].isin(comp_codex))]
         rating_after['position'] = rating_after.index
         new_results = pd.merge(new_results, rating_after, on='codex', how='inner')
-    new_results = new_results.drop_duplicates(subset=['codex'])
+        print(new_results)
+    # new_results = new_results.drop_duplicates(subset=['codex'])
     return new_results
 
 
@@ -183,14 +207,6 @@ actual_names = merge_names(actual_comps, os.getcwd()+'\\nazwy\\')
 actual_names.to_csv(os.getcwd()+'\\nazwy\\all_names.csv')
 actual_results = merge_comps(actual_names, actual_comps, os.getcwd()+'\\results\\')
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
-actual_standings = show_rating(actual_comps, actual_names, actual_rating, False)
-ryoyu = actual_rating[actual_rating['codex'] == 7147]
+actual_standings = show_rating(actual_comps, actual_names, actual_rating, True)
+ryoyu = actual_rating[actual_rating['codex'] == 5262]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
-
-team_results = actual_results[actual_results['id'] == '2015JP3828RL']
-second_round = [i for i,x in team_results.iloc[1:].iterrows() if team_results.loc[i-1]['codex'] == x['codex']]
-first_round = [i for i,x in team_results.iterrows() if i not in second_round]
-first_round_results = team_results.loc[first_round]
-second_round_results = team_results.loc[second_round]
-second_round_results = second_round_results.sort_values(['points'], ascending=[False])
-first_round_results = first_round_results.sort_values(['points'], ascending=[False])

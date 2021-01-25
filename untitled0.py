@@ -792,8 +792,9 @@ def collect(comp, tekstlin=False, tekst_start=False, TCS=0, show_all=0):
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 comps = max(list_of_files, key=os.path.getctime)
 comps = pd.read_csv(comps)
-comps = pd.read_csv(os.getcwd()+'/comps/2010_2011_2012_2013_2014_2015_GP.csv')
+# comps = pd.read_csv(os.getcwd()+'/comps/2010_2012_2014_2016_2018_2021_SFWC.csv')
 comps = comps[comps['k-point'].notnull()]
+
 exit_codes = []
 errors = []
 for k, comp_to_process in comps.iterrows():
@@ -814,7 +815,7 @@ for k, comp_to_process in comps.iterrows():
         if not os.path.isfile(directory):
             errors.append(comp_to_process)
             print(comp_to_process)
-          
+"""
 to_fix = errors
 
 exit_codes = []
@@ -838,9 +839,9 @@ for comp_to_fix in to_fix:
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-n = 249
+n = 1
 comp_manual = comps.loc[n]
-# comp_manual['type'] = 0
+comp_manual['type'] = 0
 template = 0
 parsed_manual = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_manual['id']+'.pdf')
 tekst_manual = parsed_manual["content"]
@@ -865,3 +866,4 @@ old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3) and not old_comp:
     dalej = dalej.drop(['gate_points'], axis=1)
 dalej.to_csv(comp_manual['id']+'.csv', index=False)
+"""
