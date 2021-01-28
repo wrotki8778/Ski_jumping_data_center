@@ -53,8 +53,9 @@ def merge_comps(names, comps, directory):
                      'gate_points', 'id']
     results = pd.DataFrame([], columns=columns_names)
     for i, comp in comps.iterrows():
+        print(i)
         try:
-            tmp = pd.read_csv(directory+str(comp['id'])+'.csv', sep=',')
+            tmp = pd.read_csv(directory+str(comp['id'])+'.csv', sep=',', na_values=['','NA'])
             tmp['id'] = comp['id']
             results = results.append(tmp)
         except FileNotFoundError:
@@ -78,6 +79,10 @@ def merge_infos(directory):
         tmp = pd.read_csv(directory+'\\'+item, sep=',')
         comps = comps.append(tmp)
     comps = comps.drop_duplicates(['id'])
+    comps[['hill_size_x','team', 'season', 'hill_size_y', 'k-point',
+           'meter value', 'gate factor', 'wind factor', 'type', 'training']] =\
+    comps[['hill_size_x','team', 'season', 'hill_size_y', 'k-point',
+           'meter value', 'gate factor', 'wind factor', 'type', 'training']].apply(pd.to_numeric)
     return comps
 
 
@@ -200,12 +205,13 @@ def show_rating(comps, names, rating_db, take_all=True, index = False):
 
 actual_comps = merge_infos(os.getcwd()+'\\comps\\')
 actual_comps.to_csv(os.getcwd()+'\\comps\\all_comps.csv',index=False)
-actual_comps = actual_comps[actual_comps['training'] != 1]
+#actual_comps = actual_comps.iloc[0:400]
 actual_comps = actual_comps.sort_values(['date', 'id'], ascending=[True, False])
 actual_comps = actual_comps.reset_index()
 actual_names = merge_names(actual_comps, os.getcwd()+'\\nazwy\\')
-actual_names.to_csv(os.getcwd()+'\\nazwy\\all_names.csv')
+actual_names.to_csv(os.getcwd()+'\\nazwy\\all_names.csv',index=False)
 actual_results = merge_comps(actual_names, actual_comps, os.getcwd()+'\\results\\')
+actual_results.to_csv(os.getcwd()+'\\results\\all_results.csv',index=False)
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
 actual_standings = show_rating(actual_comps, actual_names, actual_rating, True)
 ryoyu = actual_rating[actual_rating['codex'] == 5262]
