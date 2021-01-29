@@ -1,5 +1,9 @@
 library(tidyverse)
 setwd('C://Users//kubaf//Documents//Skoki//')
+
+dir = paste(getwd(), '/nazwy/all_names.csv', sep = '')
+names <- read.csv2(dir, header = TRUE, sep = ',')
+
 files_RL <-
   list.files(
     path = paste(getwd(), "/results", sep = ''),
@@ -62,7 +66,7 @@ results_database = lapply(files, function(x) {
       t[[column_name]] = apply(as.matrix(t[[column_name]]), 2, function_name)
     }
   }
-  t[['comp_name']] = rep(substr(x, 1, nchar(x) - 4), nrow(t))
+  t[['id']] = rep(substr(x, 1, nchar(x) - 4), nrow(t))
   return(t)
 })
 results = bind_rows(results_database, .id = "column_label")
@@ -70,19 +74,24 @@ results$X = NULL
 results$Unnamed..0 = NULL
 results$column_label = NULL
 
+results = merge(results,names, by = c('name'))
+
+results$name = NULL
+results$X = NULL
+
 write.csv2(results,'all_results.csv',row.names = FALSE)
 
 dir_c = paste(getwd(), '/comps/all_comps.csv', sep = '')
 competitions <- read.csv2(dir_c, header = TRUE, sep = ',')
 
-area = 'Oslo'
+area = 'Kuopio'
 min_size = 115
 max_size = 155
 filtered_competition <-
-  filter(competitions, str_detect(place, area) & as.double(hill_size_x) > min_size & as.double(hill_size_x) < max_size)[-c(42,43),]
+  filter(competitions, str_detect(place, area) & as.double(hill_size_x) > min_size & as.double(hill_size_x) < max_size)[-c(56,57,58),]
 filtered_results <-
   filter(results, comp_name %in% filtered_competition$id)
-filtered_results <- filter(filtered_results, gate != 0 & speed != 0)
+filtered_results <- filter(filtered_results, gate != 0 & speed > 85)
 boxplot(
   speed ~ gate,
   data = filtered_results ,

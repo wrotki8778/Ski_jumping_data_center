@@ -134,6 +134,7 @@ def build_rating(comps, results, names):
             k = k/2
         print(k)
         if not comp['team']:
+            print(comp)
             part_results = results[results['id'] == comp['id']]
             if part_results.empty:
                 try:
@@ -148,8 +149,8 @@ def build_rating(comps, results, names):
         else:
             k = k/2
             print(comp)
-            team_results = actual_results[actual_results['id'] == comp['id']]
-            second_round = [i for i, x in team_results.iloc[1:].iterrows() 
+            team_results = results[results['id'] == comp['id']]
+            second_round = [i for i, x in team_results.iloc[1:].iterrows()
                             if team_results.loc[i-1]['codex'] == x['codex']]
             first_round = [i for i, x in team_results.iterrows() 
                            if i not in second_round]
@@ -175,7 +176,6 @@ def build_rating(comps, results, names):
             result['delta'] = result['next_rating']-result['rating']
             if comp['team']:
                 print(comp)
-                print(result)
     return rating_db
 
 
@@ -205,14 +205,15 @@ def show_rating(comps, names, rating_db, take_all=True, index = False):
 
 actual_comps = merge_infos(os.getcwd()+'\\comps\\')
 actual_comps.to_csv(os.getcwd()+'\\comps\\all_comps.csv',index=False)
-#actual_comps = actual_comps.iloc[0:400]
+actual_comps = actual_comps[actual_comps['training']==0]
 actual_comps = actual_comps.sort_values(['date', 'id'], ascending=[True, False])
 actual_comps = actual_comps.reset_index()
 actual_names = merge_names(actual_comps, os.getcwd()+'\\nazwy\\')
 actual_names.to_csv(os.getcwd()+'\\nazwy\\all_names.csv',index=False)
-actual_results = merge_comps(actual_names, actual_comps, os.getcwd()+'\\results\\')
-actual_results.to_csv(os.getcwd()+'\\results\\all_results.csv',index=False)
+# actual_results = merge_comps(actual_names, actual_comps, os.getcwd()+'\\results\\')
+# actual_results.to_csv(os.getcwd()+'\\results\\all_results.csv',index=False)
+actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv',sep=';',decimal=',')
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
-actual_standings = show_rating(actual_comps, actual_names, actual_rating, True)
+actual_standings = show_rating(actual_comps, actual_names, actual_rating, False)
 ryoyu = actual_rating[actual_rating['codex'] == 5262]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
