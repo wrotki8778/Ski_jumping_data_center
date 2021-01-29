@@ -70,11 +70,12 @@ results_database = lapply(files, function(x) {
   return(t)
 })
 results = bind_rows(results_database, .id = "column_label")
-results$X = NULL
+results$X <- 1:nrow(results) 
 results$Unnamed..0 = NULL
 results$column_label = NULL
 
 results = merge(results,names, by = c('name'))
+results = results[order(results$X),]
 
 results$name = NULL
 results$X = NULL
