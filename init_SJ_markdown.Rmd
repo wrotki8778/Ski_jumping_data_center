@@ -1,0 +1,48 @@
+---
+title: "Initial SJ markdown"
+author: "WF"
+date: "30 01 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+competitions = read.csv2('all_comps.csv',sep=',',stringsAsFactors = TRUE)
+results = read.csv2('all_results.csv',sep=',')
+names = read.csv2('all_names.csv',sep=',')
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+require(ggplot2)
+require(tidyverse)
+
+counts <- as.data.frame(table(competitions$place,competitions$gender))
+counts_raw <- counts[aggregate(Freq ~ Var1,counts, sum)$Freq>40,]
+counts <- filter(counts,counts$Var1 %in% counts_raw$Var1)
+counts %>%
+  mutate(Var1 = fct_reorder(Var1,Freq,sum)) %>%
+  ggplot(aes(x=Var1, y=Freq, fill=Var2)) +
+    geom_bar(stat="identity", alpha=.6, width=.4) +
+    coord_flip() +
+    xlab("") +
+    theme_bw()
+
+
+ggplot(counts, aes(x=Var1, y=Freq, fill=Var2)) + geom_bar(stat = "identity",aes(y=Freq),data=counts)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
