@@ -9,28 +9,36 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+The analysis below corresponds with the data uploaded yesterday (27.01.21) on kaggle.com. In this case we will not go beyond the basic EDA. I will mainly concentrate on the file containing information about competitions. 
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## How these data look like?
 
-```{r cars}
+Let's begin with the data and libraries import:
+
+```{r import}
+library(tidyverse)
+
 competitions = read.csv2('all_comps.csv',sep=',',stringsAsFactors = TRUE)
-results = read.csv2('all_results.csv',sep=',')
-names = read.csv2('all_names.csv',sep=',')
+results = read.csv2('all_results.csv',sep=';')
+names = read.csv2('all_names.csv',sep=',',stringsAsFactors = TRUE)
+
+summary(competitions)
+summary(results)
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
+In fact in 'competitions' dataset we have mostly integer variables. What is interesting only from this code is that
+* the NA values are apparent - mostly in these cases, when 
++ the wind/gate factor was not taken into account (roughly 25% of competitions and 20% of jumps, mainly in COC/FC competitions)
++ the style was not counted (all training rounds, roughly 45% of total number of jumps)
++ parsing of PDF file was not successful (roughly 6% of competitions, mainly before 2012/13 and for COC/FC types)
+* most competitions was held in Germany and in Norway.
 ```{r pressure, echo=FALSE}
 require(ggplot2)
 require(tidyverse)
 
 counts <- as.data.frame(table(competitions$place,competitions$gender))
-counts_raw <- counts[aggregate(Freq ~ Var1,counts, sum)$Freq>40,]
+counts_raw <- counts[aggregate(Freq ~ Var1,counts, sum)$Freq>50,]
 counts <- filter(counts,counts$Var1 %in% counts_raw$Var1)
 counts %>%
   mutate(Var1 = fct_reorder(Var1,Freq,sum)) %>%
@@ -39,10 +47,6 @@ counts %>%
     coord_flip() +
     xlab("") +
     theme_bw()
-
-
-ggplot(counts, aes(x=Var1, y=Freq, fill=Var2)) + geom_bar(stat = "identity",aes(y=Freq),data=counts)
-
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

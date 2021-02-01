@@ -74,15 +74,19 @@ def merge_infos(directory):
                      'type', 'date', 'id', 'training']
     comps = pd.DataFrame([], columns=columns_names)
     list_of_files = os.listdir(directory)
-    list_of_files.remove('all_comps.csv')
     for item in list_of_files:
         tmp = pd.read_csv(directory+'\\'+item, sep=',')
+        country = [x.rsplit(' ',1)[1][1:4] for x in tmp['place']]
+        new_place = [x.rsplit(' ',1)[0] for x in tmp['place']]
+        tmp['place']=pd.DataFrame(new_place)
+        tmp['country']=pd.DataFrame(country)
         comps = comps.append(tmp)
     comps = comps.drop_duplicates(['id'])
     comps[['hill_size_x','team', 'season', 'hill_size_y', 'k-point',
            'meter value', 'gate factor', 'wind factor', 'type', 'training']] =\
     comps[['hill_size_x','team', 'season', 'hill_size_y', 'k-point',
            'meter value', 'gate factor', 'wind factor', 'type', 'training']].apply(pd.to_numeric)
+
     return comps
 
 
@@ -204,7 +208,7 @@ def show_rating(comps, names, rating_db, take_all=True, index = False):
 
 
 actual_comps = merge_infos(os.getcwd()+'\\comps\\')
-actual_comps.to_csv(os.getcwd()+'\\comps\\all_comps.csv',index=False)
+actual_comps.to_csv(os.getcwd()+'\\all_comps.csv',index=False,na_rep='NA',decimal=',')
 actual_comps = actual_comps[actual_comps['training']==0]
 actual_comps = actual_comps.sort_values(['date', 'id'], ascending=[True, False])
 actual_comps = actual_comps.reset_index()

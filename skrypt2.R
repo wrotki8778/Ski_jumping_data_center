@@ -1,7 +1,7 @@
 library(tidyverse)
 setwd('C://Users//kubaf//Documents//Skoki//')
 
-dir = paste(getwd(), '/nazwy/all_names.csv', sep = '')
+dir = paste(getwd(), '/all_names.csv', sep = '')
 names <- read.csv2(dir, header = TRUE, sep = ',')
 
 files_RL <-
@@ -148,7 +148,7 @@ results$X = NULL
 write.csv2(names, 'all_names.csv', row.names = FALSE)
 write.csv2(results, 'all_results.csv', row.names = FALSE)
 
-dir_c = paste(getwd(), '/comps/all_comps.csv', sep = '')
+dir_c = paste(getwd(), '/all_comps.csv', sep = '')
 competitions <- read.csv2(dir_c, header = TRUE, sep = ',')
 
 area = 'Kuopio'
