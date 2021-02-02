@@ -145,13 +145,15 @@ results = results[order(results$X), ]
 results$name = NULL
 results$X = NULL
 
-write.csv2(names, 'all_names.csv', row.names = FALSE)
-write.csv2(results, 'all_results.csv', row.names = FALSE)
+write.table(names, 'all_names.csv', row.names = FALSE, dec='.', sep=',')
+write.table(results, 'all_results.csv', row.names = FALSE, dec='.', sep=',')
 
 dir_c = paste(getwd(), '/all_comps.csv', sep = '')
-competitions <- read.csv2(dir_c, header = TRUE, sep = ',')
+competitions <- read.csv2(dir_c, header = TRUE, sep = ',', dec='.')
 
-area = 'Kuopio'
+write.table(competitions, 'all_comps_r.csv', row.names = FALSE, dec='.', sep=',')
+
+area = 'Oslo'
 min_size = 115
 max_size = 155
 filtered_competition <-
@@ -162,12 +164,12 @@ filtered_competition <-
       as.double(hill_size_x) < max_size
   )[-c(56, 57, 58), ]
 filtered_results <-
-  filter(results, comp_name %in% filtered_competition$id)
+  filter(results, id %in% filtered_competition$id)
 filtered_results <- filter(filtered_results, gate != 0 & speed > 85)
 boxplot(
   speed ~ gate,
-  data = filtered_results ,
-  main = "Correlation of speed with inrun length in Garmisch",
+  data = filtered_results,
+  main = paste('Correlation of speed with inrun length in', area),
   xlab = "Gate",
   ylab = "Speed (km/h)",
   varwidth = TRUE

@@ -20,9 +20,9 @@ Let's begin with the data and libraries import:
 ```{r import}
 library(tidyverse)
 
-competitions = read.csv2('all_comps.csv',sep=',',stringsAsFactors = TRUE)
-results = read.csv2('all_results.csv',sep=';')
-names = read.csv2('all_names.csv',sep=',',stringsAsFactors = TRUE)
+competitions = read.csv2('all_comps.csv',sep=',',dec='.',stringsAsFactors = TRUE)
+results = read.csv2('all_results.csv',sep=',',dec='.')
+names = read.csv2('all_names.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 
 summary(competitions)
 summary(results)
@@ -33,6 +33,8 @@ In fact in 'competitions' dataset we have mostly integer variables. What is inte
 + the style was not counted (all training rounds, roughly 45% of total number of jumps)
 + parsing of PDF file was not successful (roughly 6% of competitions, mainly before 2012/13 and for COC/FC types)
 * most competitions was held in Germany and in Norway.
+
+Let's see the most "fashioned" places and countries
 ```{r pressure, echo=FALSE}
 require(ggplot2)
 require(tidyverse)
@@ -41,6 +43,17 @@ counts <- as.data.frame(table(competitions$place,competitions$gender))
 counts_raw <- counts[aggregate(Freq ~ Var1,counts, sum)$Freq>50,]
 counts <- filter(counts,counts$Var1 %in% counts_raw$Var1)
 counts %>%
+  mutate(Var1 = fct_reorder(Var1,Freq,sum)) %>%
+  ggplot(aes(x=Var1, y=Freq, fill=Var2)) +
+    geom_bar(stat="identity", alpha=.6, width=.4) +
+    coord_flip() +
+    xlab("") +
+    theme_bw()
+
+countries <- as.data.frame(table(competitions$country,competitions$gender))
+countries_raw <- countries[aggregate(Freq ~ Var1,countries, sum)$Freq>50,]
+countries <- filter(countries,countries$Var1 %in% countries_raw$Var1)
+countries %>%
   mutate(Var1 = fct_reorder(Var1,Freq,sum)) %>%
   ggplot(aes(x=Var1, y=Freq, fill=Var2)) +
     geom_bar(stat="identity", alpha=.6, width=.4) +

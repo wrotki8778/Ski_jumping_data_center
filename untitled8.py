@@ -208,7 +208,7 @@ def show_rating(comps, names, rating_db, take_all=True, index = False):
 
 
 actual_comps = merge_infos(os.getcwd()+'\\comps\\')
-actual_comps.to_csv(os.getcwd()+'\\all_comps.csv',index=False,na_rep='NA',decimal=',')
+actual_comps.to_csv(os.getcwd()+'\\all_comps.csv',index=False,na_rep='NA')
 actual_comps = actual_comps[actual_comps['training']==0]
 actual_comps = actual_comps.sort_values(['date', 'id'], ascending=[True, False])
 actual_comps = actual_comps.reset_index()
