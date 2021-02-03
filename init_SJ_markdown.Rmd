@@ -34,8 +34,8 @@ In fact in 'competitions' dataset we have mostly integer variables. What is inte
 + parsing of PDF file was not successful (roughly 6% of competitions, mainly before 2012/13 and for COC/FC types)
 * most competitions was held in Germany and in Norway.
 
-Let's see the most "fashioned" places and countries
-```{r pressure, echo=FALSE}
+Let's see the most "fashioned" places and countries, grouped also by the type of competition
+```{r barplots, echo=FALSE}
 require(ggplot2)
 require(tidyverse)
 
@@ -60,6 +60,25 @@ countries %>%
     coord_flip() +
     xlab("") +
     theme_bw()
+
+competitions['type_str'] = cut(competitions$type, breaks = c(-0.5,0.5,1.5,2.5,3.5,5.5), labels=c('WC', 'COC', 'GP','FC','Other')) 
+
+types <- as.data.frame(table(competitions$place,competitions$type_str))
+types_raw <- types[aggregate(Freq ~ Var1,types, sum)$Freq>100,]
+types <- filter(types,types$Var1 %in% types_raw$Var1)
+types %>%
+  mutate(Var1 = fct_reorder(Var1,Freq,sum)) %>%
+  ggplot(aes(x=Var1, y=Freq, fill=Var2)) +
+    geom_bar(stat="identity", alpha=.6, width=.4) +
+    coord_flip() +
+    xlab("") +
+    theme_bw()
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+As we can see, various hills and cities have different "target" and its own specificity in terms of organizing ski jumping competitions. Let's see the sizes of different objects appearing in the dataset and the counts:
+
+```{r}
+ggplot(competitions, aes(x=hill_size_x, color=gender)) +
+  geom_histogram(aes(y = ..density..),fill="white", alpha = 0.6, position="identity",binwidth=20, breaks=c(60,85,115,160,250))
+```
+
