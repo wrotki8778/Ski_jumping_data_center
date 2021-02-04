@@ -28,10 +28,11 @@ summary(competitions)
 summary(results)
 ```
 In fact in 'competitions' dataset we have mostly integer variables. What is interesting only from this code is that
+
 * the NA values are apparent - mostly in these cases, when 
-+ the wind/gate factor was not taken into account (roughly 25% of competitions and 20% of jumps, mainly in COC/FC competitions)
-+ the style was not counted (all training rounds, roughly 45% of total number of jumps)
-+ parsing of PDF file was not successful (roughly 6% of competitions, mainly before 2012/13 and for COC/FC types)
+  + the wind/gate factor was not taken into account (roughly 25% of competitions and 20% of jumps, mainly in COC/FC competitions)
+  + the style was not counted (all training rounds, roughly 45% of total number of jumps)
+  + parsing of PDF file was not successful (roughly 6% of competitions, mainly before 2012/13 and for COC/FC types)
 * most competitions was held in Germany and in Norway.
 
 Let's see the most "fashioned" places and countries, grouped also by the type of competition
@@ -47,6 +48,7 @@ counts %>%
   ggplot(aes(x=Var1, y=Freq, fill=Var2)) +
     geom_bar(stat="identity", alpha=.6, width=.4) +
     coord_flip() +
+    scale_fill_discrete(name = "Gender") +
     xlab("") +
     theme_bw()
 
@@ -58,6 +60,7 @@ countries %>%
   ggplot(aes(x=Var1, y=Freq, fill=Var2)) +
     geom_bar(stat="identity", alpha=.6, width=.4) +
     coord_flip() +
+    scale_fill_discrete(name = "Gender") +
     xlab("") +
     theme_bw()
 
@@ -70,6 +73,7 @@ types %>%
   mutate(Var1 = fct_reorder(Var1,Freq,sum)) %>%
   ggplot(aes(x=Var1, y=Freq, fill=Var2)) +
     geom_bar(stat="identity", alpha=.6, width=.4) +
+    scale_fill_discrete(name = "Type") +
     coord_flip() +
     xlab("") +
     theme_bw()
@@ -78,7 +82,14 @@ types %>%
 As we can see, various hills and cities have different "target" and its own specificity in terms of organizing ski jumping competitions. Let's see the sizes of different objects appearing in the dataset and the counts:
 
 ```{r}
-ggplot(competitions, aes(x=hill_size_x, color=gender)) +
-  geom_histogram(aes(y = ..density..),fill="white", alpha = 0.6, position="identity",binwidth=20, breaks=c(60,85,115,160,250))
+competitions['size'] = cut(competitions$hill_size_x, breaks = c(0,85,120,160,300), labels=c('small', 'normal', 'large','flying hill')) 
+ggplot(subset(competitions, gender %in% c("Men", "Women"))) +
+  geom_bar(aes(x = size, color=gender),fill="white", alpha = 0.6, position="dodge")
 ```
+
+From this plot we can see that
+
+* women compete mostly on the normal hills and men jump mainly on the large objects,
+* women participate in substantially less number of competitions than men.
+
 
