@@ -20,7 +20,7 @@ Let's begin with the data and libraries import:
 ```{r import}
 library(tidyverse)
 
-competitions = read.csv2('all_comps.csv',sep=',',dec='.',stringsAsFactors = TRUE)
+competitions = read.csv2('all_comps_r.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 results = read.csv2('all_results.csv',sep=',',dec='.')
 names = read.csv2('all_names.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 
@@ -34,6 +34,8 @@ In fact in 'competitions' dataset we have mostly integer variables. What is inte
   + the style was not counted (all training rounds, roughly 45% of total number of jumps)
   + parsing of PDF file was not successful (roughly 6% of competitions, mainly before 2012/13 and for COC/FC types)
 * most competitions was held in Germany and in Norway.
+
+## Some insight plots - competitions dataset
 
 Let's see the most "fashioned" places and countries, grouped also by the type of competition
 ```{r barplots, echo=FALSE}
@@ -81,15 +83,44 @@ types %>%
 
 As we can see, various hills and cities have different "target" and its own specificity in terms of organizing ski jumping competitions. Let's see the sizes of different objects appearing in the dataset and the counts:
 
-```{r}
+```{r size}
 competitions['size'] = cut(competitions$hill_size_x, breaks = c(0,85,120,160,300), labels=c('small', 'normal', 'large','flying hill')) 
 ggplot(subset(competitions, gender %in% c("Men", "Women"))) +
   geom_bar(aes(x = size, color=gender),fill="white", alpha = 0.6, position="dodge")
+ggplot(competitions) +
+  geom_bar(aes(x = size, color=type_str),fill="white", alpha = 0.6, position="dodge")
 ```
 
-From this plot we can see that
+From these figures we can see that
 
 * women compete mostly on the normal hills and men jump mainly on the large objects,
-* women participate in substantially less number of competitions than men.
+* women participate in substantially less number of competitions than men,
+* most NAs come from COC competitions (season 2010/11 with different format of PDF files),
+* the leagues with lower rank (COC, GP, FC) tend to organize competitions on smaller hills, what doesn't surprise.
 
+## Some insight plots - results dataset
 
+Now we will try to say something about the "main" dataset, which comprises the results of the competitions mentioned above. First thing is that (unfortunately) some competitions from the competitions dataset don't appear in the main dataset, exactly we have the number of not-processed PDFs:
+
+```{r missing}
+length(setdiff(competitions$id,results$id))
+```
+That is about 10% of "missing" comps, and this is the result of problems while parsing (mainly from the years before 2012). I still try to include this files into the dataset, but that won't be easy.
+Now we can plot the basic facts about the key columns. First we plot the density of speed variable:
+```{r speed}
+ggplot(subset(results, speed > 60 & speed < 120)) +
+  geom_density(aes(x = speed),fill="white", alpha = 0.6)
+ggplot(subset(merge(results[,c('speed','id')],competitions,by='id'), speed > 60 & speed < 120)) +
+  geom_area(aes(x = speed, color=size),fill="white", alpha = 0.6, stat='bin', position = position_dodge())
+```
+
+We notice that the in-run speed varies mostly between 80 and 95 kilometers per hour, but this (as we can see further) is determined by the hill size (HS) of a given object. We can derive a similar plot in terms of achieved distance.
+
+```{r distances}
+ggplot(subset(results, dist>0)) +
+  geom_density(aes(x = dist),fill="white", alpha = 0.6)
+ggplot(subset(merge(results[,c('dist','id')],competitions[,c('id','size')],by='id'), dist>0)) +
+  geom_area(aes(x = dist, color=size),fill="white", alpha = 0.6, stat='bin', position = position_dodge())
+ggplot(subset(merge(results[,c('dist','id')],competitions[,c('id','size')],by='id'), dist>0)) +
+  geom_density(aes(x = dist, color=size),fill="white", alpha = 0.6)+labs(title='Normalized plots of conditional densities')
+```
