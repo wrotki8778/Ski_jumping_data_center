@@ -9,25 +9,25 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Introduction
+# Introduction
 
 The analysis below corresponds with the data uploaded yesterday (27.01.21) on kaggle.com. In this case we will not go beyond the basic EDA. I will mainly concentrate on the file containing information about competitions. 
 
-## How these data look like?
+# How these data look like?
 
-Let's begin with the data and libraries import:
+Lets begin with the data and libraries import:
 
 ```{r import}
 library(tidyverse)
-
-competitions = read.csv2('all_comps_r.csv',sep=',',dec='.',stringsAsFactors = TRUE)
-results = read.csv2('all_results.csv',sep=',',dec='.')
-names = read.csv2('all_names.csv',sep=',',dec='.',stringsAsFactors = TRUE)
+library(e1071)
+competitions = read.csv('all_comps_r.csv',sep=',',dec='.',stringsAsFactors = TRUE)
+results = read.csv('all_results.csv',sep=',',dec='.')
+names = read.csv('all_names.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 
 summary(competitions)
 summary(results)
 ```
-In fact in 'competitions' dataset we have mostly integer variables. What is interesting only from this code is that
+In fact in competitions dataset we have mostly integer variables. What is interesting only from this code is that
 
 * the NA values are apparent - mostly in these cases, when 
   + the wind/gate factor was not taken into account (roughly 25% of competitions and 20% of jumps, mainly in COC/FC competitions)
@@ -35,13 +35,10 @@ In fact in 'competitions' dataset we have mostly integer variables. What is inte
   + parsing of PDF file was not successful (roughly 6% of competitions, mainly before 2012/13 and for COC/FC types)
 * most competitions was held in Germany and in Norway.
 
-## Some insight plots - competitions dataset
+# Some insight plots - competitions dataset
 
-Let's see the most "fashioned" places and countries, grouped also by the type of competition
+Lets see the most fashioned places and countries, grouped also by the type of competition
 ```{r barplots, echo=FALSE}
-require(ggplot2)
-require(tidyverse)
-
 counts <- as.data.frame(table(competitions$place,competitions$gender))
 counts_raw <- counts[aggregate(Freq ~ Var1,counts, sum)$Freq>50,]
 counts <- filter(counts,counts$Var1 %in% counts_raw$Var1)
@@ -124,3 +121,12 @@ ggplot(subset(merge(results[,c('dist','id')],competitions[,c('id','size')],by='i
 ggplot(subset(merge(results[,c('dist','id')],competitions[,c('id','size')],by='id'), dist>0)) +
   geom_density(aes(x = dist, color=size),fill="white", alpha = 0.6)+labs(title='Normalized plots of conditional densities')
 ```
+
+What can be unexpected is that the variance of achieved distance is slightly higher on normal hills than on the large ones. In this conditional case the distribution is quite similar to normal, but it should be noted that the skewness is present here and is negative on every type of hill:
+
+```{r skewness}
+large_hill_data = subset(merge(results[,c('dist','id')],competitions[,c('id','size')],by='id'), dist>0 & size=='large')
+summary(large_hill_data$dist)
+skewness(large_hill_data$dist)
+```
+
