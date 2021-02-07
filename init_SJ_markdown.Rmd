@@ -1,7 +1,7 @@
 ---
 title: "Initial SJ markdown"
 author: "WF"
-date: "30 01 2021"
+date: "07 02 2021"
 output: html_document
 ---
 
@@ -95,7 +95,7 @@ From these figures we can see that
 * most NAs come from COC competitions (season 2010/11 with different format of PDF files),
 * the leagues with lower rank (COC, GP, FC) tend to organize competitions on smaller hills, what doesn't surprise.
 
-## Some insight plots - results dataset
+# Some insight plots - results dataset
 
 Now we will try to say something about the "main" dataset, which comprises the results of the competitions mentioned above. First thing is that (unfortunately) some competitions from the competitions dataset don't appear in the main dataset, exactly we have the number of not-processed PDFs:
 
@@ -129,4 +129,55 @@ large_hill_data = subset(merge(results[,c('dist','id')],competitions[,c('id','si
 summary(large_hill_data$dist)
 skewness(large_hill_data$dist)
 ```
+
+Next, we take a look on the additional variables like note_points and wind:
+
+```{r style_1}
+ggplot(results) +
+  geom_density(aes(x = note_points),fill="white", alpha = 0.6)
+```
+
+We can see that this plot is weirdly ragged. This can be explained by the fact, that the judges tend to give the same score, so the values 51 (3 times 17.0), 52.5 (3 times 17.5) etc. are preferred. The conclusion is that it's more acceptable to take only one judge and see the distribution.
+
+```{r style_2}
+ggplot(results) +
+  geom_histogram(aes(x = note_1, y=..density..), breaks=seq(0,20,by=0.5))
+```
+
+As an exercise we will estimate the distribution by the beta family of distributions. Next we visualize how well our distribution is approximated by this approach.
+
+```{r style_beta}
+library(EnvStats)
+
+parameters=ebeta(results$note_1/20)
+print(parameters)
+
+ggplot(results) +
+  geom_histogram(aes(x = note_1/20, y=..density..), breaks=seq(0,1,length.out = 41)) +
+  stat_function(fun = dbeta, args = list(shape1 = parameters$parameters[1], shape2 = parameters$parameters[2]))
+```
+
+Although the goodness of fit is not perfect, the nature of this variable is quite evident. Next we will see what is going on with the wind variable:
+
+```{r wind}
+summary(results$wind)
+ggplot(results) +
+  geom_density(aes(x = wind),fill="white", alpha = 0.6)
+```
+
+This plot is somewhat surprising, because it should be intuitive that the distribution of winds should be symmetric, but it does not meet that property. However, if we draw a density of *wind_comp* variable, then it becomes symmetric.
+
+```{r wind_points}
+summary(results$wind_comp)
+ggplot(results) +
+  geom_density(aes(x = wind_comp),fill="white", alpha = 0.6)
+```
+
+The purpose of this result is that the wind compensations are adjusted -- the bonus from the tail wind is bigger than the penalty from the head wind. As we can see, this method works quite well.
+
+## Conclusions
+
+As we could see, even these aggregate way of using our data brings quite attractive plots. Of course, by taking both of these datasets together, we can do a lot more of statistical analysis. I am sure that these observations contain a massive amount of knowledge which is not discovered yet.
+
+If time allows, I will upload some more advanced markdowns with more particular insights. I have a few questions which should be answered within a few weeks or months. Maybe someone else also has an idea how use this information. See you later!
 
