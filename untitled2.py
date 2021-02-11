@@ -39,27 +39,46 @@ def parse_weather(comp):
 def process_weather(data,comps):
     fis_code = data[0]
     line = data[1]
+    if not line:
+        return [fis_code,np.nan,np.nan,np.nan,np.nan,np.nan]
     comp = comps[comps['id'] == fis_code].iloc[0]
     print(comp)
     month = int(comp['date'][5:7])
-    if comp['type'] in (0,4,5) and int(comp['season']>2012):
+    if comp['type'] in (0,2,4,5):
         tmp = line.split(' ')
-        humid = float(tmp[-3])
-        snow = float(tmp[-6])
-        air = float(tmp[-9])
+        max_wind, avg_wind, min_wind = \
+            [float(tmp[-2]), float(tmp[-1]), float(tmp[-3])]
+        if comp['type'] != 2:
+            if int(comp['season']<2012):
+                i = -7
+                humid, snow, air = \
+                [float(tmp[-4]), float(tmp[-5]), float(tmp[-6])]
+            else:
+                i= -13
+                humid, snow, air = \
+                [float(tmp[-4]), float(tmp[-7]), float(tmp[-10])]
+        else:
+            if int(comp['season']<2012):
+                i = -6
+                humid, snow, air = \
+                [float(tmp[-4]), np.nan, float(tmp[-5])]
+            else:
+                i= -10
+                humid, snow, air = \
+                [float(tmp[-4]), np.nan, float(tmp[-7])]
         weather_type = ''
-        round_type = ''
-        i = -12
+        round_type = tmp[0]
         while not sum(c.isdigit() for c in tmp[i]):
             weather_type = tmp[i] + ' ' + weather_type
             i = i-1
-        i = 0
+        i = 1
         while not sum(c.isdigit() for c in tmp[i]):
-            round_type = tmp[i] + ' ' + round_type
+            round_type = round_type + ' ' + tmp[i]
             i = i+1    
-        return [fis_code,humid,snow,air,weather_type,round_type]
+        return [fis_code, humid, snow, air, weather_type,
+                round_type, max_wind, avg_wind, min_wind]
     return [fis_code,np.nan,np.nan,np.nan,np.nan,np.nan]
-    
+
 weather_data = [parse_weather(comp) for i,comp in actual_comps.iterrows()]
 all_data = [item for sublist in weather_data for item in sublist]
 processed_data = [process_weather(x, actual_comps) for x in all_data]
