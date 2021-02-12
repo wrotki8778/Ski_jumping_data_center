@@ -46,26 +46,26 @@ def process_weather(data,comps):
     month = int(comp['date'][5:7])
     if comp['type'] in (0,2,4,5):
         tmp = line.split(' ')
-        max_wind, avg_wind, min_wind = \
-            [float(tmp[-2]), float(tmp[-1]), float(tmp[-3])]
+        max_wind, avg_wind, min_wind, humid = \
+            [float(tmp[-2]), float(tmp[-1]), float(tmp[-3]),float(tmp[-4])]
         if comp['type'] != 2:
             if int(comp['season']<2012):
                 i = -7
-                humid, snow, air = \
-                [float(tmp[-4]), float(tmp[-5]), float(tmp[-6])]
+                snow, air = \
+                [float(tmp[-5]), float(tmp[-6])]
             else:
                 i= -13
-                humid, snow, air = \
-                [float(tmp[-4]), float(tmp[-7]), float(tmp[-10])]
+                snow, air = \
+                [float(tmp[-7]), float(tmp[-10])]
         else:
             if int(comp['season']<2012):
                 i = -6
-                humid, snow, air = \
-                [float(tmp[-4]), np.nan, float(tmp[-5])]
+                snow, air = \
+                [np.nan, float(tmp[-5])]
             else:
                 i= -10
-                humid, snow, air = \
-                [float(tmp[-4]), np.nan, float(tmp[-7])]
+                snow, air = \
+                [np.nan, float(tmp[-7])]
         weather_type = ''
         round_type = tmp[0]
         while not sum(c.isdigit() for c in tmp[i]):
@@ -74,9 +74,40 @@ def process_weather(data,comps):
         i = 1
         while not sum(c.isdigit() for c in tmp[i]):
             round_type = round_type + ' ' + tmp[i]
-            i = i+1    
+            i = i+1
         return [fis_code, humid, snow, air, weather_type,
                 round_type, max_wind, avg_wind, min_wind]
+    else:
+        round_type=''
+        round_types = ['1st round', '2nd round', 'training 1',
+                       'training 2', 'trial round', 'final round',
+                       'training 3']
+        for tag in round_types:
+            if line.count(tag):
+                round_type=tag
+                line = line.replace(tag, '')
+                break
+        tmp = line.split(' ')
+        max_wind, avg_wind, min_wind, humid = \
+            [float(tmp[-2]), float(tmp[-1]), float(tmp[-3]), float(tmp[-4])]
+        if month > 4 and month < 11:
+            snow, air = \
+                [np.nan, float(tmp[-5])]
+        else:
+            if len(tmp[-5]) == 2:
+                snow, air = \
+                    [float(tmp[-5][0]), float(tmp[-5][1])]
+            else:
+                last_minus = max([i for i,x in enumerate(tmp[-5]) if x == '-'])
+                snow, air = \
+                    [float(tmp[-5][:last_minus]), float(tmp[-5][last_minus:])]
+        weather_type = tmp[0]
+        i = 1
+        while not sum(c.isdigit() for c in tmp[i]):
+            weather_type = weather_type + ' ' + tmp[i]
+            i = i+1
+        return [fis_code,np.nan,np.nan,np.nan,weather_type,round_type,
+                np.nan, np.nan, np.nan]
     return [fis_code,np.nan,np.nan,np.nan,np.nan,np.nan]
 
 weather_data = [parse_weather(comp) for i,comp in actual_comps.iterrows()]
