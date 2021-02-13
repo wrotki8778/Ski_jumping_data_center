@@ -36,7 +36,7 @@ def parse_weather(comp):
                  and sum([x.count(word) for word in word_acc])]
     return tekst_lin
 
-def process_weather(data,comps):
+def process_weather_init(data,comps):
     fis_code = data[0]
     line = data[1]
     if not line:
@@ -72,7 +72,7 @@ def process_weather(data,comps):
             weather_type = tmp[i] + ' ' + weather_type
             i = i-1
         i = 1
-        while not sum(c.isdigit() for c in tmp[i]):
+        while not sum(c.isdigit() for c in tmp[i]) and tmp[i] != 'group':
             round_type = round_type + ' ' + tmp[i]
             i = i+1
         return [fis_code, humid, snow, air, weather_type,
@@ -87,32 +87,46 @@ def process_weather(data,comps):
                 round_type=tag
                 line = line.replace(tag, '')
                 break
+        print(line)
         tmp = line.split(' ')
+        tmp = [x for x in tmp if x]
         max_wind, avg_wind, min_wind, humid = \
-            [float(tmp[-2]), float(tmp[-1]), float(tmp[-3]), float(tmp[-4])]
+            [float(tmp[-1]), float(tmp[-2]), float(tmp[-3]), float(tmp[-4])]
         if month > 4 and month < 11:
             snow, air = \
                 [np.nan, float(tmp[-5])]
         else:
-            if len(tmp[-5]) == 2:
+            if len(tmp[-5]) > 2:
                 snow, air = \
                     [float(tmp[-5][0]), float(tmp[-5][1])]
             else:
                 last_minus = max([i for i,x in enumerate(tmp[-5]) if x == '-'])
-                snow, air = \
+                air, snow = \
                     [float(tmp[-5][:last_minus]), float(tmp[-5][last_minus:])]
         weather_type = tmp[0]
         i = 1
         while not sum(c.isdigit() for c in tmp[i]):
             weather_type = weather_type + ' ' + tmp[i]
             i = i+1
-        return [fis_code,np.nan,np.nan,np.nan,weather_type,round_type,
-                np.nan, np.nan, np.nan]
+        return [fis_code, humid, snow, air, weather_type,
+                round_type, max_wind, avg_wind, min_wind]
     return [fis_code,np.nan,np.nan,np.nan,np.nan,np.nan]
+
+def process_weather(data,comps):
+    try:
+        return process_weather_init(data, comps)
+    except ValueError:
+        return [data[0], np.nan, np.nan,
+                np.nan, np.nan, 'error',
+                np.nan, np.nan, np.nan]
 
 weather_data = [parse_weather(comp) for i,comp in actual_comps.iterrows()]
 all_data = [item for sublist in weather_data for item in sublist]
 processed_data = [process_weather(x, actual_comps) for x in all_data]
+u = process_weather_init(all_data[1027],actual_comps)
+all_error_data = [all_data[i] for i, x in enumerate(processed_data)
+                  if x[5] == 'error']
+error_data = [x for x in processed_data if x[5]=='error']
 comp=actual_comps.iloc[10] 
 
 
