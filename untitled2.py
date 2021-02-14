@@ -132,5 +132,3 @@ comp=actual_comps.iloc[10]
 
 
 
-
-
