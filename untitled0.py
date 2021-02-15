@@ -528,6 +528,7 @@ def przeksztalc_coc_tr(string, comp):
 
 def przeksztalc_coc(string, kwale, comp):
     nq = 0
+    team_nq = 0
     tmp = string.split(' ')
     new_string = string
     if comp['id'].count('RTRIA'):
@@ -545,6 +546,7 @@ def przeksztalc_coc(string, kwale, comp):
     if tmp[0] != rozdziel(tmp[0]):
         tmp_tmp = rozdziel(tmp[0]).split(' ')
         tmp[0] = tmp_tmp[1]+' ' + tmp_tmp[0]
+        team_nq = 1
     tmp = [rozdziel(x) for x in tmp]
     new_string = ' '.join(tmp)
     if nq and not kwale:
@@ -552,7 +554,17 @@ def przeksztalc_coc(string, kwale, comp):
         tmp = [x for x in tmp if x]
         if len(tmp) == 15:
             tmp = tmp[:13]+[tmp[14]]+[tmp[13]]
+    if comp['team']:
+        tmp = new_string.split(' ')
+        tmp = [x for x in tmp if x]
+        if nq and team_nq and len(tmp) == 15:
+            tmp = tmp[:-3] + tmp[-2:] + [tmp[-3]]
+        if not(nq) and team_nq:
+            tmp = tmp[:11] + [tmp[-1]] + [tmp[11]] + [tmp[-2]] + tmp[12:-2]  
+        if not(nq) and not(team_nq):
+            tmp = tmp[:11] + [tmp[-2]] + [tmp[11]] + [tmp[-1]] + tmp[12:-2]
         new_string = ' '.join(tmp)
+        print(tmp)
     return new_string
 
 
@@ -723,6 +735,8 @@ def column_info(comp, kwale, team):
         indices = [0, 4, 3, 14, 2, 5, 13, 1, 15]
         if no_factor:
             indices = [0, 4, 3, 14, 13]
+    if comp['type'] in (1, 3, 6) and comp['team']:
+        indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1, 14, 2, 15]
     return([names[k] for k in indices])
 
 
@@ -840,7 +854,7 @@ for comp_to_fix in to_fix:
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-n = 74
+n = 6
 comp_manual = comps.loc[n]
 # comp_manual['type'] = 0
 template = 0
