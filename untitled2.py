@@ -14,7 +14,7 @@ os.chdir('C:/Users/kubaf/Documents/Skoki/PDFs')
 
 def parse_weather(comp):
     if not os.path.isfile(os.getcwd()+'//'+comp['id']+'.pdf'):
-        return [[comp['id'], '']]
+        return [[[comp['id'], '']],[[comp['id'], '']]]
     print(comp.name)
     parsed = parser.from_file(comp['id']+'.pdf')
     tekst=parsed["content"]
@@ -27,37 +27,18 @@ def parse_weather(comp):
         start = min([i for i,x in enumerate(tekst_lin) if x.count(word1)])
         end = max([i for i,x in enumerate(tekst_lin) if x.count(word2)])
     except ValueError:
-        return [[comp['id'], '']]
-    tekst_lin = tekst_lin[start:end]
+        return [[[comp['id'], '']], [[comp['id'], '']]]
+    tekst_lin_1 = tekst_lin[start:end]
+    tekst_lin_2 = tekst_lin[end:]
     word_acc = ['1st round', 'trial round', '2nd round',
                 'training', 'qualification', 'final round']
-    tekst_lin = [[comp['id'], x] for x in tekst_lin 
+    tekst_lin_1 = [[comp['id'], x] for x in tekst_lin_1 
                  if sum(c.isdigit() for c in x) > 4
                  and sum([x.count(word) for word in word_acc])]
-    return tekst_lin
-
-def parse_stats(comp):
-    if not os.path.isfile(os.getcwd()+'//'+comp['id']+'.pdf'):
-        return [[comp['id'], '']]
-    print(comp.name)
-    parsed = parser.from_file(comp['id']+'.pdf')
-    tekst=parsed["content"]
-    tekst=tekst.lower()
-    tekst_lin=tekst.splitlines()
-    tekst_lin = [i for i in tekst_lin if i] 
-    word1 = 'weather information'
-    word2 = 'statistics'
-    try:
-        start = min([i for i,x in enumerate(tekst_lin) if x.count(word2)])
-    except ValueError:
-        return [[comp['id'], '']]
-    tekst_lin = tekst_lin[start:]
-    word_acc = ['1st round', 'trial round', '2nd round',
-                'training', 'qualification', 'final round']
-    tekst_lin = [[comp['id'], x] for x in tekst_lin 
+    tekst_lin_2 = [[comp['id'], x] for x in tekst_lin_2 
                  if sum(c.isdigit() for c in x) > 4
                  and sum([x.count(word) for word in word_acc])]
-    return tekst_lin
+    return tekst_lin_1, tekst_lin_2
 
 def process_weather_init(data,comps):
     fis_code = data[0]
@@ -142,11 +123,14 @@ def process_weather(data,comps):
         return [data[0], np.nan, np.nan,
                 np.nan, np.nan, 'error',
                 np.nan, np.nan, np.nan]
-
-weather_data = [parse_weather(comp) for i,comp in actual_comps.iterrows()]
-all_data = [item for sublist in weather_data for item in sublist]
-processed_data = [process_weather(x, actual_comps) for x in all_data]
-u = process_weather_init(all_data[1027],actual_comps)
+     
+data = [parse_weather(comp) for i,comp in actual_comps.iterrows()]
+weather_data = [x[0] for x in data]
+stats_data = [x[1] for x in data]
+all_weather_data = [item for sublist in weather_data for item in sublist]
+all_stats_data = [item for sublist in stats_data for item in sublist]
+processed_weather_data = [process_weather(x, actual_comps) for x in all_weather_data]
+# u = process_weather_init(all_data[1027],actual_comps)
 all_error_data = [all_data[i] for i, x in enumerate(processed_data)
                   if x[5] == 'error']
 error_data = [x for x in processed_data if x[5]=='error']

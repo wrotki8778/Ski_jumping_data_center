@@ -1,0 +1,57 @@
+---
+title: "Initial SJ markdown"
+author: "WF"
+date: "17 02 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Introduction
+
+The analysis below describes in quite detail competition placed on a large hill in Oberstdorf (hill size 137 meters). The analysis is connected with World Ski Championships, which are to be organized next week.
+
+# Beginning
+
+Lets begin with the data and libraries import:
+
+```{r import}
+library(tidyverse)
+library(e1071)
+competitions = read.csv('all_comps_r.csv',sep=',',dec='.',stringsAsFactors = TRUE)
+results = read.csv('all_results.csv',sep=',',dec='.')
+names = read.csv('all_names.csv',sep=',',dec='.',stringsAsFactors = TRUE)
+```
+
+Actually, we do not have any interest in data not connected with LH in Oberstdorf, therefore we filter them:
+
+```{r filter}
+obe_ids = subset(competitions, place == 'Oberstdorf' & hill_size_x == 137)
+actual_results <- subset(results, results$id %in% obe_ids$id)
+summary(actual_results)
+summary(obe_ids)
+```
+As we can see, Schattenbergschanze (the name of this hill) hosts mainly World Cup competitions and a few Continental Cup races. We can plot, how speed and distance varies
+
+```{r}
+ggplot(subset(actual_results[,c('dist','id')], dist>0)) +
+  geom_density(aes(x = dist),fill="white", alpha = 0.6)+labs(title='Normalized plots of conditional densities')
+ggplot(subset(actual_results[,c('speed','id')], speed>85)) +
+  geom_density(aes(x = speed),fill="white", alpha = 0.6)+labs(title='Normalized plots of conditional densities')
+ggplot(subset(actual_results[,c('speed','dist')], speed>85 & dist>0)) +
+  geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution')
+```
+
+The last plot can be quite surprising -- is that real, that the higher/lower speed does not have an impact on distances, as this figure suggests? Of course that is not true, but we will comment that later. Now we will make a distiction between men and women.
+
+```{r}
+obe_men = subset(obe_ids, gender=='Men')$id
+ggplot(subset(actual_results[,c('speed','dist','id')], speed>85 & dist>0 & id %in% obe_men)) +
+  geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution for men')
+obe_men = subset(obe_ids, gender=='Men')$id
+ggplot(subset(actual_results[,c('speed','dist','id')], speed>85 & dist>0 & !(id %in% obe_men))) +
+  geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution for women')
+```
+
