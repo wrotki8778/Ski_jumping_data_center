@@ -12,6 +12,19 @@ actual_comps = pd.read_csv(os.getcwd()+'\\all_comps.csv')
 actual_comps = actual_comps.sort_values(['id'], ascending=[True])
 os.chdir('C:/Users/kubaf/Documents/Skoki/PDFs')
 
+def rozdziel(string):
+    """Process a string to split a multi-'.'-substrings."""
+    new_string = string
+    if string.count('-'):
+        new_string = string.split('-')[0]+' '+' '.join(['-'+e for e in string.split('-')[1:] if e])
+    tmp = new_string.split(' ')
+    if not([i for i in tmp if i.count('.') > 1]):
+        return new_string
+    if new_string.count('.') > 1:
+        index = min([i for i, x in enumerate(new_string) if x == '.'])+2
+        return new_string[:index]+' ' + new_string[index:]
+    return new_string
+
 def parse_weather(comp):
     if not os.path.isfile(os.getcwd()+'//'+comp['id']+'.pdf'):
         return [[[comp['id'], '']],[[comp['id'], '']]]
@@ -116,6 +129,34 @@ def process_weather_init(data,comps):
                 round_type, max_wind, avg_wind, min_wind]
     return [fis_code,np.nan,np.nan,np.nan,np.nan,np.nan]
 
+def process_stats_init(data,comps):
+    fis_code = data[0]
+    line = data[1]
+    line = line.replace('/',' ')
+    if not line:
+        return [fis_code,np.nan,np.nan,np.nan,np.nan,np.nan]
+    comp = comps[comps['id'] == fis_code].iloc[0]
+    round_type= np.nan
+    gate = np.nan
+    all_jumpers = np.nan
+    counted_jumpers = np.nan
+    if comp['type'] in (0,2,4,5):
+        return [fis_code,np.nan,np.nan,np.nan,np.nan,np.nan]
+    else:
+        round_types = ['1st round ', '2nd round ', 'training 1 ',
+                       'training 2 ', 'trial round ', 'final round ',
+                       'training 3 ']
+        for tag in round_types:
+            if line.count(tag):
+                round_type=tag
+                line = line.replace(tag, '')
+                break
+        tmp = line.split(' ')
+        tmp = [rozdziel(x) for x in tmp if x]
+        gate = float(tmp[0])
+        counted_jumpers = float(tmp[1])
+        all_jumpers = float(tmp[-4])  
+        return [fis_code, round_type, gate, counted_jumpers, all_jumpers]
 def process_weather(data,comps):
     try:
         return process_weather_init(data, comps)
@@ -123,16 +164,23 @@ def process_weather(data,comps):
         return [data[0], np.nan, np.nan,
                 np.nan, np.nan, 'error',
                 np.nan, np.nan, np.nan]
-     
+def process_stats(data,comps):
+    try:
+        return process_stats_init(data, comps)
+    except ValueError:
+        return [data[0], 'error', np.nan, np.nan, np.nan, np.nan]
 data = [parse_weather(comp) for i,comp in actual_comps.iterrows()]
 weather_data = [x[0] for x in data]
 stats_data = [x[1] for x in data]
 all_weather_data = [item for sublist in weather_data for item in sublist]
 all_stats_data = [item for sublist in stats_data for item in sublist]
 processed_weather_data = [process_weather(x, actual_comps) for x in all_weather_data]
-# u = process_weather_init(all_data[1027],actual_comps)
-all_error_data = [all_data[i] for i, x in enumerate(processed_data)
+processed_stats_data = [process_stats(x, actual_comps) for x in all_stats_data]
+u = process_stats_init(all_stats_data[1237],actual_comps)
+all_error_weather_data = [all_weather_data[i] for i, x in enumerate(processed_weather_data)
                   if x[5] == 'error']
+all_error_stats_data = [all_stats_data[i] for i, x in enumerate(processed_stats_data)
+                  if x[1] == 'error']
 error_data = [x for x in processed_data if x[5]=='error']
 
 comp=actual_comps.iloc[750] 
