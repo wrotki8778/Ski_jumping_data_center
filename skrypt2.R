@@ -151,10 +151,10 @@ write.table(results, 'all_results.csv', row.names = FALSE, dec='.', sep=',')
 dir_c = paste(getwd(), '/all_comps.csv', sep = '')
 competitions <- read.csv2(dir_c, header = TRUE, sep = ',', dec='.')
 dir_s = paste(getwd(), '/all_stats.csv', sep = '')
-competitions <- read.csv2(dir_s, header = TRUE, sep = ',', dec='.')
+stats <- read.csv2(dir_s, header = TRUE, sep = ',', dec='.')
 
 write.table(competitions, 'all_comps_r.csv', row.names = FALSE, dec='.', sep=',')
-write.table(competitions, 'all_stats_r.csv', row.names = FALSE, dec='.', sep=',')
+write.table(stats, 'all_stats_r.csv', row.names = FALSE, dec='.', sep=',')
 
 area = 'Oslo'
 min_size = 115
