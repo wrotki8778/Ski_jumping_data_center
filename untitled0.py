@@ -820,15 +820,16 @@ def parse_weather(comp):
         return ['', '']
     tekst_lin_1 = tekst_lin[start:end]
     tekst_lin_2 = tekst_lin[end:]
+    tekst_lin_2 = [x.replace('tiral', 'trial') for x in tekst_lin_2]
     word_acc = ['1st round', '2nd round', '3rd round', '4th round',
                 'training 1', 'training 2', 'trial round',
                 'final round', 'training 3', 'qualification', 'prologue']
     tekst_lin_1 = [x for x in tekst_lin_1
                    if sum(c.isdigit() for c in x) > 4
-                   and sum([x.count(word) for word in word_acc])][0]
+                   and sum([x.count(word) for word in word_acc])]
     tekst_lin_2 = [x for x in tekst_lin_2
                    if sum(c.isdigit() for c in x) > 4
-                   and sum([x.count(word) for word in word_acc])][0]
+                   and sum([x.count(word) for word in word_acc])]
     return tekst_lin_1, tekst_lin_2
 
 
@@ -949,49 +950,49 @@ def process_stats_init(data, comp):
 def process_stats(comp):
     data = parse_weather(comp)
     try:
-        weather_data = process_weather_init(data[0], comp)
+        weather_data = [process_weather_init(x, comp) for x in data[0]]
     except ValueError:
         weather_data = [comp['id'], np.nan, np.nan,
                         np.nan, np.nan, 'error',
                         np.nan, np.nan, np.nan]
     try:
-        stats_data = process_stats_init(data[1], comp)
+        stats_data = [process_stats_init(x, comp) for x in data[1]]
     except ValueError:
         stats_data = [comp['id'], 'error', np.nan, np.nan, np.nan, np.nan]
     weather_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
                      'round_type', 'max_wind', 'avg_wind', 'min_wind']
     stats_names = ['fis_code', 'round_type', 'gate', 'counted_jumpers',
                    'all_jumpers', 'all_countries']
-    weather_series = pd.Series(weather_data, index = weather_names)
-    stats_series = pd.Series(stats_data, index = stats_names).iloc[2:]
-    complete_series = weather_series.append(stats_series)
+    weather_series = pd.DataFrame(weather_data, columns = weather_names)
+    stats_series = pd.DataFrame(stats_data, columns = stats_names)
+    complete_series = weather_series.merge(stats_series, on=['fis_code', 'round_type'])
     return complete_series
 
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 directory = max(list_of_files, key=os.path.getctime)
+directory = os.getcwd()+'/comps/2021_COC_2021-02-15.csv'
 comps = pd.read_csv(directory)
-# comps = pd.read_csv(os.getcwd()+'/comps/2020_COC.csv')
 comps = comps[comps['k-point'].notnull()]
 
 exit_codes = []
 errors = []
 
 for k, comp_to_process in comps.iterrows():
-    directory = os.getcwd()+'\\results\\'+comp_to_process['id']+'.csv'
-    if os.path.isfile(directory):
+    directory_res = os.getcwd()+'\\results\\'+comp_to_process['id']+'.csv'
+    if os.path.isfile(directory_res):
         continue
     try:
         content = zwroc_skoki(comp_to_process)
         [dalej, warn] = collect(comp_to_process)
-        if (warn or dalej.empty) and not os.path.isfile(directory):
+        if (warn or dalej.empty) and not os.path.isfile(directory_res):
             exit_codes.append(comp_to_process)
             print(comp_to_process)
             continue
-        if not warn and not os.path.isfile(directory):
-            dalej.to_csv(directory, index=False)
+        if not warn and not os.path.isfile(directory_res):
+            dalej.to_csv(directory_res, index=False)
         dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_process['id']+'.csv', index=False)
     except:
-        if not os.path.isfile(directory):
+        if not os.path.isfile(directory_res):
             errors.append(comp_to_process)
             print(comp_to_process)
 
@@ -999,6 +1000,7 @@ all_stats_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
                    'round_type', 'max_wind', 'avg_wind', 'min_wind',
                    'gate', 'counted_jumpers', 'all_jumpers', 'all_countries']
 stats_dataframe = pd.DataFrame([], columns = all_stats_names)
+
 
 directory_stats = directory.replace('comps','stats')
 directory_stats_2 = directory.replace('comps','elastic_stats')
@@ -1010,8 +1012,8 @@ for k, comp_to_process in comps.iterrows():
 
 if not os.path.isfile(directory_stats):
     stats_dataframe.to_csv(directory_stats, index=False)
-stats_dataframe.to_csv(directory_stats, index=False)
-
+stats_dataframe.to_csv(directory_stats_2, index=False)
+"""
 to_fix = errors
 
 exit_codes = []
@@ -1035,7 +1037,7 @@ for comp_to_fix in to_fix:
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-n = 6
+n = 7
 comp_manual = comps.loc[n]
 # comp_manual['type'] = 0
 template = 0
@@ -1062,3 +1064,4 @@ old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3, 6) and not old_comp:
     dalej = dalej.drop(['gate_points'], axis=1)
 dalej.to_csv(comp_manual['id']+'.csv', index=False)
+"""
