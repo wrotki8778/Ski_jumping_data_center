@@ -554,6 +554,7 @@ def przeksztalc_coc(string, kwale, comp):
         tmp = [x for x in tmp if x]
         if len(tmp) == 15:
             tmp = tmp[:13]+[tmp[14]]+[tmp[13]]
+        new_string = ' '.join(tmp)
     if comp['team']:
         tmp = new_string.split(' ')
         tmp = [x for x in tmp if x]
@@ -952,13 +953,14 @@ def process_stats(comp):
     try:
         weather_data = [process_weather_init(x, comp) for x in data[0]]
     except ValueError:
-        weather_data = [comp['id'], np.nan, np.nan,
+        weather_data = [[comp['id'], np.nan, np.nan,
                         np.nan, np.nan, 'error',
-                        np.nan, np.nan, np.nan]
+                        np.nan, np.nan, np.nan] for x in data[0]]
     try:
         stats_data = [process_stats_init(x, comp) for x in data[1]]
     except ValueError:
-        stats_data = [comp['id'], 'error', np.nan, np.nan, np.nan, np.nan]
+        stats_data = [[comp['id'], 'error', np.nan, np.nan, np.nan, np.nan]
+                      for x in data[1]]
     weather_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
                      'round_type', 'max_wind', 'avg_wind', 'min_wind']
     stats_names = ['fis_code', 'round_type', 'gate', 'counted_jumpers',
@@ -970,7 +972,7 @@ def process_stats(comp):
 
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 directory = max(list_of_files, key=os.path.getctime)
-directory = os.getcwd()+'/comps/2021_COC_2021-02-15.csv'
+# directory = os.getcwd()+'/comps/2021_COC_2021-02-15.csv'
 comps = pd.read_csv(directory)
 comps = comps[comps['k-point'].notnull()]
 
@@ -1037,7 +1039,7 @@ for comp_to_fix in to_fix:
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-n = 7
+n = 13
 comp_manual = comps.loc[n]
 # comp_manual['type'] = 0
 template = 0

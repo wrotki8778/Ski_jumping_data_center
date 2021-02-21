@@ -220,5 +220,5 @@ actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
 actual_standings = show_rating(actual_comps, actual_names, actual_rating, True)
-ryoyu = actual_rating[actual_rating['codex'] == 5262]
+ryoyu = actual_rating[actual_rating['codex'] == 2934]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
