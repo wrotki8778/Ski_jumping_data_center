@@ -73,17 +73,24 @@ ggplot(subset(actual_results[,c('speed','dist','id')], speed>85 & dist>0 & !(id 
 We can see that these conditional distributions are quite different and most "probable" distance varies from case to case. We can also explain why the correlation between the speed and distance is negative - simply bigger speed is connected with women rather than men and their distances are smaller. Later we will see that in fact the correlation is positive, if the gate is fixed.
 
 ```{r gate}
-selectInput(
-  'select_gate', label = 'Select gate:',
+ui <- basicPage(
+  selectInput("gate", label = 'Select gate:',
   choices = sort(unique(actual_results$gate)), selected = 15
+  ),
+  plotOutput("hist")
 )
-ui <- renderPlot({
-  gate_results  = subset(actual_results, gate == input$select_gate)
+
+server <- function(input, output) {
+  output$hist <- renderPlot({
+  gate_results  = subset(actual_results, gate == input$gate)
   hist(
     gate_results$dist,
     col = 'gray', border = 'white',
     xlab = 'Duration (minutes)', main = ''
   )
 })
+}
+
+shinyApp(ui, server)
 ```
 
