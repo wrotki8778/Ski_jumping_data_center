@@ -20,6 +20,7 @@ Lets begin with the data and libraries import:
 ```{r import}
 library(tidyverse)
 library(e1071)
+library(shiny)
 competitions = read.csv('all_comps_r.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 results = read.csv('all_results.csv',sep=',',dec='.')
 names = read.csv('all_names.csv',sep=',',dec='.',stringsAsFactors = TRUE)
@@ -70,3 +71,19 @@ ggplot(subset(actual_results[,c('speed','dist','id')], speed>85 & dist>0 & !(id 
 ```
 
 We can see that these conditional distributions are quite different and most "probable" distance varies from case to case. We can also explain why the correlation between the speed and distance is negative - simply bigger speed is connected with women rather than men and their distances are smaller. Later we will see that in fact the correlation is positive, if the gate is fixed.
+
+```{r gate}
+selectInput(
+  'select_gate', label = 'Select gate:',
+  choices = sort(unique(actual_results$gate)), selected = 15
+)
+ui <- renderPlot({
+  gate_results  = subset(actual_results, gate == input$select_gate)
+  hist(
+    gate_results$dist,
+    col = 'gray', border = 'white',
+    xlab = 'Duration (minutes)', main = ''
+  )
+})
+```
+
