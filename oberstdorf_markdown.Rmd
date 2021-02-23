@@ -33,7 +33,21 @@ actual_results <- subset(results, results$id %in% obe_ids$id)
 summary(actual_results)
 summary(obe_ids)
 ```
-As we can see, Schattenbergschanze (the name of this hill) hosts mainly World Cup competitions and a few Continental Cup races. We can plot, how speed and distance varies
+As we can see, Schattenbergschanze (the name of this hill) hosts mainly World Cup competitions and a few Continental Cup races. 
+
+To see how the variables are correlated, we made a scatterplot and a correlation matrix:
+
+```{r}
+plot(actual_results[,c(1,2,9,11,13,15)])
+round(cor(actual_results[,c(1,2,9,11,13,15)],use = 'complete.obs'),2)
+```
+This chunk suggests that
+
+* the distance is positively correlated with style marks (+0.75) and wind (+0.3), but is negatively correlated with the gate (-0.28) and the speed (-0.06), what is surprising, but we will discuss it later,
+* loc variable (place in given round) is negatively correlated with distance and style marks, what is quite obvious.
+* wind is negatively correlated with the loc variable (-0.15), so this suggests (at least initially) that the jumpers with better wind have bigger chance to achieve a good result.
+
+We can plot, how speed and distance varies
 
 ```{r}
 ggplot(subset(actual_results[,c('dist','id')], dist>0)) +
@@ -44,14 +58,15 @@ ggplot(subset(actual_results[,c('speed','dist')], speed>85 & dist>0)) +
   geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution')
 ```
 
-The last plot can be quite surprising -- is that real, that the higher/lower speed does not have an impact on distances, as this figure suggests? Of course that is not true, but we will comment that later. Now we will make a distiction between men and women.
+The last plot can be quite surprising -- is that real, that the higher/lower speed does not have an impact on distances, as this figure suggests? Of course that is not true, but we will comment that later. Now we will make a distinction between men and women.
 
 ```{r}
 obe_men = subset(obe_ids, gender=='Men')$id
 ggplot(subset(actual_results[,c('speed','dist','id')], speed>85 & dist>0 & id %in% obe_men)) +
-  geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution for men')
+  geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution for men') + xlim(87,100) + ylim(80,140)
 obe_men = subset(obe_ids, gender=='Men')$id
 ggplot(subset(actual_results[,c('speed','dist','id')], speed>85 & dist>0 & !(id %in% obe_men))) +
-  geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution for women')
+  geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution for women') + xlim(87,100) + ylim(80,140)
 ```
 
+We can see that these conditional distributions are quite different and most "probable" distance varies from case to case. We can also explain why the correlation between the speed and distance is negative - simply bigger speed is connected with women rather than men and their distances are smaller. Later we will see that in fact the correlation is positive, if the gate is fixed.
