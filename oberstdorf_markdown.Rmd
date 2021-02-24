@@ -72,25 +72,53 @@ ggplot(subset(actual_results[,c('speed','dist','id')], speed>85 & dist>0 & !(id 
 
 We can see that these conditional distributions are quite different and most "probable" distance varies from case to case. We can also explain why the correlation between the speed and distance is negative - simply bigger speed is connected with women rather than men and their distances are smaller. Later we will see that in fact the correlation is positive, if the gate is fixed.
 
+Now we can examine the gate variable and see how the speed changes along with the higher/lower start position.
+
 ```{r gate}
 ui <- basicPage(
   selectInput("gate", label = 'Select gate:',
   choices = sort(unique(actual_results$gate)), selected = 15
   ),
-  plotOutput("hist")
+  plotOutput("den")
 )
 
 server <- function(input, output) {
-  output$hist <- renderPlot({
-  gate_results  = subset(actual_results, gate == input$gate)
-  hist(
-    gate_results$dist,
-    col = 'gray', border = 'white',
-    xlab = 'Duration (minutes)', main = ''
-  )
+  output$den <- renderPlot({
+  gate_results  = subset(merge(actual_results[,c('speed','id','gate')],competitions[,c('id','gender')],by='id'), gate == input$gate & speed > 85)
+  N_1 = nrow(subset(gate_results, gender=='Women'))
+  N = paste('Women jumps count: ', N_1, ', Men jumps count: ', nrow(gate_results) - N_1)
+  ggplot(merge(gate_results[,c('speed','id')],competitions[,c('id','gender')],by='id')) +
+  geom_histogram(aes(x = speed, color = gender),fill="white", alpha = 0.6)+labs(title=N) + xlim(87.5,97.5)
 })
 }
 
 shinyApp(ui, server)
 ```
 
+The results are weird, because the distribution is not uni-modal. The explanation is simple -- the labelling of start position changed in the mid-time. To see, when (probably) this change occurred.
+
+```{r gate_shift}
+ui <- basicPage(
+  selectInput("gate", label = 'Select gate:',
+  choices = sort(unique(actual_results$gate)), selected = 15
+  ),
+  selectInput("year", label = 'Select a limit year:',
+  choices = seq(2010,2021,by = 1), selected = 2018
+  ),
+  plotOutput("den")
+)
+
+server <- function(input, output) {
+  output$den <- renderPlot({
+  gate_results  = subset(merge(actual_results[,c('speed','id','gate')],competitions[,c('id','season')],by='id'), gate == input$gate & speed > 85)
+  gate_results['before'] = cut(gate_results$season, breaks = c(2009,input$year,2022), labels=c('before', 'after')) 
+  N = paste('Before and after: ', input$year)
+  ggplot(gate_results) +
+  geom_histogram(aes(x = speed, color = before),fill="white", alpha = 0.6)+labs(title=N) + xlim(87.5,97.5)
+})
+}
+
+shinyApp(ui, server)
+```
+
+We conclude that every competition after (i.e. not including) 2018/2019 WC season has "new" way of labelling.
