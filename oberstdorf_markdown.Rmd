@@ -28,8 +28,13 @@ names = read.csv('all_names.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 
 Actually, we do not have any interest in data not connected with LH in Oberstdorf, therefore we filter them:
 
+```{r select_hill}
+our_place = 'Oberstdorf'
+our_hill_size = c(120,160)
+```
+
 ```{r filter}
-obe_ids = subset(competitions, place == 'Oberstdorf' & hill_size_x == 137)
+obe_ids = subset(competitions, place == our_place & hill_size_x > our_hill_size[1] & hill_size_x < our_hill_size[2])
 actual_results <- subset(results, results$id %in% obe_ids$id)
 summary(actual_results)
 summary(obe_ids)
@@ -75,50 +80,60 @@ We can see that these conditional distributions are quite different and most "pr
 Now we can examine the gate variable and see how the speed changes along with the higher/lower start position.
 
 ```{r gate}
-ui <- basicPage(
+ui_gate <- basicPage(
   selectInput("gate", label = 'Select gate:',
   choices = sort(unique(actual_results$gate)), selected = 15
   ),
-  plotOutput("den")
+  plotOutput("den"),
+  actionButton("button", "Close app")
 )
 
-server <- function(input, output) {
+server_gate <- function(input, output) {
   output$den <- renderPlot({
-  gate_results  = subset(merge(actual_results[,c('speed','id','gate')],competitions[,c('id','gender')],by='id'), gate == input$gate & speed > 85)
-  N_1 = nrow(subset(gate_results, gender=='Women'))
-  N = paste('Women jumps count: ', N_1, ', Men jumps count: ', nrow(gate_results) - N_1)
-  ggplot(merge(gate_results[,c('speed','id')],competitions[,c('id','gender')],by='id')) +
-  geom_histogram(aes(x = speed, color = gender),fill="white", alpha = 0.6)+labs(title=N) + xlim(87.5,97.5)
+  gate_results  <- reactive({
+    u = subset(merge(actual_results[,c('speed','id','gate')],competitions[,c('id','gender')],by='id'), gate == input$gate & speed > 85)
+    u
+  })
+  N_1 = nrow(gate_results()[gate_results()$gender == 'Women',])
+  N = paste('Women jumps count: ', N_1, ', Men jumps count: ', nrow(gate_results()) - N_1)
+  ggplot(gate_results()) +
+  geom_histogram(aes(x = speed, color = gender),fill = "white", alpha = 0.6) + labs(title = N) + xlim(87.5,97.5)
 })
+  observeEvent(input$button, stopApp())
 }
 
-shinyApp(ui, server)
+shinyApp(ui_gate, server_gate)
 ```
 
 The results are weird, because the distribution is not uni-modal. The explanation is simple -- the labelling of start position changed in the mid-time. To see, when (probably) this change occurred.
 
 ```{r gate_shift}
-ui <- basicPage(
+ui_shift <- basicPage(
   selectInput("gate", label = 'Select gate:',
   choices = sort(unique(actual_results$gate)), selected = 15
   ),
   selectInput("year", label = 'Select a limit year:',
   choices = seq(2010,2021,by = 1), selected = 2018
   ),
-  plotOutput("den")
+  plotOutput("den"),
+  actionButton("button", "Close app")
 )
 
-server <- function(input, output) {
+server_shift <- function(input, output) {
   output$den <- renderPlot({
-  gate_results  = subset(merge(actual_results[,c('speed','id','gate')],competitions[,c('id','season')],by='id'), gate == input$gate & speed > 85)
-  gate_results['before'] = cut(gate_results$season, breaks = c(2009,input$year,2022), labels=c('to', 'after')) 
+  gate_results <- reactive({
+    u <- subset(merge(actual_results[,c('speed','id','gate')],competitions[,c('id','season')],by = 'id'), gate == input$gate & speed > 85)
+    u$before = cut(as.numeric(u$season), breaks = c(2009,input$year,2022), labels = c('to', 'after'))
+    u
+    })
   N = paste('Before and after: ', input$year)
-  ggplot(gate_results) +
-  geom_histogram(aes(x = speed, color = before),fill="white", alpha = 0.6) + labs(title=N) + xlim(87.5,97.5)
+  ggplot(gate_results()) +
+  geom_histogram(aes(x = speed, color = before),fill = "white", alpha = 0.6) + labs(title = N) + xlim(87.5,97.5)
 })
+  observeEvent(input$button, stopApp())
 }
 
-shinyApp(ui, server)
+shinyApp(ui_shift, server_shift)
 ```
 
 We conclude that every competition after (i.e. not including) 2018/2019 WC season has "new" way of labelling. Moreover, we can estimate the difference in two ways:
@@ -130,27 +145,34 @@ To make the further part clear, we will not include the gate variable, but opera
 
 Now we can check how the distances depend on the speed and the wind variable:
 
-```{r}
-ui <- basicPage(
-  selectInput("gender", label = 'Select gender:',
-  choices = unique(competitions$gender), selected = "Men"
-  ),
-  selectInput("year", label = 'Select a limit year:',
-  choices = seq(2010,2021,by = 1), selected = 2018
-  ),
-  plotOutput("den")
+```{r distances}
+ui_dist <- fluidPage(
+   sidebarLayout(
+ sidebarPanel(
+    selectInput("gender", label = 'Select gender:',
+    choices = unique(competitions$gender), selected = "Men"),
+    checkboxGroupInput('years', label = 'Select years:', choices = seq(2010,2021,by = 1), 
+                       selected = 2018),
+ actionButton("button", "Close app")
+ ),
+ mainPanel(
+   plotOutput("den")
+   )
 )
-
-server <- function(input, output) {
+)
+server_dist <- function(input, output) {
   output$den <- renderPlot({
-  gate_results  = subset(merge(actual_results[,c('speed','id', 'gate', 'wind', 'dist')],
+  gate_results  = reactive(subset(merge(actual_results[,c('speed','id', 'gate', 'wind', 'dist')],
                                competitions[,c('id', 'season', 'gender')],by = 'id'), 
-                         season == input$year & gender == input$gender & speed > 85 & dist > 0)
+                         season %in% input$years & gender == input$gender & speed > 85 & dist > 0))
   N = paste('Results from : ', input$year, ' Gender:', input$gender)
-  ggplot(gate_results) +
-  geom_raster(aes(x = speed, y = dist, fill = wind), alpha = 0.6) + labs(title=N) + xlim(87.5,97.5) + ylim(90,145)
+  ggplot(gate_results()) +
+  geom_jitter(aes(x = speed, y = wind, color = dist)) + labs(title=N) + xlim(87.5,97.5) + ylim(-2,2) +
+  scale_color_gradientn(colours =  rev(rainbow(3)), limits = c(90,145))
 })
+  observeEvent(input$button, stopApp())
 }
-shinyApp(ui, server)
+shinyApp(ui_dist, server_dist)
 ```
 
+Therefore we conclude that this dependence is in some sense linear -- if both in-run speed and wind are good, then the jumps are statistically further. Because the chefs of competitions tend to preserve the same mean length of jumps, the most important thing is to observe in which direction this cloud of jumps is going. We can notice that especially between 2013 and 2018 this cloud shifted to lower speeds, so the jumpers need less in-run to achieve good results.  
