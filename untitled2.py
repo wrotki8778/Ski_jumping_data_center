@@ -3,9 +3,11 @@
 Test module
 """
 import os
+import os.path
 import pandas as pd
 import numpy as np
 import re
+import glob
 from tika import parser
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 actual_comps = pd.read_csv(os.getcwd()+'\\all_comps.csv')
@@ -186,6 +188,47 @@ def process_stats(data, comps):
     except ValueError:
         return [data[0], 'error', np.nan, np.nan, np.nan, np.nan]
 
+def get_round_names(comp):
+    types = ['WC', 'COC', 'GP', 'FC', 'SFWC', 'WSC', 'WJC']
+    list_of_files = glob.glob(os.getcwd()+'/stats/'+str(comp['season'])+'*'+types[comp['type']]+'*')
+    if not(list_of_files):
+        return []
+    names = []
+    for item in list_of_files:
+        database = pd.read_csv(item)
+        names = names + [x['round_type'] for i, x in database.iterrows()
+                 if x['fis_code'] == comp['id']]
+    names = [str(x) for x in list(np.unique(names))]
+    return names
+
+actual_comps = pd.read_csv(os.getcwd()+'\\all_comps.csv')
+actual_comps = actual_comps.sort_values(['date'], ascending=[True])
+comp = actual_comps.iloc[4180]
+names = get_round_names(comp)
+
+def cummulative(vector):
+    i = 1
+    counter = 0
+    output = [counter]
+    while (i<len(vector)):
+        if vector[i] == vector[i-1]:
+            counter = counter + 1
+        else:
+            counter = 0
+        output = output + [counter]
+        i = i+1
+    return output
+
+def get_round(comp, names ,csv_file=True):
+    u = get_round_names(comp)
+    if not u:
+        return []
+    if csv_file:
+        results = pd.read_csv(os.getcwd()+'/results/'+comp['id']+'.csv')
+    tmp = [names[i] for i in cummulative(results['name'])]
+    return tmp
+    
+round_type = get_round(comp, names)
 
 data = [parse_weather(comp) for i, comp in actual_comps.iterrows()]
 weather_data = [x[0] for x in data]
