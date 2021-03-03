@@ -4,22 +4,20 @@ Test module
 """
 import os
 import os.path
+import re
+from datetime import datetime
+import math
+import glob
 import pandas as pd
 import numpy as np
-import re
-import glob
 from tika import parser
 os.chdir('C:/Users/kubaf/Documents/Skoki')
-actual_comps = pd.read_csv(os.getcwd()+'\\all_comps.csv')
-actual_comps = actual_comps.sort_values(['id'], ascending=[True])
-os.chdir('C:/Users/kubaf/Documents/Skoki/PDFs')
 
 def rozdziel(string):
     """Process a string to split a multi-'.'-substrings."""
     new_string = string
     if string.count('-'):
-        new_string = string.split('-')[0]+' ' \
-            + ' '.join(['-'+e for e in string.split('-')[1:] if e])
+        new_string = string.split('-')[0]+' '+' '.join(['-'+e for e in string.split('-')[1:] if e])
     tmp = new_string.split(' ')
     if not([i for i in tmp if i.count('.') > 1]):
         return new_string
@@ -28,12 +26,10 @@ def rozdziel(string):
         return new_string[:index]+' ' + new_string[index:]
     return new_string
 
-
 def parse_weather(comp):
-    if not os.path.isfile(os.getcwd()+'//'+comp['id']+'.pdf'):
+    if not os.path.isfile(os.getcwd()+'//PDFs//'+comp['id']+'.pdf'):
         return [[[comp['id'], '']], [[comp['id'], '']]]
-    print(comp.name)
-    parsed = parser.from_file(comp['id']+'.pdf')
+    parsed = parser.from_file(os.getcwd()+'//PDFs//'+comp['id']+'.pdf')
     tekst = parsed["content"]
     tekst = tekst.lower()
     tekst_lin = tekst.splitlines()
@@ -44,33 +40,33 @@ def parse_weather(comp):
         start = min([i for i, x in enumerate(tekst_lin) if x.count(word1)])
         end = max([i for i, x in enumerate(tekst_lin) if x.count(word2)])
     except ValueError:
-        return [[[comp['id'], '']], [[comp['id'], '']]]
+        return ['', '']
     tekst_lin_1 = tekst_lin[start:end]
     tekst_lin_2 = tekst_lin[end:]
+    tekst_lin_2 = [x.replace('tiral', 'trial') for x in tekst_lin_2]
     word_acc = ['1st round', '2nd round', '3rd round', '4th round',
                 'training 1', 'training 2', 'trial round',
-                'final round', 'training 3']
-    tekst_lin_1 = [[comp['id'], x] for x in tekst_lin_1
+                'final round', 'training 3', 'qualification', 'prologue']
+    tekst_lin_1 = [x for x in tekst_lin_1
                    if sum(c.isdigit() for c in x) > 4
                    and sum([x.count(word) for word in word_acc])]
-    tekst_lin_2 = [[comp['id'], x] for x in tekst_lin_2
+    tekst_lin_2 = [x for x in tekst_lin_2
                    if sum(c.isdigit() for c in x) > 4
                    and sum([x.count(word) for word in word_acc])]
     return tekst_lin_1, tekst_lin_2
 
 
-def process_weather_init(data,comps):
-    fis_code = data[0]
-    line = data[1] + ' '
-    if not data[1]:
+def process_weather_init(data, comp):
+    fis_code = comp['id']
+    line = data + ' '
+    if not data:
         return [fis_code, np.nan, np.nan, np.nan, np.nan, np.nan]
-    comp = comps[comps['id'] == fis_code].iloc[0]
-    print(comp)
     month = int(comp['date'][5:7])
     round_type = ''
     round_types = ['1st round ', '2nd round ', '3rd round ', '4th round ',
                    'training 1 ', 'training 2 ', 'trial round ',
-                   'final round ', 'training 3 ']
+                   'final round ', 'training 3 ',
+                   'qualification ', 'prologue ']
     if comp['type'] in (0, 2, 4, 5):
         tmp = line.split(' ')
         tmp = [x for x in tmp if x]
@@ -132,13 +128,12 @@ def process_weather_init(data,comps):
     return [fis_code,np.nan,np.nan,np.nan,np.nan,np.nan]
 
 
-def process_stats_init(data,comps):
-    fis_code = data[0]
-    line = data[1]
+def process_stats_init(data, comp):
+    fis_code = comp['id']
+    line = data
     line = line.replace('/',' ')
     if not line:
         return [fis_code,np.nan,np.nan,np.nan,np.nan,np.nan]
-    comp = comps[comps['id'] == fis_code].iloc[0]
     gate = np.nan
     all_jumpers = np.nan
     counted_jumpers = np.nan
@@ -146,7 +141,8 @@ def process_stats_init(data,comps):
     round_type = np.nan
     round_types = ['1st round ', '2nd round ', '3rd round ', '4th round ',
                    'training 1 ', 'training 2 ', 'trial round ',
-                   'final round ', 'training 3 ']
+                   'final round ', 'training 3 ',
+                   'qualification ', 'prologue ']
     for tag in round_types:
         if line.count(tag):
             round_type = tag
@@ -173,20 +169,27 @@ def process_stats_init(data,comps):
                 all_jumpers, all_countries]
 
 
-def process_weather(data, comps):
+def process_stats(comp):
+    data = parse_weather(comp)
     try:
-        return process_weather_init(data, comps)
+        weather_data = [process_weather_init(x, comp) for x in data[0]]
     except ValueError:
-        return [data[0], np.nan, np.nan,
-                np.nan, np.nan, 'error',
-                np.nan, np.nan, np.nan]
-
-
-def process_stats(data, comps):
+        weather_data = [[comp['id'], np.nan, np.nan,
+                        np.nan, np.nan, 'error',
+                        np.nan, np.nan, np.nan] for x in data[0]]
     try:
-        return process_stats_init(data, comps)
+        stats_data = [process_stats_init(x, comp) for x in data[1]]
     except ValueError:
-        return [data[0], 'error', np.nan, np.nan, np.nan, np.nan]
+        stats_data = [[comp['id'], 'error', np.nan, np.nan, np.nan, np.nan]
+                      for x in data[1]]
+    weather_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
+                     'round_type', 'max_wind', 'avg_wind', 'min_wind']
+    stats_names = ['fis_code', 'round_type', 'gate', 'counted_jumpers',
+                   'all_jumpers', 'all_countries']
+    weather_series = pd.DataFrame(weather_data, columns = weather_names)
+    stats_series = pd.DataFrame(stats_data, columns = stats_names)
+    complete_series = weather_series.merge(stats_series, on=['fis_code', 'round_type'])
+    return complete_series
 
 def get_round_names(comp):
     types = ['WC', 'COC', 'GP', 'FC', 'SFWC', 'WSC', 'WJC']
@@ -198,38 +201,83 @@ def get_round_names(comp):
         database = pd.read_csv(item)
         names = names + [x['round_type'] for i, x in database.iterrows()
                  if x['fis_code'] == comp['id']]
-    names = [str(x) for x in list(np.unique(names))]
+    names = ['NA']+[str(x) for x in list(np.unique(names))]
     return names
 
-actual_comps = pd.read_csv(os.getcwd()+'\\all_comps.csv')
-actual_comps = actual_comps.sort_values(['date'], ascending=[True])
-comp = actual_comps.iloc[4180]
-names = get_round_names(comp)
-
-def cummulative(vector):
+def cummulative(vector, comp):
     i = 1
-    counter = 0
+    counter = 1
+    no_comps = len(get_round_names(comp))
     output = [counter]
     while (i<len(vector)):
         if vector[i] == vector[i-1]:
             counter = counter + 1
         else:
-            counter = 0
+            counter = 1
         output = output + [counter]
         i = i+1
+    if comp['id'].count('RLT') and (comp['type'] in (1,3,6) 
+                                    or comp['season']<2016 
+                                    or (comp['type'] == 2 
+                                        and comp['season'] == 2016)):
+        for i in range(len(vector)):
+            if output[i] + 1 < no_comps and (output[i+1] == 1 or i+1 == len(vector)):
+                output[i-output[i]:i+1] = np.repeat(0, output[i],axis=0)
     return output
 
-def get_round(comp, names ,csv_file=True):
+def get_round(comp):
     u = get_round_names(comp)
     if not u:
         return []
-    if csv_file:
-        results = pd.read_csv(os.getcwd()+'/results/'+comp['id']+'.csv')
-    tmp = [names[i] for i in cummulative(results['name'])]
-    return tmp
-    
-round_type = get_round(comp, names)
+    directory = os.getcwd()+'/results/'+comp['id']+'.csv'
+    if not os.path.isfile(directory):
+        return []
+    results = pd.read_csv(os.getcwd()+'/results/'+comp['id']+'.csv')
+    tmp = [u[i] for i in cummulative(results['name'],comp)]
+    results['round']=tmp
+    return results
+  
+results=get_round(comps.iloc[36])
+list_of_files = glob.glob(os.getcwd()+'/comps/*')
+directory = max(list_of_files, key=os.path.getctime)
+# directory = os.getcwd()+'/comps/2021_COC_2021-02-15.csv'
+comps = pd.read_csv(directory)
+comps = comps[comps['k-point'].notnull()]
 
+all_stats_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
+                   'round_type', 'max_wind', 'avg_wind', 'min_wind',
+                   'gate', 'counted_jumpers', 'all_jumpers', 'all_countries']
+stats_dataframe = pd.DataFrame([], columns = all_stats_names)
+
+
+directory_stats = directory.replace('comps','stats')
+directory_stats_2 = directory.replace('comps','elastic_stats')
+
+for k, comp_to_process in comps.iterrows():
+    if os.path.isfile(directory_stats):
+        continue
+    content = process_stats(comp_to_process)
+    stats_dataframe = stats_dataframe.append(content, ignore_index = True)
+
+if not os.path.isfile(directory_stats):
+    stats_dataframe.to_csv(directory_stats, index=False)
+stats_dataframe.to_csv(directory_stats_2, index=False)    
+
+
+for k, comp_to_process in comps.iterrows():
+    corrected_results = pd.DataFrame(get_round(comp_to_process))
+    if not corrected_results.empty:
+        stats_dataframe =\
+            corrected_results.to_csv(os.getcwd()+'\\elastic_results\\'
+                                     + comp_to_process['id']+'.csv',
+                                     index=False)
+    
+actual_comps = pd.read_csv(os.getcwd()+'\\all_comps.csv')
+actual_comps = actual_comps.sort_values(['date'], ascending=[True])
+comp = actual_comps.iloc[1321]
+names = get_round_names(comp)  
+new_results = get_round(comp)
+"""
 data = [parse_weather(comp) for i, comp in actual_comps.iterrows()]
 weather_data = [x[0] for x in data]
 stats_data = [x[1] for x in data]
@@ -259,4 +307,5 @@ all_error_stats_data = [all_stats_data[i]
                         if x[1] == 'error']
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 complete_dataframe.to_csv('all_stats.csv',index=False,na_rep='NA')
+"""
 
