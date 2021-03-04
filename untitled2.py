@@ -221,28 +221,40 @@ def cummulative(vector, comp):
                                     or (comp['type'] == 2 
                                         and comp['season'] == 2016)):
         for i in range(len(vector)):
-            if output[i] + 1 < no_comps and (output[i+1] == 1 or i+1 == len(vector)):
-                output[i-output[i]:i+1] = np.repeat(0, output[i],axis=0)
+            print(output[i]+1, no_comps)
+            if output[i+1:]:
+                if (output[i] + 1 < no_comps and output[i+1] == 1):
+                    print('replace')
+                    output[i-output[i]+1:i+1] = np.repeat(0, output[i], axis=0)
+            elif (output[i] + 1 < no_comps):
+                output[i-output[i]+1:i+1] = np.repeat(0, output[i], axis=0)
+    print(output)
     return output
 
 def get_round(comp):
     u = get_round_names(comp)
-    if not u:
+    print(u)
+    if u == ['NA']:
         return []
     directory = os.getcwd()+'/results/'+comp['id']+'.csv'
     if not os.path.isfile(directory):
         return []
     results = pd.read_csv(os.getcwd()+'/results/'+comp['id']+'.csv')
+    print(results)
     tmp = [u[i] for i in cummulative(results['name'],comp)]
+    print(tmp)
     results['round']=tmp
     return results
   
-results=get_round(comps.iloc[36])
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 directory = max(list_of_files, key=os.path.getctime)
 # directory = os.getcwd()+'/comps/2021_COC_2021-02-15.csv'
 comps = pd.read_csv(directory)
 comps = comps[comps['k-point'].notnull()]
+
+n=3
+names=get_round_names(comps.iloc[n])
+results=get_round(comps.iloc[n])
 
 all_stats_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
                    'round_type', 'max_wind', 'avg_wind', 'min_wind',

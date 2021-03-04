@@ -804,172 +804,6 @@ def collect(comp, tekstlin=False, tekst_start=False, TCS=0, show_all=0):
         database = database.append(new_jumps, ignore_index=True)
     return([database, exit_code])
 
-def parse_weather(comp):
-    if not os.path.isfile(os.getcwd()+'//PDFs//'+comp['id']+'.pdf'):
-        return [[[comp['id'], '']], [[comp['id'], '']]]
-    parsed = parser.from_file(os.getcwd()+'//PDFs//'+comp['id']+'.pdf')
-    tekst = parsed["content"]
-    tekst = tekst.lower()
-    tekst_lin = tekst.splitlines()
-    tekst_lin = [i for i in tekst_lin if i]
-    word1 = 'weather information'
-    word2 = 'statistics'
-    try:
-        start = min([i for i, x in enumerate(tekst_lin) if x.count(word1)])
-        end = max([i for i, x in enumerate(tekst_lin) if x.count(word2)])
-    except ValueError:
-        return ['', '']
-    tekst_lin_1 = tekst_lin[start:end]
-    tekst_lin_2 = tekst_lin[end:]
-    tekst_lin_2 = [x.replace('tiral', 'trial') for x in tekst_lin_2]
-    word_acc = ['1st round', '2nd round', '3rd round', '4th round',
-                'training 1', 'training 2', 'trial round',
-                'final round', 'training 3', 'qualification', 'prologue']
-    tekst_lin_1 = [x for x in tekst_lin_1
-                   if sum(c.isdigit() for c in x) > 4
-                   and sum([x.count(word) for word in word_acc])]
-    tekst_lin_2 = [x for x in tekst_lin_2
-                   if sum(c.isdigit() for c in x) > 4
-                   and sum([x.count(word) for word in word_acc])]
-    return tekst_lin_1, tekst_lin_2
-
-
-def process_weather_init(data, comp):
-    fis_code = comp['id']
-    line = data + ' '
-    if not data:
-        return [fis_code, np.nan, np.nan, np.nan, np.nan, np.nan]
-    month = int(comp['date'][5:7])
-    round_type = ''
-    round_types = ['1st round ', '2nd round ', '3rd round ', '4th round ',
-                   'training 1 ', 'training 2 ', 'trial round ',
-                   'final round ', 'training 3 ',
-                   'qualification ', 'prologue ']
-    if comp['type'] in (0, 2, 4, 5):
-        tmp = line.split(' ')
-        tmp = [x for x in tmp if x]
-        max_wind, avg_wind, min_wind, humid = \
-            [float(tmp[-2]), float(tmp[-1]), float(tmp[-3]), float(tmp[-4])]
-        if comp['type'] != 2:
-            if int(comp['season']) < 2012:
-                i = -7
-                snow, air = [float(tmp[-5]), float(tmp[-6])]
-            else:
-                i = -13
-                snow, air = [float(tmp[-7]), float(tmp[-10])]
-        else:
-            if int(comp['season']) < 2012:
-                i = -6
-                snow, air = [np.nan, float(tmp[-5])]
-            else:
-                i = -10
-                snow, air = [np.nan, float(tmp[-7])]
-        weather_type = ''
-        round_type = tmp[0]
-        while not sum(c.isdigit() for c in tmp[i]):
-            weather_type = tmp[i] + ' ' + weather_type
-            i = i-1
-        for tag in round_types:
-            if line.count(tag):
-                round_type = tag
-                break
-        return [fis_code, humid, snow, air, weather_type,
-                round_type, max_wind, avg_wind, min_wind]
-    else:
-        for tag in round_types:
-            if line.count(tag):
-                round_type = tag
-                line = line.replace(tag, '')
-                break
-        tmp = line.split(' ')
-        tmp = [x for x in tmp if x]
-        max_wind, avg_wind, min_wind, humid = \
-            [float(tmp[-1]), float(tmp[-2]), float(tmp[-3]), float(tmp[-4])]
-        if month > 4 and month < 11:
-            snow, air = \
-                [np.nan, float(tmp[-5])]
-        else:
-            if len(tmp[-5]) == 2:
-                snow, air = \
-                    [float(tmp[-5][0]), float(tmp[-5][1])]
-            else:
-                last_minus = max([i for i, x in enumerate(tmp[-5]) if x == '-'])
-                air, snow = \
-                    [float(tmp[-5][:last_minus]), float(tmp[-5][last_minus:])]
-        weather_type = tmp[0]
-        i = 1
-        while not sum(c.isdigit() for c in tmp[i]):
-            weather_type = weather_type + ' ' + tmp[i]
-            i = i+1
-        return [fis_code, humid, snow, air, weather_type,
-                round_type, max_wind, avg_wind, min_wind]
-    return [fis_code,np.nan,np.nan,np.nan,np.nan,np.nan]
-
-
-def process_stats_init(data, comp):
-    fis_code = comp['id']
-    line = data
-    line = line.replace('/',' ')
-    if not line:
-        return [fis_code,np.nan,np.nan,np.nan,np.nan,np.nan]
-    comp = comps[comps['id'] == fis_code].iloc[0]
-    gate = np.nan
-    all_jumpers = np.nan
-    counted_jumpers = np.nan
-    all_countries = np.nan
-    round_type = np.nan
-    round_types = ['1st round ', '2nd round ', '3rd round ', '4th round ',
-                   'training 1 ', 'training 2 ', 'trial round ',
-                   'final round ', 'training 3 ',
-                   'qualification ', 'prologue ']
-    for tag in round_types:
-        if line.count(tag):
-            round_type = tag
-            line = line.replace(tag, '')
-            break
-    tmp = line.split(' ')
-    tmp = [rozdziel(x) for x in tmp if x]
-    if comp['type'] in (0, 2, 4, 5):
-        if comp['team']:
-            gate = float(tmp[2])
-        else:
-            gate = float(tmp[0])
-        counted_jumpers = float(tmp[-2])
-        all_jumpers = float(tmp[-4])
-        all_countries = float(tmp[-3])
-        return [fis_code, round_type, gate, counted_jumpers,
-                all_jumpers, all_countries]
-    else:
-        gate = float(tmp[0])
-        counted_jumpers = float(tmp[-2])
-        all_jumpers = float(tmp[-4])
-        all_countries = float(tmp[-3])
-        return [fis_code, round_type, gate, counted_jumpers,
-                all_jumpers, all_countries]
-
-
-def process_stats(comp):
-    data = parse_weather(comp)
-    try:
-        weather_data = [process_weather_init(x, comp) for x in data[0]]
-    except ValueError:
-        weather_data = [[comp['id'], np.nan, np.nan,
-                        np.nan, np.nan, 'error',
-                        np.nan, np.nan, np.nan] for x in data[0]]
-    try:
-        stats_data = [process_stats_init(x, comp) for x in data[1]]
-    except ValueError:
-        stats_data = [[comp['id'], 'error', np.nan, np.nan, np.nan, np.nan]
-                      for x in data[1]]
-    weather_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
-                     'round_type', 'max_wind', 'avg_wind', 'min_wind']
-    stats_names = ['fis_code', 'round_type', 'gate', 'counted_jumpers',
-                   'all_jumpers', 'all_countries']
-    weather_series = pd.DataFrame(weather_data, columns = weather_names)
-    stats_series = pd.DataFrame(stats_data, columns = stats_names)
-    complete_series = weather_series.merge(stats_series, on=['fis_code', 'round_type'])
-    return complete_series
-
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 directory = max(list_of_files, key=os.path.getctime)
 # directory = os.getcwd()+'/comps/2021_COC_2021-02-15.csv'
@@ -998,24 +832,7 @@ for k, comp_to_process in comps.iterrows():
             errors.append(comp_to_process)
             print(comp_to_process)
 
-all_stats_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
-                   'round_type', 'max_wind', 'avg_wind', 'min_wind',
-                   'gate', 'counted_jumpers', 'all_jumpers', 'all_countries']
-stats_dataframe = pd.DataFrame([], columns = all_stats_names)
 
-
-directory_stats = directory.replace('comps','stats')
-directory_stats_2 = directory.replace('comps','elastic_stats')
-for k, comp_to_process in comps.iterrows():
-    if os.path.isfile(directory_stats):
-        continue
-    content = process_stats(comp_to_process)
-    stats_dataframe = stats_dataframe.append(content, ignore_index = True)
-
-if not os.path.isfile(directory_stats):
-    stats_dataframe.to_csv(directory_stats, index=False)
-stats_dataframe.to_csv(directory_stats_2, index=False)
-"""
 to_fix = errors
 
 exit_codes = []
@@ -1039,7 +856,7 @@ for comp_to_fix in to_fix:
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-n = 13
+n = 3
 comp_manual = comps.loc[n]
 # comp_manual['type'] = 0
 template = 0
@@ -1066,4 +883,3 @@ old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3, 6) and not old_comp:
     dalej = dalej.drop(['gate_points'], axis=1)
 dalej.to_csv(comp_manual['id']+'.csv', index=False)
-"""
