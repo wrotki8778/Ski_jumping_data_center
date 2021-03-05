@@ -28,7 +28,7 @@ def rozdziel(string):
 
 def parse_weather(comp):
     if not os.path.isfile(os.getcwd()+'//PDFs//'+comp['id']+'.pdf'):
-        return [[[comp['id'], '']], [[comp['id'], '']]]
+        return ['', '']
     parsed = parser.from_file(os.getcwd()+'//PDFs//'+comp['id']+'.pdf')
     tekst = parsed["content"]
     tekst = tekst.lower()
@@ -58,9 +58,9 @@ def parse_weather(comp):
 
 def process_weather_init(data, comp):
     fis_code = comp['id']
-    line = data + ' '
     if not data:
         return [fis_code, np.nan, np.nan, np.nan, np.nan, np.nan]
+    line = data + ' '
     month = int(comp['date'][5:7])
     round_type = ''
     round_types = ['1st round ', '2nd round ', '3rd round ', '4th round ',
@@ -188,12 +188,13 @@ def process_stats(comp):
                    'all_jumpers', 'all_countries']
     weather_series = pd.DataFrame(weather_data, columns = weather_names)
     stats_series = pd.DataFrame(stats_data, columns = stats_names)
-    complete_series = weather_series.merge(stats_series, on=['fis_code', 'round_type'])
+    complete_series = pd.merge(weather_series, stats_series,
+                               on=['fis_code', 'round_type'], how = 'outer')
     return complete_series
 
 def get_round_names(comp):
     types = ['WC', 'COC', 'GP', 'FC', 'SFWC', 'WSC', 'WJC']
-    list_of_files = glob.glob(os.getcwd()+'/stats/'+str(comp['season'])+'*'+types[comp['type']]+'*')
+    list_of_files = glob.glob(os.getcwd()+'/stats/*'+str(comp['season'])+'*'+types[comp['type']]+'*')
     if not(list_of_files):
         return []
     names = []
@@ -234,7 +235,7 @@ def cummulative(vector, comp):
 def get_round(comp):
     u = get_round_names(comp)
     print(u)
-    if u == ['NA']:
+    if u == ['NA'] or u == ['NA', 'error']:
         return []
     directory = os.getcwd()+'/results/'+comp['id']+'.csv'
     if not os.path.isfile(directory):
@@ -248,39 +249,35 @@ def get_round(comp):
   
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 directory = max(list_of_files, key=os.path.getctime)
-# directory = os.getcwd()+'/comps/2021_COC_2021-02-15.csv'
-comps = pd.read_csv(directory)
-comps = comps[comps['k-point'].notnull()]
-
-n=3
-names=get_round_names(comps.iloc[n])
-results=get_round(comps.iloc[n])
-
-all_stats_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
+for directory in list_of_files:
+    comps = pd.read_csv(directory)
+    comps = comps[comps['k-point'].notnull()]
+    all_stats_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
                    'round_type', 'max_wind', 'avg_wind', 'min_wind',
                    'gate', 'counted_jumpers', 'all_jumpers', 'all_countries']
-stats_dataframe = pd.DataFrame([], columns = all_stats_names)
+    stats_dataframe = pd.DataFrame([], columns = all_stats_names)
 
+    directory_stats = directory.replace('comps', 'stats')
+    directory_stats_2 = directory.replace('comps', 'elastic_stats')
 
-directory_stats = directory.replace('comps','stats')
-directory_stats_2 = directory.replace('comps','elastic_stats')
+    for k, comp_to_process in comps.iterrows():
+        if os.path.isfile(directory_stats):
+            continue
+        content = process_stats(comp_to_process)
+        stats_dataframe = stats_dataframe.append(content, ignore_index = True)
 
-for k, comp_to_process in comps.iterrows():
-    if os.path.isfile(directory_stats):
-        continue
-    content = process_stats(comp_to_process)
-    stats_dataframe = stats_dataframe.append(content, ignore_index = True)
+    stats_dataframe = stats_dataframe[stats_dataframe['round_type']!='error']
+    if not os.path.isfile(directory_stats):
+        stats_dataframe.to_csv(directory_stats, index=False)
+    stats_dataframe.to_csv(directory_stats_2, index=False)    
 
-if not os.path.isfile(directory_stats):
-    stats_dataframe.to_csv(directory_stats, index=False)
-stats_dataframe.to_csv(directory_stats_2, index=False)    
-
-
-for k, comp_to_process in comps.iterrows():
-    corrected_results = pd.DataFrame(get_round(comp_to_process))
-    if not corrected_results.empty:
-        stats_dataframe =\
-            corrected_results.to_csv(os.getcwd()+'\\elastic_results\\'
+for directory in list_of_files[3:]:
+    comps = pd.read_csv(directory)
+    for k, comp_to_process in comps.iterrows():
+        corrected_results = pd.DataFrame(get_round(comp_to_process))
+        if not corrected_results.empty:
+            stats_dataframe =\
+                corrected_results.to_csv(os.getcwd()+'\\elastic_results\\'
                                      + comp_to_process['id']+'.csv',
                                      index=False)
     
