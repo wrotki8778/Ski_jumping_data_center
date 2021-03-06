@@ -271,7 +271,7 @@ for directory in list_of_files:
         stats_dataframe.to_csv(directory_stats, index=False)
     stats_dataframe.to_csv(directory_stats_2, index=False)    
 
-for directory in list_of_files[3:]:
+for directory in list_of_files[17:]:
     comps = pd.read_csv(directory)
     for k, comp_to_process in comps.iterrows():
         corrected_results = pd.DataFrame(get_round(comp_to_process))

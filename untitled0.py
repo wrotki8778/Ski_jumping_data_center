@@ -138,6 +138,7 @@ def find_names(comp, tekst_lin, year, tick):
         which was found in a parsed PDF.
     """
     lista = []
+    tekst_lin = [x.replace(' *', '') for x in tekst_lin]
     if tick not in (1, 3, 6):
         names = []
         bibs = []
@@ -807,6 +808,7 @@ def collect(comp, tekstlin=False, tekst_start=False, TCS=0, show_all=0):
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 directory = max(list_of_files, key=os.path.getctime)
 # directory = os.getcwd()+'/comps/2021_COC_2021-02-15.csv'
+directory = list_of_files[17]
 comps = pd.read_csv(directory)
 comps = comps[comps['k-point'].notnull()]
 
@@ -856,7 +858,7 @@ for comp_to_fix in to_fix:
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-n = 3
+n = 111
 comp_manual = comps.loc[n]
 # comp_manual['type'] = 0
 template = 0
