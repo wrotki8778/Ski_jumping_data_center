@@ -66,6 +66,24 @@ def merge_comps(names, comps, directory):
     results = results.drop(['name', 'Unnamed: 0'], axis=1)
     return results
 
+def merge_stats(directory):
+    columns_names = ['fis_code', 'humid', 'snow',
+                     'air', 'weather_type', 'round_type', 'max_wind',
+                     'avg_wind', 'min_wind', 'gate', 'counted_jumpers',
+                     'all_jumpers', 'all_countries']
+    stats = pd.DataFrame([], columns=columns_names)
+    list_of_files = os.listdir(directory)
+    for item in list_of_files:
+        tmp = pd.read_csv(directory+'\\'+item, sep=',')
+        stats = stats.append(tmp)
+    stats = stats.drop_duplicates(['fis_code','round_type'])
+    stats[['humid','snow', 'air', 'max_wind',
+           'avg_wind', 'min_wind', 'gate', 'counted_jumpers',
+           'all_jumpers', 'all_countries']] =\
+    stats[['humid','snow', 'air', 'max_wind',
+           'avg_wind', 'min_wind', 'gate', 'counted_jumpers',
+           'all_jumpers', 'all_countries']].apply(pd.to_numeric)
+    return stats
 
 def merge_infos(directory):
     columns_names = ['codex', 'place', 'gender', 'hill_size_x',
@@ -209,6 +227,8 @@ def show_rating(comps, names, rating_db, take_all=True, index = False):
 
 actual_comps = merge_infos(os.getcwd()+'\\comps\\')
 actual_comps.to_csv(os.getcwd()+'\\all_comps.csv',index=False,na_rep='NA')
+actual_stats = merge_stats(os.getcwd()+'\\stats\\')
+actual_stats.to_csv(os.getcwd()+'\\all_stats.csv',index=False,na_rep='NA')
 actual_comps = actual_comps[actual_comps['training']==0]
 actual_comps = actual_comps.sort_values(['date', 'id'], ascending=[True, False])
 actual_comps = actual_comps.reset_index()
@@ -220,5 +240,5 @@ actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
 actual_standings = show_rating(actual_comps, actual_names, actual_rating, True)
-ryoyu = actual_rating[actual_rating['codex'] == 2934]
+ryoyu = actual_rating[actual_rating['codex'] == 5585]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])

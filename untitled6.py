@@ -492,13 +492,16 @@ def import_start_list(comp, pdf_name, block=False, tekstlin=False):
 
 
 take_years = [2021]
-type_indice = 3
+type_indice = 5
 types = ['WC', 'COC', 'GP', 'FC', 'SFWC', 'WSC', 'WJC']
-new_data = import_links(years=take_years, genre=types[type_indice], import_num=3)
+new_data = import_links(years=take_years, genre=types[type_indice],
+                        import_num=0, to_download = ['RL', 'RLQ', 'SLQ',
+                                                     'SLR1', 'RLT', 'RTRIA',
+                                                     'SLT', 'RLT2'])
 
 comps_init = new_data[3]
 comps_init['type'] = type_indice
-to_process = ['RLQ', 'RL', 'RLT', 'RTRIA']
+to_process = ['RLQ', 'RL', 'RLT', 'RTRIA', 'RLT2']
 to_process = [x+'.pdf' for x in to_process]
 list_of_pdfs = os.listdir(os.getcwd()+'\\PDFs\\')
 comps_init['ID'] = comps_init.apply(lambda x: str(x['season'])+'JP'+str(x['codex']), axis=1).tolist()

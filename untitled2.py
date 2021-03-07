@@ -249,72 +249,34 @@ def get_round(comp):
   
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 directory = max(list_of_files, key=os.path.getctime)
-for directory in list_of_files:
-    comps = pd.read_csv(directory)
-    comps = comps[comps['k-point'].notnull()]
-    all_stats_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
+
+comps = pd.read_csv(directory)
+comps = comps[comps['k-point'].notnull()]
+all_stats_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
                    'round_type', 'max_wind', 'avg_wind', 'min_wind',
                    'gate', 'counted_jumpers', 'all_jumpers', 'all_countries']
-    stats_dataframe = pd.DataFrame([], columns = all_stats_names)
+stats_dataframe = pd.DataFrame([], columns = all_stats_names)
 
-    directory_stats = directory.replace('comps', 'stats')
-    directory_stats_2 = directory.replace('comps', 'elastic_stats')
+directory_stats = directory.replace('comps', 'stats')
+directory_stats_2 = directory.replace('comps', 'elastic_stats')
 
-    for k, comp_to_process in comps.iterrows():
-        if os.path.isfile(directory_stats):
-            continue
-        content = process_stats(comp_to_process)
-        stats_dataframe = stats_dataframe.append(content, ignore_index = True)
+for k, comp_to_process in comps.iterrows():
+    if os.path.isfile(directory_stats):
+        continue
+    content = process_stats(comp_to_process)
+    stats_dataframe = stats_dataframe.append(content, ignore_index = True)
 
-    stats_dataframe = stats_dataframe[stats_dataframe['round_type']!='error']
-    if not os.path.isfile(directory_stats):
-        stats_dataframe.to_csv(directory_stats, index=False)
-    stats_dataframe.to_csv(directory_stats_2, index=False)    
+stats_dataframe = stats_dataframe[stats_dataframe['round_type']!='error']
+if not os.path.isfile(directory_stats):
+    stats_dataframe.to_csv(directory_stats, index=False)
+stats_dataframe.to_csv(directory_stats_2, index=False)    
 
-for directory in list_of_files[17:]:
-    comps = pd.read_csv(directory)
-    for k, comp_to_process in comps.iterrows():
-        corrected_results = pd.DataFrame(get_round(comp_to_process))
-        if not corrected_results.empty:
-            stats_dataframe =\
-                corrected_results.to_csv(os.getcwd()+'\\elastic_results\\'
+comps = pd.read_csv(directory)
+for k, comp_to_process in comps.iterrows():
+    corrected_results = pd.DataFrame(get_round(comp_to_process))
+    if not corrected_results.empty:
+        stats_dataframe =\
+            corrected_results.to_csv(os.getcwd()+'\\elastic_results\\'
                                      + comp_to_process['id']+'.csv',
                                      index=False)
-    
-actual_comps = pd.read_csv(os.getcwd()+'\\all_comps.csv')
-actual_comps = actual_comps.sort_values(['date'], ascending=[True])
-comp = actual_comps.iloc[1321]
-names = get_round_names(comp)  
-new_results = get_round(comp)
-"""
-data = [parse_weather(comp) for i, comp in actual_comps.iterrows()]
-weather_data = [x[0] for x in data]
-stats_data = [x[1] for x in data]
-all_weather_data = [item for sublist in weather_data for item in sublist]
-all_stats_data = [item for sublist in stats_data for item in sublist]
-processed_weather_data = [process_weather(x, actual_comps)
-                          for x in all_weather_data]
-weather_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
-                 'round_type', 'max_wind', 'avg_wind', 'min_wind']
-weather_dataframe = pd.DataFrame(processed_weather_data,
-                                 columns = weather_names)
-processed_stats_data = [process_stats(x, actual_comps)
-                        for x in all_stats_data]
-stats_names = ['fis_code', 'round_type', 'gate', 'counted_jumpers',
-               'all_jumpers', 'all_countries']
-stats_dataframe = pd.DataFrame(processed_stats_data,
-                                 columns = stats_names)
-complete_dataframe = pd.merge(weather_dataframe, stats_dataframe,
-                              on = ['fis_code','round_type'], how = 'left')
-w = process_weather_init(all_weather_data[0], actual_comps)
-# s = process_stats_init(all_stats_data[6004], actual_comps)
-all_error_weather_data = [all_weather_data[i]
-                          for i, x in enumerate(processed_weather_data)
-                          if x[5] == 'error']
-all_error_stats_data = [all_stats_data[i]
-                        for i, x in enumerate(processed_stats_data)
-                        if x[1] == 'error']
-os.chdir('C:/Users/kubaf/Documents/Skoki')
-complete_dataframe.to_csv('all_stats.csv',index=False,na_rep='NA')
-"""
 

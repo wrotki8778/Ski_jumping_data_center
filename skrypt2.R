@@ -6,28 +6,28 @@ names <- read.csv2(dir, header = TRUE, sep = ',')
 
 files_RL <-
   list.files(
-    path = paste(getwd(), "/results", sep = ''),
+    path = paste(getwd(), "/elastic_results", sep = ''),
     pattern = "*RL.csv",
     full.names = FALSE,
     recursive = FALSE
   )
 files_RLQ <-
   list.files(
-    path = paste(getwd(), "/results", sep = ''),
+    path = paste(getwd(), "/elastic_results", sep = ''),
     pattern = "*RLQ.csv",
     full.names = FALSE,
     recursive = FALSE
   )
 files_RLT <-
   list.files(
-    path = paste(getwd(), "/results", sep = ''),
+    path = paste(getwd(), "/elastic_results", sep = ''),
     pattern = "*RLT.csv",
     full.names = FALSE,
     recursive = FALSE
   )
 files_RTRIA <-
   list.files(
-    path = paste(getwd(), "/results", sep = ''),
+    path = paste(getwd(), "/elastic_results", sep = ''),
     pattern = "*RTRIA.csv",
     full.names = FALSE,
     recursive = FALSE
@@ -67,11 +67,12 @@ column_names = c(
   'gate_points',
   'wind',
   'wind_comp',
-  'loc'
+  'loc',
+  'round'
 )
-function_names = c('as.character', rep('as.double', 14), 'as.integer')
+function_names = c('as.character', rep('as.double', 14), 'as.integer','as.character')
 results_database = lapply(files, function(x) {
-  dir = paste(getwd(), '/results/', x, sep = '')
+  dir = paste(getwd(), '/elastic_results/', x, sep = '')
   t <- read.csv2(dir, header = TRUE, sep = ',') # load file
   nowe_nazwy = setdiff(colnames(t), column_names)
   if (length(nowe_nazwy) > 0) {
