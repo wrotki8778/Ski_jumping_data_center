@@ -8,9 +8,9 @@ https://rstudio-pubs-static.s3.amazonaws.com/153728_02db88490f314b8db409a2ce2555
 
 Question is: why? This discipline is in fact overloaded with data, but almost nobody took this topic seriously. Therefore I decided to start collecting data and analyzing them. However, the amount of work needed to capture various data (i.e. jumps and results of competitions) was so big and there is so many ways to use these informations, that make it public was obvious. In fact, I have a plan to expand my database to be as big as possible, but it requires more time and (I wish) more help.
 
-My script now (06.01.21) is able to:
+My script now (08.03.21) is able to:
 - scrap information from FIS official website and automatically download PDFs (alert: FIS allows to use these methods, see https://www.fis-ski.com/robots.txt), it is done in untitled6.py file
-- gather information about competitions in a systematic way - by the script we can export a database with basic facts about every PDF with results (untitled0.py) and build a foundation to parsing results,
+- gather information about competitions in a systematic way - by the script we can export a database with basic facts about every PDF with results and stats (untitled0.py, untitled2.py, untitled8.py and skrypt2.r on the top)
 - parse results of every World Cup/Grand Prix competition from 2009/10 season to now, including these without gate/wind compensations, along with World Championships and Ski Flying World Championships (tested with success back to 2009/10 season), coded in untitled0.py
 - parse results of every Continental Cup/FIS Cup competition,
 - parse results of training/trial rounds from all described above types of competitions (with minor exceptions)
@@ -19,6 +19,5 @@ My script now (06.01.21) is able to:
 Next steps are as below:
 - complete the documentation of function appearing in the modules,
 - optimize code (make the style better, clean redundant sections etc.)
-- make some insights from the collected data, at least one.
 My scripts have several limitations and I take no responsibility for errors appearing in them.
 
