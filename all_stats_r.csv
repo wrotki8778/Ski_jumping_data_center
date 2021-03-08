@@ -18,7 +18,7 @@
 "2015JP3748RLT",50,NA,12,"cloudy ","1st round ",0.57,0.13,-0.79,14,29,29,10
 "2015JP3748RLT",51,NA,12.3,"cloudy ","2nd round ",1.04,0.47,-0.62,14,26,26,9
 "2015JP3748RLT",515,NA,12.5,"cloudy ","3rd round ",0.96,0.52,0.02,13,26,26,10
-"2015JP3748RL",35,NA,18.8,"sunny ","1st round ",2.01,2.4,0.23,11,29,29,10
+"2015JP3748RL",35,NA,18.8,"sunny ","1st round ",2.4,2.01,0.23,11,29,29,10
 "2015JP3748RL",35,NA,18.4,"sunny ","final round ",2.45,1.41,0.63,11,29,29,10
 "2015JP3747RTRIA",32,NA,19,"partly cloudy ","trial round ",0.56,0.18,-0.49,17,33,33,10
 "2015JP3747RL",34,NA,17.7,"partly cloudy ","1st round ",0.06,-0.38,-0.62,18,33,34,10
@@ -808,19 +808,19 @@
 "2014JP3888RL",80,-7,-6,"partly cloudy","2nd round ",0.5,0,-1,7,30,30,8
 "2014JP3887RTRIA",73,-7,-3,"overcast","trial round ",0.3,0.1,0,13,23,23,7
 "2014JP3887RL",73,-7,-3,"partly cloudy","1st round ",0.3,-0.2,-0.5,NA,NA,NA,NA
-"2014JP3887RL",73,-7,-3,"partly cloudy","2nd round ",-1.1,-0.6,-0.4,NA,NA,NA,NA
-"2014JP3886RTRIA",71,-7,-6,"overcast","trial round ",-0.9,-0.5,-0.1,9,45,45,7
-"2014JP3886RL",70,-7,-6,"overcast","1st round ",-0.6,-0.3,-0.1,8,46,46,7
-"2014JP3886RL",70,-7,-6,"cloudy to snowy","2nd round ",-0.3,-0.1,0,8,29,29,5
-"2014JP3885RTRIA",71,-7,-6,"overcast","trial round ",-0.1,0,0,13,27,27,7
-"2014JP3885RLT",79,-4,3,"cloudy to rainy","training 1 ",-0.8,-0.6,-0.1,NA,NA,NA,NA
-"2014JP3885RLT",79,-4,4,"cloudy","training 2 ",-0.7,-0.5,-0.2,NA,NA,NA,NA
+"2014JP3887RL",73,-7,-3,"partly cloudy","2nd round ",-0.4,-0.6,-1.1,NA,NA,NA,NA
+"2014JP3886RTRIA",71,-7,-6,"overcast","trial round ",-0.1,-0.5,-0.9,9,45,45,7
+"2014JP3886RL",70,-7,-6,"overcast","1st round ",-0.1,-0.3,-0.6,8,46,46,7
+"2014JP3886RL",70,-7,-6,"cloudy to snowy","2nd round ",0,-0.1,-0.3,8,29,29,5
+"2014JP3885RTRIA",71,-7,-6,"overcast","trial round ",0,0,-0.1,13,27,27,7
+"2014JP3885RLT",79,-4,3,"cloudy to rainy","training 1 ",-0.1,-0.6,-0.8,NA,NA,NA,NA
+"2014JP3885RLT",79,-4,4,"cloudy","training 2 ",-0.2,-0.5,-0.7,NA,NA,NA,NA
 "2014JP3885RL",70,-7,-6,"snowy","1st round ",0.2,-0.2,-0.6,13,27,27,7
-"2014JP3885RL",70,-7,-6,"overcast","2nd round ",-0.6,-0.2,0,13,26,26,7
-"2014JP3884RTRIA",78,-4,1,"overcast","trial round ",-0.3,-0.1,0,9,45,45,6
-"2014JP3884RLT",78,-4,1,"clear","training 1 ",-0.3,-0.1,-0.1,NA,NA,NA,NA
-"2014JP3884RLT",76,-4,-1,"clear","training 2 ",-0.4,-0.2,0,NA,NA,NA,NA
-"2014JP3884RL",78,-4,1,"overcast","1st round ",-0.2,0,0,8,46,47,7
+"2014JP3885RL",70,-7,-6,"overcast","2nd round ",0,-0.2,-0.6,13,26,26,7
+"2014JP3884RTRIA",78,-4,1,"overcast","trial round ",0,-0.1,-0.3,9,45,45,6
+"2014JP3884RLT",78,-4,1,"clear","training 1 ",-0.1,-0.1,-0.3,NA,NA,NA,NA
+"2014JP3884RLT",76,-4,-1,"clear","training 2 ",0,-0.2,-0.4,NA,NA,NA,NA
+"2014JP3884RL",78,-4,1,"overcast","1st round ",0,0,-0.2,8,46,47,7
 "2014JP3884RL",79,-4,2,"overcast","2nd round ",0.3,-0.3,-0.6,9,31,31,6
 "2014JP3869RTRIA",63,-7,-8,"cloudy to sunny","trial round ",2.5,1.2,0.3,18,56,56,18
 "2014JP3869RL",62,-8,-7,"sunny","1st round ",2,1.1,0.2,14,57,57,18
@@ -888,9 +888,9 @@
 "2014JP3758RL",53,NA,16,"overcast","2nd round ",1.6,1.2,0.7,NA,NA,NA,NA
 "2014JP3757RTRIA",61,NA,16,"rainy","trial round ",1,-0.7,-1.5,14,73,73,15
 "2014JP3757RLT",49,NA,18,"sunny","training 1 ",2.8,-1.1,-2.2,12,73,73,15
-"2014JP3757RLT",52,NA,16,"clear","training 2 ",-4.7,-3.4,-1,15,61,61,15
+"2014JP3757RLT",52,NA,16,"clear","training 2 ",-1,-3.4,-4.7,15,61,61,15
 "2014JP3757RL",68,NA,15,"rainy","1st round ",0.2,-1.2,-2.2,14,70,73,15
-"2014JP3757RL",78,NA,14,"rainy","2nd round ",-2.4,-1.7,-0.9,16,30,30,7
+"2014JP3757RL",78,NA,14,"rainy","2nd round ",-0.9,-1.7,-2.4,16,30,30,7
 "2014JP3726RTRIA",51,NA,20,"sunny","trial round ",0.2,0.1,-0.2,22,51,51,14
 "2014JP3726RL",51,NA,21,"sunny","1st round ",0.4,0,-0.3,23,51,51,14
 "2014JP3726RL",51,NA,22,"sunny","2nd round ",1.5,0.6,0.4,18,30,30,9
@@ -912,12 +912,12 @@
 "2014JP3700RLT",84,NA,11,"partly cloudy","training 1 ",1,0.6,0.3,10,28,28,8
 "2014JP3700RLT",84,NA,11,"overcast","training 2 ",0.9,0.5,0.2,8,71,71,15
 "2014JP3700RL",84,NA,11,"rainy","1st round ",0.4,0.2,-0.5,8,69,71,15
-"2014JP3700RL",84,NA,11,"rainy","2nd round ",-0.8,-0.4,-0.2,8,29,30,8
+"2014JP3700RL",84,NA,11,"rainy","2nd round ",-0.2,-0.4,-0.8,8,29,30,8
 "2013JP3937RL",90,-8,-6,"overcast","1st round ",2.8,1.8,0,14,50,50,11
 "2013JP3937RL",85,-8,-6,"overcast","2nd round ",1.5,0.8,0.4,15,30,30,7
 "2013JP3925RLT",91,-7,-6,"partly cloudy","training 1 ",0.4,0.1,0,20,41,41,10
 "2013JP3925RLT",91,-7,-6,"sunny","training 2 ",0.4,0.1,0,22,39,39,10
-"2013JP3925RL",90,-7,-6,"partly cloudy","2nd round ",-1.6,-0.5,-0.2,21,30,30,10
+"2013JP3925RL",90,-7,-6,"partly cloudy","2nd round ",-0.2,-0.5,-1.6,21,30,30,10
 "2013JP3925RL",NA,NA,NA,NA,"1st round ",NA,NA,NA,21,41,41,10
 "2013JP3922RTRIA",81,4,0,"overcast","trial round ",2,1.1,-0.8,18,49,49,10
 "2013JP3922RL",81,4,0,"overcast","1st round ",2,0.7,-1,18,48,49,10
@@ -941,16 +941,16 @@
 "2013JP3913RL",0,-6,-6,"sunny","1st round ",0,0,0,NA,NA,NA,NA
 "2013JP3913RL",0,-7,-7,"clear","2nd round ",0,0,0,NA,NA,NA,NA
 "2013JP3912RTRIA",79,-5,3,"cloudy","trial round ",1,0.2,-0.5,23,91,91,19
-"2013JP3912RL",77,-5,3,"cloudy","1st round ",-0.5,-0.2,-0.1,22,90,92,19
-"2013JP3912RL",70,-5,3,"cloudy","2nd round ",-0.4,-0.1,-0.1,23,30,30,9
+"2013JP3912RL",77,-5,3,"cloudy","1st round ",-0.1,-0.2,-0.5,22,90,92,19
+"2013JP3912RL",70,-5,3,"cloudy","2nd round ",-0.1,-0.1,-0.4,23,30,30,9
 "2013JP3911RLT",76,-3,6,"rainy and windy","training 1 ",1.9,-1.7,-2.5,22,94,94,20
-"2013JP3911RL",73,-3,6,"rainy","1st round ",-1.7,-1.1,-0.6,22,88,94,20
-"2013JP3911RL",76,-3,6,"rainy","2nd round ",-0.5,-0.3,0,24,29,30,10
+"2013JP3911RL",73,-3,6,"rainy","1st round ",-0.6,-1.1,-1.7,22,88,94,20
+"2013JP3911RL",76,-3,6,"rainy","2nd round ",0,-0.3,-0.5,24,29,30,10
 "2013JP3898RL",80,-4,-3,"sunny","1st round ",0.5,-1,-1.8,14,83,83,20
-"2013JP3898RL",81,-4,-4,"sunny","2nd round ",-1.6,-1.4,-0.7,16,31,31,10
+"2013JP3898RL",81,-4,-4,"sunny","2nd round ",-0.7,-1.4,-1.6,16,31,31,10
 "2013JP3897RLT",79,-4,-3,"sunny","training 1 ",0.2,-1.6,-2.8,17,83,83,20
 "2013JP3897RL",80,-4,-3,"sunny","1st round ",0.3,-0.4,-0.8,13,80,83,20
-"2013JP3897RL",80,-4,-3,"sunny","2nd round ",-0.8,-0.5,-0.2,13,30,30,10
+"2013JP3897RL",80,-4,-3,"sunny","2nd round ",-0.2,-0.5,-0.8,13,30,30,10
 "2013JP3880RTRIA",88,-2,3,"overcast","trial round ",1.4,-0.7,-1.4,20,60,60,13
 "2013JP3880RL",89,-2,5,"overcast","1st round ",2.2,-0.8,-2.1,21,57,61,13
 "2013JP3880RL",75,-2,8,"overcast","2nd round ",1.9,-0.8,-1.5,22,30,30,8
@@ -963,23 +963,23 @@
 "2013JP3871RL",69,-5,-4,"overcast","2nd round ",0.8,0.4,0.2,12,29,30,9
 "2013JP3870RTRIA",86,-3,-1,"snowy","trial round ",2.5,1.5,0.5,15,90,90,19
 "2013JP3870RLT",88,-2,0,"snowy","training 1 ",1.1,-1.5,-2.3,14,79,79,19
-"2013JP3870RLT",86,-2,0,"snowy","training 2 ",-2,-1.6,-0.8,16,73,73,18
+"2013JP3870RLT",86,-2,0,"snowy","training 2 ",-0.8,-1.6,-2,16,73,73,18
 "2013JP3870RL",79,-2,0,"snowy","1st round ",2,1.1,0.6,14,84,90,19
 "2013JP3862RTRIA",74,-7,-6,"snowy","trial round ",0.1,0,-0.2,9,80,80,15
 "2013JP3862RL",74,-7,-5,"snowy","1st round ",2.8,1.5,0.7,6,80,80,15
 "2013JP3862RL",73,-7,-4,"cloudy","2nd round ",1.6,0.8,-0.8,7,30,30,11
 "2013JP3861RLT",74,-6,-3,"sunny","training 1 ",0.4,0.2,-0.2,10,72,72,15
 "2013JP3861RLT",75,-6,-3,"sunny","training 2 ",0.3,0.2,-0.4,9,78,78,15
-"2013JP3861RL",73,-7,-4,"clear","1st round ",-1,-0.5,-0.1,9,78,80,15
-"2013JP3861RL",73,-7,-5,"clear","2nd round ",-0.9,-0.5,0,9,30,30,7
+"2013JP3861RL",73,-7,-4,"clear","1st round ",-0.1,-0.5,-1,9,78,80,15
+"2013JP3861RL",73,-7,-5,"clear","2nd round ",0,-0.5,-0.9,9,30,30,7
 "2013JP3854RL",0,-9,-9,"clear","1st round ",0,0,0,NA,NA,NA,NA
 "2013JP3854RL",0,-9,-9,"clear","2nd round ",0,0,0,NA,NA,NA,NA
-"2013JP3849RTRIA",78,-1,-1,"partly cloudy to overcast","trial round ",-0.1,0.1,0.4,20,61,61,13
+"2013JP3849RTRIA",78,-1,-1,"partly cloudy to overcast","trial round ",0.4,0.1,-0.1,20,61,61,13
 "2013JP3849RL",77,-1,-1,"partly cloudy","1st round ",0.2,-0.4,-1.8,20,59,62,13
 "2013JP3849RL",76,-1,-2,"partly cloudy","2nd round ",0.7,-0.2,-0.6,21,30,30,7
 "2013JP3848RTRIA",63,-2,-3,"clear","trial round ",0.9,0.3,-1.3,23,62,62,13
 "2013JP3848RLT",66,-3,-4,"clear","training 1 ",1.2,0.6,0.4,NA,NA,NA,NA
-"2013JP3848RLT",63,-4,-6,"clear","training 2 ",1.5,0.5,0.6,NA,NA,NA,NA
+"2013JP3848RLT",63,-4,-6,"clear","training 2 ",1.5,0.6,0.5,NA,NA,NA,NA
 "2013JP3848RLT",64,-6,-9,"cloudy","training 3 ",1.2,0.3,0,NA,NA,NA,NA
 "2013JP3848RL",63,-4,-6,"clear","1st round ",-0.3,-0.8,-1.8,23,59,62,13
 "2013JP3848RL",64,-5,-7,"clear","2nd round ",-0.2,-0.6,-1.5,23,29,30,6
@@ -987,8 +987,8 @@
 "2013JP3834RL",57,-5,-4,"sunny","1st round ",3.1,1.9,0.9,13,45,45,13
 "2013JP3834RL",55,-6,-5,"sunny","2nd round ",2.2,1.3,0.5,11,30,30,10
 "2013JP3833RTRIA",82,-6,-7,"cloudy","trial round ",1,0.6,0.2,22,51,51,13
-"2013JP3833RLT",78,-12,-10,"snowy","training 1 ",-0.6,-0.2,-0.1,20,50,50,13
-"2013JP3833RLT",83,-12,-10,"snowy","training 2 ",-0.7,-0.4,-0.2,22,49,49,13
+"2013JP3833RLT",78,-12,-10,"snowy","training 1 ",-0.1,-0.2,-0.6,20,50,50,13
+"2013JP3833RLT",83,-12,-10,"snowy","training 2 ",-0.2,-0.4,-0.7,22,49,49,13
 "2013JP3833RL",71,-4,-5,"overcast","1st round ",1,0.6,0,21,50,51,13
 "2013JP3833RL",73,-4,-5,"overcast","2nd round ",1.3,0.9,-0.1,19,30,30,9
 "2013JP3832RTRIA",67,-11,-9,"cloudy","trial round ",1.8,1.1,0.5,10,51,51,13
@@ -1005,12 +1005,12 @@
 "2013JP3828RL",86,-1,2,"cloudy","1st round ",1.5,0.7,0.3,10,57,61,14
 "2013JP3828RL",85,-1,2,"cloudy","2nd round ",1.5,0.7,0.2,10,31,31,9
 "2013JP3817RTRIA",87,-6,0,"partly cloudy","trial round ",0.5,-0.3,-1,23,74,74,15
-"2013JP3817RL",90,-5,5,"overcast","1st round ",-1.5,-0.7,0,24,75,75,15
-"2013JP3816RTRIA",85,-7,-5,"partly cloudy","trial round ",-1.5,-0.9,-0.5,24,77,77,16
+"2013JP3817RL",90,-5,5,"overcast","1st round ",0,-0.7,-1.5,24,75,75,15
+"2013JP3816RTRIA",85,-7,-5,"partly cloudy","trial round ",-0.5,-0.9,-1.5,24,77,77,16
 "2013JP3816RLT",82,-6,-2,"overcast","training 1 ",1,0.4,-0.2,NA,NA,NA,NA
 "2013JP3816RLT",82,-6,-2,"snowy","training 2 ",1.3,0.8,0.5,NA,NA,NA,NA
-"2013JP3816RL",82,-7,-3,"partly cloudy","1st round ",-1,-0.7,0,24,76,77,16
-"2013JP3816RL",82,-7,-3,"partly cloudy","2nd round ",-1,-0.6,0,24,29,29,8
+"2013JP3816RL",82,-7,-3,"partly cloudy","1st round ",0,-0.7,-1,24,76,77,16
+"2013JP3816RL",82,-7,-3,"partly cloudy","2nd round ",0,-0.6,-1,24,29,29,8
 "2013JP3785RL",78,-7,-2,"snowy","1st round ",1.5,-1.2,-2.5,17,72,73,16
 "2013JP3784RTRIA",81,-7,0,"sunny","trial round ",1,0.6,-0.5,16,73,73,16
 "2013JP3784RLT",81,-7,-1,"sunny","training 1 ",2.5,0.8,-0.8,21,58,58,15
@@ -1020,10 +1020,10 @@
 "2013JP3774RL",82,-5,-3,"partly cloudy","1st round ",0.6,-0.2,-0.5,23,72,74,16
 "2013JP3774RL",83,-5,-3,"overcast","2nd round ",0.8,0.2,-0.6,23,30,30,9
 "2013JP3773RTRIA",75,-7,-5,"overcast","trial round ",-0.1,-0.3,-0.7,24,75,75,16
-"2013JP3773RLT",73,-9,-8,"clear","training 1 ",-1.3,-1,-0.7,33,75,75,16
-"2013JP3773RLT",72,-11,-10,"clear","training 2 ",-1.1,-0.9,-0.6,28,76,76,16
-"2013JP3773RL",78,-5,-3,"partly cloudy","1st round ",-0.7,-0.5,-0.2,25,74,76,16
-"2013JP3773RL",73,-8,-7,"overcast","2nd round ",-0.8,-0.6,-0.2,25,30,30,11
+"2013JP3773RLT",73,-9,-8,"clear","training 1 ",-0.7,-1,-1.3,33,75,75,16
+"2013JP3773RLT",72,-11,-10,"clear","training 2 ",-0.6,-0.9,-1.1,28,76,76,16
+"2013JP3773RL",78,-5,-3,"partly cloudy","1st round ",-0.2,-0.5,-0.7,25,74,76,16
+"2013JP3773RL",73,-8,-7,"overcast","2nd round ",-0.2,-0.6,-0.8,25,30,30,11
 "2013JP3754RTRIA",51,NA,9,"partly cloudy","trial round ",0,0,0,27,82,82,16
 "2013JP3754RL",50,NA,10,"partly cloudy","1st round ",1.8,0.9,0.2,26,77,82,16
 "2013JP3754RL",42,NA,14,"partly cloudy","2nd round ",2.2,1.8,0.5,22,30,30,8
@@ -1034,11 +1034,11 @@
 "2013JP3746RTRIA",76,NA,15,"overcast","trial round ",0,-0.6,-1.4,27,43,43,10
 "2013JP3746RL",76,NA,16,"partly cloudy","1st round ",0,-0.3,-1.1,27,42,43,10
 "2013JP3746RL",76,NA,17,"overcast","2nd round ",-0.2,-0.4,-0.9,28,30,30,7
-"2013JP3745RTRIA",78,NA,16,"cloudy","trial round ",-2.9,-1.6,-1,28,49,49,10
-"2013JP3745RLT",76,NA,10,"sunny","training 1 ",-0.8,-0.5,-0.2,23,37,37,8
+"2013JP3745RTRIA",78,NA,16,"cloudy","trial round ",-1,-1.6,-2.9,28,49,49,10
+"2013JP3745RLT",76,NA,10,"sunny","training 1 ",-0.2,-0.5,-0.8,23,37,37,8
 "2013JP3745RLT",78,NA,12,"sunny","training 2 ",0.6,0.4,-0.2,24,38,38,8
-"2013JP3745RL",78,NA,17,"cloudy","1st round ",-1.5,-1,-0.4,24,49,49,10
-"2013JP3745RL",78,NA,18,"cloudy to sunny","2nd round ",-1.3,-0.6,-0.4,26,30,30,6
+"2013JP3745RL",78,NA,17,"cloudy","1st round ",-0.4,-1,-1.5,24,49,49,10
+"2013JP3745RL",78,NA,18,"cloudy to sunny","2nd round ",-0.4,-0.6,-1.3,26,30,30,6
 "2013JP3744RTRIA",90,NA,4,"cloudy to rainy","trial round ",1.5,0.7,0.3,16,75,75,15
 "2013JP3744RL",91,NA,5,"cloudy to rainy","1st round ",0.9,0.7,0.5,15,76,78,15
 "2013JP3744RL",91,NA,5,"rainy","2nd round ",1,0.7,0.2,15,31,31,9
@@ -1048,7 +1048,7 @@
 "2013JP3742RLT",65,NA,10,"clear","training 1 ",2.5,0,-1.5,10,66,66,12
 "2013JP3742RLT",63,NA,9,"clear","training 2 ",2.6,-0.4,-1.7,16,65,65,12
 "2013JP3742RL",51,NA,8,"clear","1st round ",0.5,-0.4,-0.8,14,75,78,15
-"2013JP3742RL",48,NA,6,"clear","2nd round ",-0.7,-0.5,-0.2,16,31,31,10
+"2013JP3742RL",48,NA,6,"clear","2nd round ",-0.2,-0.5,-0.7,16,31,31,10
 "2013JP3741RLT",38,NA,7,"sunny","training 1 ",1.5,-0.8,-2,17,39,39,12
 "2013JP3741RL",39,NA,8,"sunny","1st round ",0.5,0.2,0,15,38,39,12
 "2013JP3741RL",41,NA,12,"sunny","2nd round ",0.3,0,-0.4,15,30,30,11
@@ -1059,7 +1059,7 @@
 "2013JP3720RLT",55,NA,11,"cloudy","training 1 ",1.3,0.9,0.6,21,50,50,13
 "2013JP3720RLT",55,NA,11,"cloudy","training 2 ",1.4,0.8,0.6,21,49,49,13
 "2013JP3720RL",67,NA,12,"cloudy","1st round ",0.4,0.2,0,23,55,55,14
-"2013JP3720RL",66,NA,11,"cloudy","2nd round ",-0.2,0,0,24,30,30,9
+"2013JP3720RL",66,NA,11,"cloudy","2nd round ",0,0,-0.2,24,30,30,9
 "2013JP3710RTRIA",NA,NA,NA,NA,"trial round ",NA,NA,NA,40,46,46,10
 "2013JP3710RL",NA,NA,NA,NA,"1st round ",NA,NA,NA,37,43,45,10
 "2013JP3710RL",NA,NA,NA,NA,"final round ",NA,NA,NA,32,28,30,9
@@ -1095,7 +1095,7 @@
 "2012JP3211RLT",60,-10,-6,"sunny to partly cloudy","training 1 ",7.6,5,4,15,42,42,9
 "2012JP3211RL",65,-6,-2,"sunny","1st round ",6.9,4.1,1.5,7,45,45,10
 "2012JP3211RL",65,-5,-2,"sunny","2nd round ",6.1,4.2,3,7,30,30,9
-"2012JP3206RLT",92,-12,-11,"cloudy","training 1 ",-2.2,-1.6,-1,26,53,53,14
+"2012JP3206RLT",92,-12,-11,"cloudy","training 1 ",-1,-1.6,-2.2,26,53,53,14
 "2012JP3206RL",92,-14,-13,"cloudy","2nd round ",0.5,-1.2,-1.8,20,30,30,9
 "2012JP3206RL",NA,NA,NA,NA,"1st round ",NA,NA,NA,21,53,53,14
 "2012JP3205RLT",62,-9,-7,"overcast","training 1 ",0.9,0.5,-1,NA,NA,NA,NA
@@ -1103,13 +1103,13 @@
 "2012JP3205RLT",60,-10,-8,"overcast","training 3 ",1.7,0.3,-0.7,NA,NA,NA,NA
 "2012JP3205RL",66,-8,-6,"cloudy","1st round ",1.5,1.1,-1,19,56,56,14
 "2012JP3205RL",NA,NA,NA,NA,"2nd round ",NA,NA,NA,19,30,30,8
-"2012JP3204RTRIA",68,-5,2,"sunny","trial round ",-1.1,-0.7,-0.5,13,81,81,15
-"2012JP3204RL",68,-5,2,"sunny","1st round ",-1.1,-0.8,-0.3,13,78,82,15
-"2012JP3204RL",72,-5,4,"partly cloudy","2nd round ",-1.4,-0.7,-0.2,14,30,30,10
-"2012JP3203RLT",75,-5,0,"sunny","training 1 ",-0.5,-0.2,0,NA,NA,NA,NA
-"2012JP3203RLT",72,-5,0,"sunny","training 2 ",-1,-0.5,0.1,NA,NA,NA,NA
-"2012JP3203RL",73,-5,0,"sunny","1st round ",-0.9,-0.5,-0.1,13,79,81,15
-"2012JP3203RL",73,-5,1,"sunny","2nd round ",-0.8,-0.4,-0.2,13,30,30,12
+"2012JP3204RTRIA",68,-5,2,"sunny","trial round ",-0.5,-0.7,-1.1,13,81,81,15
+"2012JP3204RL",68,-5,2,"sunny","1st round ",-0.3,-0.8,-1.1,13,78,82,15
+"2012JP3204RL",72,-5,4,"partly cloudy","2nd round ",-0.2,-0.7,-1.4,14,30,30,10
+"2012JP3203RLT",75,-5,0,"sunny","training 1 ",0,-0.2,-0.5,NA,NA,NA,NA
+"2012JP3203RLT",72,-5,0,"sunny","training 2 ",0.1,-0.5,-1,NA,NA,NA,NA
+"2012JP3203RL",73,-5,0,"sunny","1st round ",-0.1,-0.5,-0.9,13,79,81,15
+"2012JP3203RL",73,-5,1,"sunny","2nd round ",-0.2,-0.4,-0.8,13,30,30,12
 "2012JP3180RTRIA",84,-1,1,"cloudy","trial round ",2.8,1.2,-1.2,18,68,68,15
 "2012JP3180RL",81,-1,4,"cloudy","1st round ",3.2,1.4,-1.2,15,68,68,15
 "2012JP3179RLT",90,-1,5,"rainy","training 1 ",2.5,0.8,-2,NA,NA,NA,NA
@@ -1125,28 +1125,28 @@
 "2012JP3172RLT",NA,NA,NA,NA,"1st round ",NA,NA,NA,11,61,61,15
 "2012JP3172RLT",NA,NA,NA,NA,"2nd round ",NA,NA,NA,10,61,61,15
 "2012JP3172RLQ",NA,NA,NA,NA,"qualification ",NA,NA,NA,10,56,57,15
-"2012JP3162RTRIA",68,-9,-4,"sunny","trial round ",-2,-1.2,0,13,56,56,9
-"2012JP3162RL",68,-9,-3,"sunny","1st round ",-1.8,-0.3,-1.3,13,56,57,9
-"2012JP3162RL",67,-7,-1,"partly cloudy","2nd round ",-1.2,-0.5,0.6,13,30,30,7
+"2012JP3162RTRIA",68,-9,-4,"sunny","trial round ",0,-1.2,-2,13,56,56,9
+"2012JP3162RL",68,-9,-3,"sunny","1st round ",-0.3,-1.3,-1.8,13,56,57,9
+"2012JP3162RL",67,-7,-1,"partly cloudy","2nd round ",0.6,-0.5,-1.2,13,30,30,7
 "2012JP3161RTRIA",97,-6,0,"rainy and fogy","trial round ",3,1.5,-0.2,10,49,49,9
 "2012JP3161RL",98,-6,0,"rainy and foggy","1st round ",2.5,1.5,-0.5,10,47,49,9
 "2012JP3161RL",98,-6,-2,"rainy and foggy","2nd round ",2.5,1.3,0,12,30,30,8
-"2012JP3160RTRIA",91,-3,-2,"partly cloudy","trial round ",-0.3,-0.2,0,7,45,45,9
+"2012JP3160RTRIA",91,-3,-2,"partly cloudy","trial round ",0,-0.2,-0.3,7,45,45,9
 "2012JP3160RL",92,-3,-2,"overcast","1st round ",0.1,0,-0.1,6,47,47,9
 "2012JP3160RL",92,-3,-1,"partly cloudy","2nd round ",0.1,0,-0.1,6,29,30,8
 "2012JP3159RTRIA",92,-3,-2,"partly cloudy","trial round ",0.2,0,-0.1,10,42,42,10
 "2012JP3159RL",93,-3,-1,"partly cloudy","1st round ",0,0,-0.1,9,47,48,10
-"2012JP3159RL",93,-3,0,"cloudy","2nd round ",-0.1,0,0,9,31,31,10
-"2012JP3158RTRIA",81,-2,-1,"cloudy","trial round ",-0.9,-0.4,0,10,46,46,9
-"2012JP3158RLT",83,-5,-6,"snowy","training 1 ",-0.6,-0.4,-0.2,12,46,46,9
+"2012JP3159RL",93,-3,0,"cloudy","2nd round ",0,0,-0.1,9,31,31,10
+"2012JP3158RTRIA",81,-2,-1,"cloudy","trial round ",0,-0.4,-0.9,10,46,46,9
+"2012JP3158RLT",83,-5,-6,"snowy","training 1 ",-0.2,-0.4,-0.6,12,46,46,9
 "2012JP3158RLT",83,-6,-6,"snowy","training 2 ",1,-0.9,-1,13,36,36,8
-"2012JP3158RL",81,-2,-1,"cloudy","1st round ",-0.7,-0.4,0,6,46,46,9
-"2012JP3158RL",80,-3,-2,"cloudy","2nd round ",-0.7,-0.3,-0.1,6,30,30,8
-"2012JP3157RTRIA",82,-2,-1,"cloudy","trial round ",-0.9,-0.6,-0.1,8,47,47,10
+"2012JP3158RL",81,-2,-1,"cloudy","1st round ",0,-0.4,-0.7,6,46,46,9
+"2012JP3158RL",80,-3,-2,"cloudy","2nd round ",-0.1,-0.3,-0.7,6,30,30,8
+"2012JP3157RTRIA",82,-2,-1,"cloudy","trial round ",-0.1,-0.6,-0.9,8,47,47,10
 "2012JP3157RLT",78,-4,-6,"snowy","training 1 ",0.4,0.2,0,9,47,47,10
 "2012JP3157RLT",83,-5,-6,"snowy","training 2 ",0.4,0.3,0,10,43,43,10
-"2012JP3157RL",82,-2,-1,"cloudy","1st round ",-0.8,-0.4,-0.1,10,48,48,10
-"2012JP3157RL",80,-3,-3,"cloudy","2nd round ",-0.6,-0.4,-0.1,10,30,30,9
+"2012JP3157RL",82,-2,-1,"cloudy","1st round ",-0.1,-0.4,-0.8,10,48,48,10
+"2012JP3157RL",80,-3,-3,"cloudy","2nd round ",-0.1,-0.4,-0.6,10,30,30,9
 "2012JP3143RTRIA",NA,NA,NA,NA,"trial round ",NA,NA,NA,20,54,54,13
 "2012JP3143RL",NA,NA,NA,NA,"1st round ",NA,NA,NA,16,55,55,12
 "2012JP3143RL",NA,NA,NA,NA,"2nd round ",NA,NA,NA,16,30,30,10
@@ -1159,10 +1159,10 @@
 "2012JP3141RL",NA,NA,NA,NA,"1st round ",NA,NA,NA,8,46,48,13
 "2012JP3141RL",NA,NA,NA,NA,"2nd round ",NA,NA,NA,8,30,30,11
 "2012JP3140RL",85,-1,5,"rainy","1st round ",0.3,-0.2,-0.5,9,62,65,13
-"2012JP3139RLT",59,-1,9,"clear","training 1 ",-1,-0.6,-0.1,NA,NA,NA,NA
-"2012JP3139RLT",59,-1,11,"clear","training 2 ",-1.1,-0.8,-0.4,NA,NA,NA,NA
-"2012JP3139RL",69,-1,10,"partly cloudy","1st round ",-1.2,-0.8,-0.5,10,63,65,13
-"2012JP3139RL",70,-1,9,"partly cloudy","2nd round ",-1,-0.7,-0.1,9,29,30,8
+"2012JP3139RLT",59,-1,9,"clear","training 1 ",-0.1,-0.6,-1,NA,NA,NA,NA
+"2012JP3139RLT",59,-1,11,"clear","training 2 ",-0.4,-0.8,-1.1,NA,NA,NA,NA
+"2012JP3139RL",69,-1,10,"partly cloudy","1st round ",-0.5,-0.8,-1.2,10,63,65,13
+"2012JP3139RL",70,-1,9,"partly cloudy","2nd round ",-0.1,-0.7,-1,9,29,30,8
 "2012JP3121RTRIA",72,-13,-13,"sunny","trial round ",0.5,-0.8,-1.2,9,51,51,10
 "2012JP3121RL",72,-11,-10,"sunny","1st round ",0.4,-0.5,-1.1,8,53,53,10
 "2012JP3121RL",72,-11,-10,"sunny","2nd round ",1,0.6,-0.2,8,30,30,9
@@ -1184,15 +1184,15 @@
 "2012JP3106RL",76,-2,4,"partly cloudy","2nd round ",3,1.5,0.5,17,31,31,9
 "2012JP3099RL",78,-5,-5,"partly cloudy","1st round ",0.9,0.6,0.4,5,77,80,16
 "2012JP3099RL",78,-5,-5,"partly cloudy","2nd round ",0.4,0.2,0.1,5,30,30,10
-"2012JP3098RL",78,-5,-5,"partly cloudy","1st round ",0.7,0,0.2,NA,NA,NA,NA
-"2012JP3098RL",78,-5,-5,"partly cloudy","2nd round ",0.4,0.1,0.2,NA,NA,NA,NA
-"2012JP3097RLT",80,-8,-8,"partly cloudy","training 1 ",-2.2,-1.4,-0.9,8,80,80,16
-"2012JP3097RLT",80,-8,-8,"partly cloudy","training 2 ",-2.2,-1.4,-0.4,9,76,76,15
-"2012JP3097RL",80,-8,-8,"partly cloudy","1st round ",-1.8,-1.2,-0.5,8,78,80,16
-"2012JP3097RL",80,-8,-8,"partly cloudy","2nd round ",-1.2,-0.9,-0.4,8,31,31,10
+"2012JP3098RL",78,-5,-5,"partly cloudy","1st round ",0.7,0.2,0,NA,NA,NA,NA
+"2012JP3098RL",78,-5,-5,"partly cloudy","2nd round ",0.4,0.2,0.1,NA,NA,NA,NA
+"2012JP3097RLT",80,-8,-8,"partly cloudy","training 1 ",-0.9,-1.4,-2.2,8,80,80,16
+"2012JP3097RLT",80,-8,-8,"partly cloudy","training 2 ",-0.4,-1.4,-2.2,9,76,76,15
+"2012JP3097RL",80,-8,-8,"partly cloudy","1st round ",-0.5,-1.2,-1.8,8,78,80,16
+"2012JP3097RL",80,-8,-8,"partly cloudy","2nd round ",-0.4,-0.9,-1.2,8,31,31,10
 "2012JP3096RTRIA",78,-6,-6,"partly cloudy","trial round ",0.4,0,0,11,18,18,7
-"2012JP3096RLT",80,-8,-8,"partly cloudy","training 1 ",-1.8,1.4,-0.9,14,18,18,7
-"2012JP3096RLT",80,-8,-8,"partly cloudy","training 2 ",-1.8,-1.3,-0.8,14,17,17,6
+"2012JP3096RLT",80,-8,-8,"partly cloudy","training 1 ",1.4,-0.9,-1.8,14,18,18,7
+"2012JP3096RLT",80,-8,-8,"partly cloudy","training 2 ",-0.8,-1.3,-1.8,14,17,17,6
 "2012JP3096RL",78,-6,-6,"partly cloudy","1st round ",0.5,0.1,0,NA,NA,NA,NA
 "2012JP3096RL",78,-6,-6,"partly cloudy","2nd round ",0.4,0.1,0,NA,NA,NA,NA
 "2012JP3094RTRIA",91,-3,0,"rainy","trial round ",1,0.2,-1,16,57,57,11
@@ -1218,24 +1218,24 @@
 "2011JP3176RLT",NA,NA,NA,NA,"1st round ",NA,NA,NA,14,51,51,13
 "2011JP3176RL",NA,NA,NA,NA,"1st round ",NA,NA,NA,20,50,51,13
 "2011JP3176RL",NA,NA,NA,NA,"final round ",NA,NA,NA,21,30,30,8
-"2011JP3078RTRIA",89,NA,6.5,"08:32 -","trial round ",0.84,1.36,0.41,6,84,84,18
-"2011JP3078RL",74,NA,10.7,"10:00 -","1st round ",1.34,2.34,0.44,5,87,88,18
-"2011JP3078RL",71,NA,12.6,"11:31 -","final round ",1.48,2.28,0.78,4,29,29,9
-"2011JP3077RTRIA",57,NA,15.1,"13:06 -","trial round ",1.05,2.2,-0.09,13,44,44,13
-"2011JP3077RL",56,NA,15.6,"13:59 -","1st round ",1.13,2.34,-1.08,14,44,44,13
-"2011JP3077RL",55,NA,15.1,"15:02 -","final round ",1.27,2.23,0.56,14,30,30,9
-"2011JP3076RTRIA",53,NA,14.6,"14:32 -","trial round ",-0.05,1.45,-1.23,5,85,85,18
-"2011JP3076RLT",56,NA,15.2,"14:00 -","1st round ",1.13,2.57,-0.23,5,84,84,18
-"2011JP3076RLT",55,NA,15.5,"15:15 -","2nd round ",0.5,1.13,-0.35,5,82,82,18
-"2011JP3076RLT",54,NA,15,"16:23 -","3rd round ",0.66,1.23,-0.07,10,77,77,17
-"2011JP3076RL",55,NA,14.5,"15:57 -","1st round ",-0.04,1.57,-1.35,8,87,88,18
-"2011JP3076RL",54,NA,14.5,"17:38 -","final round ",-0.72,0.04,-1.5,9,30,30,9
-"2011JP3075RTRIA",75,NA,11.1,"10:02 -","trial round ",0.37,1.53,-1.04,17,44,44,13
-"2011JP3075RLT",75,NA,10.4,"10:05 -","1st round ",1.11,1.82,0.52,16,43,43,13
-"2011JP3075RLT",77,NA,10.3,"10:49 -","2nd round ",1.14,1.51,0.38,16,43,43,13
-"2011JP3075RLT",68,NA,11.9,"11:29 -","3rd round ",0.96,1.62,0.25,18,37,37,13
-"2011JP3075RL",51,NA,14.1,"10:45 -","1st round ",-0.18,2.32,-1.84,17,45,45,13
-"2011JP3075RL",52,NA,14.7,"13:38 -","final round ",-0.19,1.43,-1.54,16,30,30,10
+"2011JP3078RTRIA",89,NA,6.5,"08:32 -","trial round ",1.36,0.84,0.41,6,84,84,18
+"2011JP3078RL",74,NA,10.7,"10:00 -","1st round ",2.34,1.34,0.44,5,87,88,18
+"2011JP3078RL",71,NA,12.6,"11:31 -","final round ",2.28,1.48,0.78,4,29,29,9
+"2011JP3077RTRIA",57,NA,15.1,"13:06 -","trial round ",2.2,1.05,-0.09,13,44,44,13
+"2011JP3077RL",56,NA,15.6,"13:59 -","1st round ",2.34,1.13,-1.08,14,44,44,13
+"2011JP3077RL",55,NA,15.1,"15:02 -","final round ",2.23,1.27,0.56,14,30,30,9
+"2011JP3076RTRIA",53,NA,14.6,"14:32 -","trial round ",1.45,-0.05,-1.23,5,85,85,18
+"2011JP3076RLT",56,NA,15.2,"14:00 -","1st round ",2.57,1.13,-0.23,5,84,84,18
+"2011JP3076RLT",55,NA,15.5,"15:15 -","2nd round ",1.13,0.5,-0.35,5,82,82,18
+"2011JP3076RLT",54,NA,15,"16:23 -","3rd round ",1.23,0.66,-0.07,10,77,77,17
+"2011JP3076RL",55,NA,14.5,"15:57 -","1st round ",1.57,-0.04,-1.35,8,87,88,18
+"2011JP3076RL",54,NA,14.5,"17:38 -","final round ",0.04,-0.72,-1.5,9,30,30,9
+"2011JP3075RTRIA",75,NA,11.1,"10:02 -","trial round ",1.53,0.37,-1.04,17,44,44,13
+"2011JP3075RLT",75,NA,10.4,"10:05 -","1st round ",1.82,1.11,0.52,16,43,43,13
+"2011JP3075RLT",77,NA,10.3,"10:49 -","2nd round ",1.51,1.14,0.38,16,43,43,13
+"2011JP3075RLT",68,NA,11.9,"11:29 -","3rd round ",1.62,0.96,0.25,18,37,37,13
+"2011JP3075RL",51,NA,14.1,"10:45 -","1st round ",2.32,-0.18,-1.84,17,45,45,13
+"2011JP3075RL",52,NA,14.7,"13:38 -","final round ",1.43,-0.19,-1.54,16,30,30,10
 "2011JP3044RLT",NA,NA,NA,NA,"1st round ",NA,NA,NA,24,51,51,14
 "2011JP3044RL",NA,NA,NA,NA,"1st round ",NA,NA,NA,27,49,51,14
 "2011JP3044RL",NA,NA,NA,NA,"final round ",NA,NA,NA,28,30,30,11
@@ -1256,7 +1256,7 @@
 "2015JP3942RL",92,-3,1,"overcast","1st round ",1.4,0.5,0.2,NA,NA,NA,NA
 "2015JP3942RL",92,-3,-1,"overcast","2nd round ",1.2,0.5,0.2,NA,NA,NA,NA
 "2015JP3938RTRIA",15,-26,-20,"partly cloudy","trial round ",0.5,-0.3,-0.8,10,33,33,8
-"2015JP3938RLT",30,-11,-10,"sunny","training 1 ",-1.1,-0.4,0.2,NA,NA,NA,NA
+"2015JP3938RLT",30,-11,-10,"sunny","training 1 ",0.2,-0.4,-1.1,NA,NA,NA,NA
 "2015JP3938RLT",38,-11,-10,"sunny","training 2 ",-0.5,-0.8,-1.3,NA,NA,NA,NA
 "2015JP3938RLT",39,-11,-10,"sunny","training 3 ",-0.7,-0.9,-1.5,NA,NA,NA,NA
 "2015JP3938RL",13,-15,-13,"overcast","1st round ",0.8,0.3,-0.7,11,32,33,8
@@ -1271,7 +1271,7 @@
 "2015JP3936RL",80,-15,-12,"overcast","1st round ",0,0,0,7,33,33,8
 "2015JP3936RL",86,-9,-9,"overcast","2nd round ",0,0,0,7,30,30,8
 "2015JP3919RTRIA",56,-3,-1,"sunny","trial round ",0.5,-0.4,-1.2,29,87,87,13
-"2015JP3919RLT",65,-4,-2,"sunny","training 1 ",-1.2,-0.7,-0.4,27,88,88,13
+"2015JP3919RLT",65,-4,-2,"sunny","training 1 ",-0.4,-0.7,-1.2,27,88,88,13
 "2015JP3919RL",54,-5,-1,"sunny","1st round ",0.3,-0.2,-0.6,28,86,88,13
 "2015JP3919RL",61,-6,-3,"overcast","2nd round ",0.4,0.4,-0.4,28,30,30,9
 "2015JP3903RL",78,5,1,"partly cloudy","1st round ",0,0,0,9,76,76,10
@@ -1303,7 +1303,7 @@
 "2015JP3750RLT",82,NA,16,"overcast, rainy","training 1 ",1.5,0.7,-0.3,12,71,71,11
 "2015JP3750RLT",82,NA,15,"overcast","training 2 ",0.7,0.3,-0.3,12,69,69,11
 "2015JP3750RL",75,NA,19,"overcast","1st round ",0.4,-0.5,-0.9,10,84,88,12
-"2015JP3750RL",71,NA,17,"overcast","2nd round ",-1.3,-0.6,-0.2,11,30,30,9
+"2015JP3750RL",71,NA,17,"overcast","2nd round ",-0.2,-0.6,-1.3,11,30,30,9
 "2015JP3740RTRIA",96,NA,9,"rainy, overcast","trial round ",0,0,0,16,70,70,9
 "2015JP3740RL",96,NA,9,"overcast","1st round ",0,0,0,15,71,71,9
 "2015JP3740RL",96,NA,9,"overcast","2nd round ",0,0,0,15,32,32,7
@@ -1328,12 +1328,12 @@
 "2015JP3714RLT",65,NA,26,"partly cloudy","training 1 ",0.7,0.3,-0.4,NA,NA,NA,NA
 "2015JP3714RLT",65,NA,24,"partly cloudy","training 2 ",0.4,-0.2,-0.6,NA,NA,NA,NA
 "2015JP3714RL",70,NA,22,"partly cloudy","1st round ",0.4,-0.2,-0.5,20,68,69,11
-"2015JP3714RL",70,NA,19,"clear","2nd round ",-1.1,-0.7,-0.5,22,30,30,5
+"2015JP3714RL",70,NA,19,"clear","2nd round ",-0.5,-0.7,-1.1,22,30,30,5
 "2015JP3713RTRIA",70,NA,23,"sunny","trial round ",1.5,0.9,0.4,26,19,19,7
 "2015JP3713RLT",65,NA,27,"sunny","training 1 ",0.7,0.3,-0.2,NA,NA,NA,NA
 "2015JP3713RLT",64,NA,25,"partly cloudy","training 2 ",0.4,0.1,-0.5,NA,NA,NA,NA
 "2015JP3713RL",69,NA,22,"partly cloudy","1st round ",0.3,0,-0.2,NA,NA,NA,NA
-"2015JP3713RL",70,NA,21,"clear","2nd round ",-0.7,-0.4,-0.1,NA,NA,NA,NA
+"2015JP3713RL",70,NA,21,"clear","2nd round ",-0.1,-0.4,-0.7,NA,NA,NA,NA
 "2015JP3705RTRIA",77,NA,14,"partly cloudy","trial round ",0.4,0.2,-0.1,10,75,75,10
 "2015JP3705RL",63,NA,15,"overcast","1st round ",1.1,0.7,0.4,10,77,77,10
 "2015JP3705RL",62,NA,18,"overcast","2nd round ",1.1,0.7,0.3,9,34,34,8
@@ -1362,7 +1362,7 @@
 "2014JP3913RL",84,-2,8,"cloudy","1st round ",0,0,-1,NA,NA,NA,NA
 "2014JP3913RL",85,-2,9,"cloudy","2nd round ",-0.1,-0.6,-1,NA,NA,NA,NA
 "2014JP3912RTRIA",81,-2,6,"cloudy","trial round ",0,-0.6,-2.1,31,44,44,8
-"2014JP3912RLT",84,-2,6,"cloudy","training 1 ",-1,-0.3,-2,30,44,44,8
+"2014JP3912RLT",84,-2,6,"cloudy","training 1 ",-0.3,-1,-2,30,44,44,8
 "2014JP3912RL",85,-2,10,"cloudy","1st round ",0,-0.7,-1.8,33,43,43,8
 "2014JP3912RL",85,-2,10,"cloudy","2nd round ",0.1,-0.8,-1.9,33,30,30,7
 "2014JP3911RTRIA",87,6,0,"partly cloudy","trial round ",0,-0.2,-0.5,15,16,16,5
@@ -1388,7 +1388,7 @@
 "2014JP3775RL",82,NA,13,"partly cloudy","1st round ",2.5,1.6,1,31,41,42,9
 "2014JP3775RL",82,NA,12,"partly cloudy","2nd round ",1.5,0.8,-0.4,32,30,30,7
 "2014JP3774RTRIA",82,NA,10,"cloudy","trial round ",0.5,0,-0.5,16,12,12,4
-"2014JP3774RLT",78,NA,7,"partly cloudy","training 1 ",-1,-0.6,-0.4,NA,NA,NA,NA
+"2014JP3774RLT",78,NA,7,"partly cloudy","training 1 ",-0.4,-0.6,-1,NA,NA,NA,NA
 "2014JP3774RLT",78,NA,7,"partly cloudy","training 2 ",0.8,-0.6,-1.1,NA,NA,NA,NA
 "2014JP3774RLT",78,NA,7,"partly cloudy","training 3 ",1.3,0.7,-0.8,NA,NA,NA,NA
 "2014JP3774RL",82,NA,10,"partly cloudy","1st round ",1.1,0.6,0.2,NA,NA,NA,NA
@@ -1408,12 +1408,12 @@
 "2014JP3745RL",48,NA,20,"cloudy","2nd round ",1.8,1.3,1,16,12,12,4
 "2014JP3744RTRIA",56,NA,20,"partly cloudy","trial round ",2.5,1.9,0.9,11,47,47,6
 "2014JP3744RLT",62,NA,20,"rainy","training 1 ",1.2,0.7,-0.5,NA,NA,NA,NA
-"2014JP3744RLT",62,NA,19,"cloudy","training 2 ",-0.7,-0.4,-0.2,NA,NA,NA,NA
+"2014JP3744RLT",62,NA,19,"cloudy","training 2 ",-0.2,-0.4,-0.7,NA,NA,NA,NA
 "2014JP3744RL",56,NA,20,"partly cloudy","1st round ",2.5,1.4,1,10,46,47,6
 "2014JP3744RL",55,NA,18,"partly cloudy","2nd round ",2.5,1.6,0.6,11,30,30,6
 "2014JP3743RTRIA",56,NA,20,"sunny","trial round ",2.5,1.3,0.8,14,13,13,5
 "2014JP3743RLT",62,NA,20,"cloudy","training 1 ",1.4,0.9,0.6,NA,NA,NA,NA
-"2014JP3743RLT",62,NA,19,"rainy","training 2 ",-0.7,-0.5,-0.3,NA,NA,NA,NA
+"2014JP3743RLT",62,NA,19,"rainy","training 2 ",-0.3,-0.5,-0.7,NA,NA,NA,NA
 "2014JP3743RL",56,NA,20,"partly cloudy","1st round ",2.3,1.7,0.8,NA,NA,NA,NA
 "2014JP3743RL",55,NA,19,"partly cloudy","2nd round ",1.6,1.2,0.8,NA,NA,NA,NA
 "2014JP3738RL",66,NA,19,"sunny","1st round ",2.5,1.2,0,17,65,65,12
@@ -1445,7 +1445,7 @@
 "2014JP3718RL",54,NA,35,"partly cloudy","1st round ",1.2,-0.4,-0.7,12,91,91,12
 "2014JP3718RL",54,NA,35,"sunny","2nd round ",0.6,-0.2,-0.6,12,30,30,8
 "2014JP3709RTRIA",55,NA,19,"partly cloudy","trial round ",1,0.6,0.3,12,77,77,12
-"2014JP3709RL",56,NA,21,"partly cloudy","1st round ",0,0,0.2,11,78,78,12
+"2014JP3709RL",56,NA,21,"partly cloudy","1st round ",0.2,0,0,11,78,78,12
 "2014JP3709RL",58,NA,22,"partly cloudy","2nd round ",1.2,0.8,0.2,11,30,30,10
 "2014JP3708RTRIA",53,NA,18,"partly cloudy","trial round ",1,0.6,0.3,18,30,30,7
 "2014JP3708RL",56,NA,20,"partly cloudy","1st round ",1,0.6,0.3,16,31,32,7
@@ -1453,7 +1453,7 @@
 "2014JP3707RLT",78,NA,25,"sunny","training 1 ",1.6,0.9,0.6,13,62,62,10
 "2014JP3707RLT",79,NA,26,"sunny","training 2 ",1.5,1.1,0.8,11,72,72,11
 "2014JP3707RL",78,NA,26,"cloudy, sunny, rainy","1st round ",1.2,0.6,-0.4,11,78,79,12
-"2014JP3707RL",85,NA,22,"cloudy, rainy","2nd round ",-0.7,-2,0,12,34,34,9
+"2014JP3707RL",85,NA,22,"cloudy, rainy","2nd round ",0,-0.7,-2,12,34,34,9
 "2014JP3706RLT",78,NA,25,"sunny","training 1 ",1.8,1.1,0.6,18,12,12,4
 "2014JP3706RLT",78,NA,26,"sunny","training 2 ",1.4,1.2,0.8,18,32,32,7
 "2014JP3706RL",79,NA,26,"partly cloudy","1st round ",1.1,0.7,0.4,18,30,32,7
@@ -1465,7 +1465,7 @@
 "2013JP3933RL",85,-1,1,"rainy","2nd round ",2,0.5,-1,NA,NA,NA,NA
 "2013JP3924RTRIA",90,2,0,"rainy","trial round ",1,0.4,-0.2,4,61,61,10
 "2013JP3924RL",90,2,0,"cloudy","1st round ",0.5,0,-0.5,4,62,62,10
-"2013JP3924RL",86,3,0,"cloudy","2nd round ",0.2,0.4,-1.2,4,30,30,9
+"2013JP3924RL",86,3,0,"cloudy","2nd round ",0.4,0.2,-1.2,4,30,30,9
 "2013JP3923RL",87,2,0,"cloudy","1st round ",1,0,-1,5,61,61,10
 "2013JP3923RL",85,-2,-1,"rainy","2nd round ",1,0.3,-0.5,4,30,30,10
 "2013JP3920RTRIA",82,-8,-7,"overcast","trial round ",3,1.2,0.5,10,28,28,6
@@ -1483,9 +1483,9 @@
 "2013JP3902RLT",96,-6,-1,"overcast","training 2 ",2.2,1.5,0.5,11,54,54,9
 "2013JP3902RL",64,-6,-2,"cloudy","1st round ",2,1,0,11,60,60,9
 "2013JP3902RL",64,-6,-2,"partly cloudy","2nd round ",1.5,0.5,-0.3,11,30,30,5
-"2013JP3884RTRIA",85,-5,-3,"overcast","trial round ",-0.8,-0.5,-0.3,30,30,30,8
-"2013JP3884RL",89,-4,-1,"overcast","1st round ",-0.5,-0.3,-0.2,32,34,35,8
-"2013JP3884RL",84,-4,-1,"overcast","2nd round ",-0.7,-0.5,-0.2,34,28,28,7
+"2013JP3884RTRIA",85,-5,-3,"overcast","trial round ",-0.3,-0.5,-0.8,30,30,30,8
+"2013JP3884RL",89,-4,-1,"overcast","1st round ",-0.2,-0.3,-0.5,32,34,35,8
+"2013JP3884RL",84,-4,-1,"overcast","2nd round ",-0.2,-0.5,-0.7,34,28,28,7
 "2013JP3883RTRIA",95,-6,-3,"snowy","trial round ",0,-0.2,-0.5,20,10,10,4
 "2013JP3883RL",92,-6,-3,"overcast","1st round ",0.7,0.2,-0.5,NA,NA,NA,NA
 "2013JP3883RL",92,-6,-2,"overcast","2nd round ",0,-0.1,-0.3,NA,NA,NA,NA
@@ -1498,7 +1498,7 @@
 "2013JP3881RTRIA",90,-4,-2,"overcast","trial round ",0,-0.1,-0.2,20,10,10,4
 "2013JP3881RLT",90,-3,1,"overcast","training 1 ",0,0,-0.1,NA,NA,NA,NA
 "2013JP3881RLT",90,-3,1,"overcast","training 2 ",0,0,-0.1,NA,NA,NA,NA
-"2013JP3881RLT",90,-3,1,"overcast","training 3 ",0,0.1,0.2,NA,NA,NA,NA
+"2013JP3881RLT",90,-3,1,"overcast","training 3 ",0.2,0.1,0,NA,NA,NA,NA
 "2013JP3881RL",90,-4,-2,"overcast","1st round ",0.4,0.2,-0.4,NA,NA,NA,NA
 "2013JP3881RL",90,-4,-2,"overcast","2nd round ",0.4,0.2,-0.2,NA,NA,NA,NA
 "2013JP3878RTRIA",73,-7,-6,"snowy","trial round ",1.5,1.1,0.7,14,76,76,11
@@ -1512,15 +1512,15 @@
 "2013JP3831RL",20,-3,0,"sunny","1st round ",1.7,1,0.6,20,82,82,12
 "2013JP3831RL",20,-3,0,"sunny","2nd round ",2.6,2.2,1.6,20,30,30,7
 "2013JP3830RTRIA",20,-9,-7,"sunny","trial round ",-0.2,-0.4,-0.6,26,82,82,12
-"2013JP3830RL",20,-7,-6,"sunny","1st round ",0.2,0.3,0.5,22,82,82,12
+"2013JP3830RL",20,-7,-6,"sunny","1st round ",0.5,0.3,0.2,22,82,82,12
 "2013JP3830RL",NA,NA,NA,NA,"2nd round ",NA,NA,NA,22,30,30,8
-"2013JP3762RTRIA",95,NA,12,"rainy","trial round ",-4.2,-3.4,-2.8,25,43,43,8
-"2013JP3762RL",94,NA,12,"rainy","1st round ",-3.4,-1.4,-0.8,25,44,44,9
-"2013JP3762RL",95,NA,11,"rainy","2nd round ",-2.3,-1.2,-0.2,25,30,30,8
+"2013JP3762RTRIA",95,NA,12,"rainy","trial round ",-2.8,-3.4,-4.2,25,43,43,8
+"2013JP3762RL",94,NA,12,"rainy","1st round ",-0.8,-1.4,-3.4,25,44,44,9
+"2013JP3762RL",95,NA,11,"rainy","2nd round ",-0.2,-1.2,-2.3,25,30,30,8
 "2013JP3761RLT",71,NA,18,"overcast","training 1 ",2.3,1.3,0.7,24,34,34,8
 "2013JP3761RLT",71,NA,18,"overcast","training 2 ",3.4,2,-1.4,24,44,44,9
 "2013JP3761RL",75,NA,16,"overcast","1st round ",1.8,0.4,-0.8,25,49,49,9
-"2013JP3761RL",76,NA,16,"overcast","2nd round ",-0.8,-0.2,0,24,29,29,7
+"2013JP3761RL",76,NA,16,"overcast","2nd round ",0,-0.2,-0.8,24,29,29,7
 "2013JP3740RTRIA",77,NA,16,"partly cloudy","trial round ",2.2,-0.3,-1.1,28,56,56,9
 "2013JP3740RL",75,NA,16,"partly cloudy","1st round ",2.7,1.4,0.6,26,57,57,9
 "2013JP3740RL",74,NA,17,"partly cloudy","2nd round ",2.8,1.5,0.9,27,31,31,8
@@ -2685,18 +2685,18 @@
 "2020JP3219RL",84,-8,2,"overcast","1st round ",0.16,-0.92,-1.85,20,60,60,15
 "2020JP3219RL",87,-8,1,"overcast","2nd round ",0.02,-0.34,-0.94,20,32,32,8
 "2020JP3218RTRIA",86,-8,-1,"overcast","trial round ",2.9,1.34,0.03,5,52,52,13
-"2020JP3218RLT",92,-8,1,"snowy","training 1 ",0.7,-0.8,2.4,12,33,33,14
-"2020JP3218RLT",92,-8,1,"snowy","training 2 ",0.8,-0.7,2.2,12,32,32,14
+"2020JP3218RLT",92,-8,1,"snowy","training 1 ",2.4,0.7,-0.8,12,33,33,14
+"2020JP3218RLT",92,-8,1,"snowy","training 2 ",2.2,0.8,-0.7,12,32,32,14
 "2020JP3218RL",87,-8,-1,"overcast","1st round ",2.23,1.17,0.01,5,51,52,13
 "2020JP3218RL",86,-8,-1,"overcast","2nd round ",2.16,1.4,-0.06,6,32,32,8
 "2020JP3217RTRIA",87,-8,-1,"snowy","trial round ",2.6,1.3,-1.6,13,40,40,10
-"2020JP3217RLT",93,-8,2,"snowy","training 1 ",0.8,0.1,0.8,20,27,27,12
-"2020JP3217RLT",89,-8,2,"snowy","training 2 ",1.1,-0.2,1.9,20,24,24,12
+"2020JP3217RLT",93,-8,2,"snowy","training 1 ",0.8,0.8,0.1,20,27,27,12
+"2020JP3217RLT",89,-8,2,"snowy","training 2 ",1.9,1.1,-0.2,20,24,24,12
 "2020JP3217RL",91,-8,-1,"overcast","1st round ",2.68,1.51,0.44,15,40,40,10
 "2020JP3217RL",87,-8,0,"overcast","2nd round ",2.8,1.5,0.4,16,32,32,8
 "2020JP3216RTRIA",58,-8,3,"overcast","trial round ",3.9,2.3,-1.1,10,65,65,23
-"2020JP3216RLT",88,-8,-1,"cloudy","training 1 ",0.8,0.1,0.6,NA,NA,NA,NA
-"2020JP3216RLT",88,-8,-2,"cloudy","training 2 ",1,0.1,0.5,NA,NA,NA,NA
+"2020JP3216RLT",88,-8,-1,"cloudy","training 1 ",0.8,0.6,0.1,NA,NA,NA,NA
+"2020JP3216RLT",88,-8,-2,"cloudy","training 2 ",1,0.5,0.1,NA,NA,NA,NA
 "2020JP3216RL",75,-8,2,"snowy","1st round ",3.7,2.4,-1.4,6,63,65,23
 "2020JP3216RL",78,-8,1,"snowy","2nd round ",3,2,-1,5,30,30,12
 "2020JP3215RTRIA",65,-8,3,"cloudy","trial round ",3.6,2.2,-1.1,14,57,57,19
@@ -2815,8 +2815,8 @@
 "2014JP3861RLT",72,-8,-4,"partly cloudy","training 2 ",-0.4,-0.8,-1.3,NA,NA,NA,NA
 "2014JP3861RL",87,-7,-1,"cloudy","1st round ",-0.3,-0.5,-0.7,24,42,42,15
 "2014JP3861RL",87,-7,-1,"cloudy","2nd round ",-0.4,-0.6,-0.8,25,30,30,14
-"2013JP3780RLT",79,-9,-8,"clear","training 1 ",-1.3,-0.8,-0.5,18,39,39,13
-"2013JP3780RLT",81,-9,-8,"clear","training 2 ",-0.8,-0.6,-0.4,19,41,41,13
+"2013JP3780RLT",79,-9,-8,"clear","training 1 ",-0.5,-0.8,-1.3,18,39,39,13
+"2013JP3780RLT",81,-9,-8,"clear","training 2 ",-0.4,-0.6,-0.8,19,41,41,13
 "2013JP3780RL",81,-10,-13,"partly cloudy","1st round ",1.7,0.7,-0.4,14,52,52,13
 "2013JP3780RL",78,-10,-12,"partly cloudy","2nd round ",1.9,1,0.1,14,32,32,8
 "2013JP3779RLT",80,-8,-11,"clear","training 1 ",0.4,-0.7,-1.2,24,27,27,8
@@ -2845,9 +2845,9 @@
 "2012JP3209RL",60,-4,-4,"sunny","2nd round ",1.4,0.9,-0.4,28,32,32,8
 "2012JP3208RTRIA",53,-8,-6,"sunny","trial round ",1,-0.2,-1.2,22,66,66,22
 "2012JP3208RLT",75,-11,-16,"clear","training 1 ",0,-0.4,-0.8,NA,NA,NA,NA
-"2012JP3208RLT",66,-12,-16,"clear","training 2 ",-1.7,-1.1,-0.8,NA,NA,NA,NA
+"2012JP3208RLT",66,-12,-16,"clear","training 2 ",-0.8,-1.1,-1.7,NA,NA,NA,NA
 "2012JP3208RLT",66,-11,-17,"clear","training 3 ",-0.3,-0.5,-1,NA,NA,NA,NA
-"2012JP3208RL",63,-9,-12,"clear","1st round ",-1,-0.7,-0.5,22,65,66,22
+"2012JP3208RL",63,-9,-12,"clear","1st round ",-0.5,-0.7,-1,22,65,66,22
 "2012JP3208RL",62,-9,-11,"clear","2nd round ",0.8,0.2,-0.4,22,32,32,15
 "2012JP3207RTRIA",51,-10,-7,"sunny","trial round ",1,0.4,0,28,46,46,14
 "2012JP3207RLT",0,0,0,"sunny","training 1 ",0,0,0,NA,NA,NA,NA
@@ -3304,9 +3304,9 @@
 "2017JP3777RLT",62,NA,19,"partly cloudy, rainy","training 2 ",1.4,0.6,-0.5,8,97,97,19
 "2017JP3777RL",76,NA,20,"partly cloudy","1st round ",0.3,-0.4,-0.7,8,99,103,19
 "2017JP3777RL",55,NA,22,"partly cloudy","2nd round ",0.8,0.4,-0.1,8,30,30,7
-"2017JP3776RLT",83,NA,19,"partly cloudy","training 1 ",-1.2,-0.6,-0.3,17,18,18,11
+"2017JP3776RLT",83,NA,19,"partly cloudy","training 1 ",-0.3,-0.6,-1.2,17,18,18,11
 "2017JP3776RLT",66,NA,23,"partly cloudy","training 2 ",1.5,0.9,0.6,17,25,25,12
-"2017JP3776RL",63,NA,20,"partly cloudy","1st round ",-0.8,-0.5,-0.2,NA,NA,NA,NA
+"2017JP3776RL",63,NA,20,"partly cloudy","1st round ",-0.2,-0.5,-0.8,NA,NA,NA,NA
 "2017JP3776RL",58,NA,20,"partly cloudy","2nd round ",0.5,-0.6,-1,NA,NA,NA,NA
 "2017JP3771RTRIA",43,NA,23,"overcast","trial round ",0.3,-0.1,-0.2,16,25,25,8
 "2017JP3771RL",44,NA,24,"overcast","1st round ",0.3,-0.1,-0.3,15,25,25,8
@@ -3318,10 +3318,10 @@
 "2017JP3769RLT",42,NA,26,"partly cloudy","training 2 ",2.5,1.7,1.1,16,22,22,7
 "2017JP3769RL",53,NA,23,"partly cloudy","1st round ",1.3,0.8,0.5,16,24,24,8
 "2017JP3769RL",53,NA,23,"partly cloudy","2nd round ",0.8,0.6,0.3,14,25,25,8
-"2017JP3768RTRIA",59,NA,22,"overcast","trial round ",-1,-0.7,-0.3,17,77,77,14
+"2017JP3768RTRIA",59,NA,22,"overcast","trial round ",-0.3,-0.7,-1,17,77,77,14
 "2017JP3768RLT",48,NA,27,"partly cloudy","training 1 ",2.5,1.8,1.2,17,8,8,3
-"2017JP3768RL",63,NA,19,"overcast","1st round ",-0.9,-0.6,-0.2,17,78,78,14
-"2017JP3768RL",73,NA,17,"overcast","2nd round ",-1.1,-0.8,-0.6,17,30,30,7
+"2017JP3768RL",63,NA,19,"overcast","1st round ",-0.2,-0.6,-0.9,17,78,78,14
+"2017JP3768RL",73,NA,17,"overcast","2nd round ",-0.6,-0.8,-1.1,17,30,30,7
 "2017JP3754RTRIA",81,NA,12,"sunny","trial round ",0.4,0.2,0.1,31,61,61,15
 "2017JP3754RL",81,NA,14,"sunny","1st round ",0.3,0.2,0,31,61,62,15
 "2017JP3754RL",78,NA,18,"sunny","2nd round ",0.8,0.5,0.2,29,31,31,11
@@ -3339,7 +3339,7 @@
 "2017JP3705RL",92,NA,15,"rainy","1st round ",0.2,-0.3,-0.6,10,104,106,17
 "2017JP3705RL",0,NA,15,"overcast, rainy","2nd round ",0.5,0.1,-0.1,9,32,32,8
 "2017JP3704RTRIA",98,NA,17,"overcast","trial round ",0.1,-0.2,-0.4,19,27,27,10
-"2017JP3704RL",92,NA,15,"rainy","1st round ",-0.5,-0.3,0,NA,NA,NA,NA
+"2017JP3704RL",92,NA,15,"rainy","1st round ",0,-0.3,-0.5,NA,NA,NA,NA
 "2017JP3704RL",91,NA,15,"overcast, rainy","2nd round ",0.2,-0.1,-0.3,NA,NA,NA,NA
 "2017JP3703RTRIA",63,NA,26,"sunny","trial round ",2.5,1.2,-0.2,8,94,94,18
 "2017JP3703RLT",48,NA,25,"sunny","training 1 ",2.1,1.2,0.3,12,62,62,16
@@ -3357,10 +3357,10 @@
 "2016JP3937RLT",76,-1,-1,"snowy","training 1 ",1,0,-1,13,62,62,11
 "2016JP3937RL",78,-1,-1,"snowy","1st round ",1,0,-1,12,62,62,11
 "2016JP3937RL",78,-1,-1,"snowy","2nd round ",1,0,-1,13,30,30,6
-"2016JP3928RTRIA",76,-5,-10,"clear","trial round ",-1.5,-0.5,-0.5,14,82,82,13
+"2016JP3928RTRIA",76,-5,-10,"clear","trial round ",-0.5,-0.5,-1.5,14,82,82,13
 "2016JP3928RL",62,-8,-11,"clear","1st round ",2.5,1.6,0.5,11,82,84,13
 "2016JP3928RL",65,-7,-9,"clear","2nd round ",0.6,0.3,0,12,30,30,7
-"2016JP3927RLT",84,-3,-4,"snowy","training 1 ",-0.1,0,0.1,16,76,76,13
+"2016JP3927RLT",84,-3,-4,"snowy","training 1 ",0.1,0,-0.1,16,76,76,13
 "2016JP3927RLT",83,-3,-4,"snowy","training 2 ",2,1,0,13,80,80,13
 "2016JP3927RL",79,-3,-5,"overcast","1st round ",2.5,1.7,1,11,84,84,13
 "2016JP3927RL",78,-3,-5,"overcast","2nd round ",1.8,1.1,0.5,11,30,30,8
@@ -3392,7 +3392,7 @@
 "2016JP3882RTRIA",85,-3,6,"partly cloudy","trial round ",2.2,1.3,0.5,8,84,84,15
 "2016JP3882RL",78,-3,3,"overcast","1st round ",1.9,0.9,0,5,85,85,15
 "2016JP3882RL",91,-4,2,"overcast","2nd round ",1.4,0.6,0,6,31,31,11
-"2016JP3881RTRIA",89,-4,0,"partly cloudy","trial round ",0,0.3,0.9,14,44,44,10
+"2016JP3881RTRIA",89,-4,0,"partly cloudy","trial round ",0.9,0.3,0,14,44,44,10
 "2016JP3881RL",91,-4,0,"overcast","1st round ",2.5,1.2,0.5,10,43,44,10
 "2016JP3881RL",76,-4,0,"partly cloudy","2nd round ",1.8,0.8,0.2,10,30,30,8
 "2016JP3880RLT",78,-4,2,"partly cloudy","training 1 ",1,0.4,-0.6,6,86,86,15
@@ -3412,17 +3412,17 @@
 "2016JP3872RL",59,-8,-17,"clear","1st round ",0.4,0.2,0.1,7,35,36,10
 "2016JP3872RL",65,-8,-17,"clear","2nd round ",0.6,0.3,0.2,8,30,30,10
 "2016JP3871RTRIA",48,-8,-15,"sunny","trial round ",0.5,0.3,0.2,6,31,31,9
-"2016JP3871RLT",56,-8,-12,"sunny","training 1 ",-0.5,-0.3,-0.2,8,31,31,9
-"2016JP3871RLT",56,-8,-12,"sunny","training 2 ",-0.8,-0.5,-0.4,8,30,30,9
-"2016JP3871RLT",58,-8,-12,"sunny","training 3 ",-0.7,-0.5,-0.3,8,19,19,7
+"2016JP3871RLT",56,-8,-12,"sunny","training 1 ",-0.2,-0.3,-0.5,8,31,31,9
+"2016JP3871RLT",56,-8,-12,"sunny","training 2 ",-0.4,-0.5,-0.8,8,30,30,9
+"2016JP3871RLT",58,-8,-12,"sunny","training 3 ",-0.3,-0.5,-0.7,8,19,19,7
 "2016JP3871RL",48,-8,-15,"clear","1st round ",0.5,0.3,0.2,7,36,36,10
 "2016JP3871RL",50,-8,-16,"clear","2nd round ",0.4,0.2,-0.1,8,28,29,10
-"2016JP3854RTRIA",80,NA,14,"overcast","trial round ",-0.9,-0.4,0.1,18,66,66,10
+"2016JP3854RTRIA",80,NA,14,"overcast","trial round ",0.1,-0.4,-0.9,18,66,66,10
 "2016JP3854RL",80,NA,14,"overcast","1st round ",0.9,0,-0.9,18,71,72,11
 "2016JP3854RL",78,NA,15,"overcast","2nd round ",0.2,-0.2,-0.6,18,30,31,8
-"2016JP3853RLT",60,NA,20,"partly cloudy","training 1 ",-1.2,-0.6,0,18,60,60,10
-"2016JP3853RLT",60,NA,20,"partly cloudy","training 2 ",-1.2,-0.6,0,19,69,69,11
-"2016JP3853RL",66,NA,15,"partly cloudy","1st round ",-1.5,-0.5,0.7,19,71,71,11
+"2016JP3853RLT",60,NA,20,"partly cloudy","training 1 ",0,-0.6,-1.2,18,60,60,10
+"2016JP3853RLT",60,NA,20,"partly cloudy","training 2 ",0,-0.6,-1.2,19,69,69,11
+"2016JP3853RL",66,NA,15,"partly cloudy","1st round ",0.7,-0.5,-1.5,19,71,71,11
 "2016JP3835RTRIA",100,NA,14,"rainy","trial round ",0.8,0.5,-0.2,30,63,63,15
 "2016JP3835RL",100,NA,14,"rainy","1st round ",1.9,0.9,-0.2,28,66,67,15
 "2016JP3835RL",95,NA,15,"cloudy","2nd round ",2.1,1.3,0.5,29,31,31,10
@@ -3433,7 +3433,7 @@
 "2016JP3833RLT",86,NA,19,"overcast","training 2 ",1.5,0.2,-1,30,54,54,15
 "2016JP3833RL",84,NA,21,"partly cloudy","1st round ",1.7,1.1,-0.2,30,66,67,15
 "2016JP3833RL",84,NA,20,"partly cloudy","2nd round ",1.8,0.8,-0.2,30,30,30,10
-"2016JP3832RLT",78,NA,13,"partly cloudy","training 1 ",0.5,-0.2,0,NA,NA,NA,NA
+"2016JP3832RLT",78,NA,13,"partly cloudy","training 1 ",0.5,0,-0.2,NA,NA,NA,NA
 "2016JP3832RLT",69,NA,15,"partly cloudy","training 2 ",0.5,0.2,0,NA,NA,NA,NA
 "2016JP3832RL",72,NA,19,"rainy","1st round ",0.7,0.3,0,NA,NA,NA,NA
 "2016JP3832RL",89,NA,19,"rainy","2nd round ",1.9,0.7,0,NA,NA,NA,NA
@@ -3441,7 +3441,7 @@
 "2016JP3825RL",50,NA,29,"clear","1st round ",1.1,-0.3,-1.6,12,80,86,15
 "2016JP3825RL",50,NA,27,"clear","2nd round ",3,1,-1,10,30,30,9
 "2016JP3824RTRIA",60,NA,27,"clear","trial round ",0.2,0,-0.2,21,15,15,7
-"2016JP3824RL",50,NA,28,"clear","1st round ",-1.2,0.6,0.5,NA,NA,NA,NA
+"2016JP3824RL",50,NA,28,"clear","1st round ",0.6,0.5,-1.2,NA,NA,NA,NA
 "2016JP3824RL",50,NA,29,"clear","2nd round ",2.5,0.7,-1,NA,NA,NA,NA
 "2016JP3823RTRIA",71,NA,26,"cloudy","trial round ",2.1,1.2,0.3,10,71,71,15
 "2016JP3823RLT",69,NA,24,"clear","training 1 ",3,1.7,0.5,12,54,54,14
@@ -4311,14 +4311,14 @@
 "2019JP3155RTRIA",75,NA,20,"cloudy","trial round ",-0.1,-0.3,-0.5,12,46,46,9
 "2019JP3155RL",70,NA,23,"cloudy","1st round ",-0.1,-0.3,-0.5,12,45,46,9
 "2019JP3155RL",75,NA,24,"overcast","2nd round ",-0.6,-0.9,-1.2,12,31,31,8
-"2019JP3154RTRIA",73,NA,20,"cloudy","trial round ",-0.6,-0.5,-0.2,8,80,80,10
-"2019JP3154RLT",70,NA,20,"sunny","training 1 ",-1.2,-1,-0.8,10,17,17,5
-"2019JP3154RL",68,NA,24,"cloudy","1st round ",-0.9,-0.5,-0.2,7,79,80,10
-"2019JP3154RL",70,NA,25,"cloudy","2nd round ",-0.8,-0.5,-0.2,7,31,31,8
-"2019JP3153RTRIA",70,NA,23,"cloudy","trial round ",-0.8,-0.5,-0.1,15,46,46,9
-"2019JP3153RLT",70,NA,20,"sunny","training 1 ",-0.9,-0.6,-0.3,15,29,29,7
-"2019JP3153RL",70,NA,25,"cloudy","1st round ",-0.8,-0.5,-0.2,12,46,46,9
-"2019JP3153RL",70,NA,25,"cloudy","2nd round ",-0.9,-0.5,-0.2,12,30,30,8
+"2019JP3154RTRIA",73,NA,20,"cloudy","trial round ",-0.2,-0.5,-0.6,8,80,80,10
+"2019JP3154RLT",70,NA,20,"sunny","training 1 ",-0.8,-1,-1.2,10,17,17,5
+"2019JP3154RL",68,NA,24,"cloudy","1st round ",-0.2,-0.5,-0.9,7,79,80,10
+"2019JP3154RL",70,NA,25,"cloudy","2nd round ",-0.2,-0.5,-0.8,7,31,31,8
+"2019JP3153RTRIA",70,NA,23,"cloudy","trial round ",-0.1,-0.5,-0.8,15,46,46,9
+"2019JP3153RLT",70,NA,20,"sunny","training 1 ",-0.3,-0.6,-0.9,15,29,29,7
+"2019JP3153RL",70,NA,25,"cloudy","1st round ",-0.2,-0.5,-0.8,12,46,46,9
+"2019JP3153RL",70,NA,25,"cloudy","2nd round ",-0.2,-0.5,-0.9,12,30,30,8
 "2019JP3148RTRIA",86,NA,16,"rainy","trial round ",1.9,0.8,0,27,82,82,20
 "2019JP3148RL",82,NA,17,"overcast","1st round ",3,1.3,0,26,78,82,20
 "2019JP3148RL",73,NA,19,"overcast","2nd round ",2.4,1.1,-0.2,24,30,30,11
@@ -4467,10 +4467,10 @@
 "2018JP3122RLT",79,NA,16,"partly cloudy","training 2 ",2.5,0.8,-1.2,26,66,66,16
 "2018JP3122RL",75,NA,16,"overcast","1st round ",2,0.4,-1.5,25,80,81,17
 "2018JP3122RL",74,NA,16,"partly cloudy","2nd round ",1.1,0.7,0.1,26,30,30,11
-"2018JP3117RTRIA",93,NA,4,"partly cloudy","trial round ",-2.3,-0.8,0.5,25,38,38,10
+"2018JP3117RTRIA",93,NA,4,"partly cloudy","trial round ",0.5,-0.8,-2.3,25,38,38,10
 "2018JP3117RL",83,NA,5,"partly cloudy","1st round ",1.6,0.8,-0.9,22,39,39,11
 "2018JP3117RL",79,NA,7,"partly cloudy","2nd round ",2.1,0.4,-0.4,21,30,30,10
-"2018JP3116RTRIA",86,NA,5,"partly cloudy","trial round ",-1.8,0.5,1.2,11,91,91,16
+"2018JP3116RTRIA",86,NA,5,"partly cloudy","trial round ",1.2,0.5,-1.8,11,91,91,16
 "2018JP3116RL",78,NA,6,"partly cloudy","1st round ",2.8,0.8,-0.5,7,97,98,16
 "2018JP3116RL",78,NA,6,"partly cloudy","2nd round ",1.8,0.4,-0.8,10,30,30,9
 "2018JP3115RTRIA",79,NA,10,"rainy","trial round ",2,0.5,-1,24,31,31,9
@@ -4480,9 +4480,9 @@
 "2018JP3115RL",89,NA,6,"rainy","2nd round ",1.1,0.4,0.1,23,29,30,9
 "2018JP3114RTRIA",85,NA,10,"rainy","trial round ",1.2,-0.3,-1.5,10,78,78,14
 "2018JP3114RLT",82,NA,6,"partly cloudy","training 1 ",0.6,0.1,-0.6,13,64,64,12
-"2018JP3114RLT",78,NA,7,"partly cloudy","training 2 ",0.1,3.1,3.9,14,67,67,14
+"2018JP3114RLT",78,NA,7,"partly cloudy","training 2 ",3.9,3.1,0.1,14,67,67,14
 "2018JP3114RL",89,NA,8,"rainy","1st round ",2.1,1,0.2,12,96,98,16
-"2018JP3114RL",89,NA,5,"rainy","2nd round ",-1.3,-0.4,0.1,13,31,31,8
+"2018JP3114RL",89,NA,5,"rainy","2nd round ",0.1,-0.4,-1.3,13,31,31,8
 "2018JP3253RTRIA",50,-8,-10,"sunny","trial round ",1,0.3,-0.3,18,37,37,10
 "2018JP3253RL",51,-8,-8,"sunny","1st round ",2.3,0.8,-0.4,19,41,41,10
 "2018JP3253RL",38,-8,-6,"sunny","2nd round ",1.9,1.2,0.2,16,30,30,8
@@ -5327,10 +5327,10 @@
 "2020JP3227RLT",95,-3,-3,"overcast","training 2 ",0.9,0.4,-0.4,22,49,49,10
 "2020JP3227RL",95,-3,-3,"overcast","1st round ",1.2,0.4,-0.1,20,50,53,10
 "2020JP3227RL",95,-3,-3,"overcast","2nd round ",0.7,0.2,-0.5,21,30,30,8
-"2020JP3206RTRIA",78,-8,-7,"sunny","trial round ",-0.27,-0.57,1.14,10,39,39,9
-"2020JP3206RLT",79,-8,-8,"sunny","training 1 ",0.28,-0.32,0.66,10,36,36,9
-"2020JP3206RL",70,-8,-4,"overcast","1st round ",-0.06,-0.34,0.71,10,39,39,9
-"2020JP3206RL",77,-8,-5,"overcast","2nd round ",0.43,-0.13,0.46,10,30,30,9
+"2020JP3206RTRIA",78,-8,-7,"sunny","trial round ",1.14,-0.27,-0.57,10,39,39,9
+"2020JP3206RLT",79,-8,-8,"sunny","training 1 ",0.66,0.28,-0.32,10,36,36,9
+"2020JP3206RL",70,-8,-4,"overcast","1st round ",0.71,-0.06,-0.34,10,39,39,9
+"2020JP3206RL",77,-8,-5,"overcast","2nd round ",0.46,0.43,-0.13,10,30,30,9
 "2020JP3205RTRIA",91,-4,-1,"overcast","trial round ",0,-0.5,-0.9,14,33,33,10
 "2020JP3205RL",90,-4,-1,"overcast","1st round ",0,-0.3,-0.7,14,34,34,10
 "2020JP3205RL",90,-4,0,"overcast","2nd round ",0,-0.3,-0.7,14,30,30,10

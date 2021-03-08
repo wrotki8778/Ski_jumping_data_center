@@ -70,8 +70,11 @@ def process_weather_init(data, comp):
     if comp['type'] in (0, 2, 4, 5):
         tmp = line.split(' ')
         tmp = [x for x in tmp if x]
-        max_wind, avg_wind, min_wind, humid = \
-            [float(tmp[-2]), float(tmp[-1]), float(tmp[-3]), float(tmp[-4])]
+        humid = float(tmp[-4])
+        wind = sorted([float(tmp[-1]), float(tmp[-2]), float(tmp[-3])])
+        max_wind = wind[2]
+        avg_wind = wind[1]
+        min_wind = wind[0]
         if comp['type'] != 2:
             if int(comp['season']) < 2012:
                 i = -7
@@ -105,8 +108,11 @@ def process_weather_init(data, comp):
                 break
         tmp = line.split(' ')
         tmp = [x for x in tmp if x]
-        max_wind, avg_wind, min_wind, humid = \
-            [float(tmp[-1]), float(tmp[-2]), float(tmp[-3]), float(tmp[-4])]
+        humid = float(tmp[-4])
+        wind = sorted([float(tmp[-1]), float(tmp[-2]), float(tmp[-3])])
+        max_wind = wind[2]
+        avg_wind = wind[1]
+        min_wind = wind[0]
         if month > 4 and month < 11:
             snow, air = \
                 [np.nan, float(tmp[-5])]
@@ -250,26 +256,27 @@ def get_round(comp):
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 directory = max(list_of_files, key=os.path.getctime)
 
-comps = pd.read_csv(directory)
-comps = comps[comps['k-point'].notnull()]
-all_stats_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
+for directory in list_of_files:
+    comps = pd.read_csv(directory)
+    comps = comps[comps['k-point'].notnull()]
+    all_stats_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
                    'round_type', 'max_wind', 'avg_wind', 'min_wind',
                    'gate', 'counted_jumpers', 'all_jumpers', 'all_countries']
-stats_dataframe = pd.DataFrame([], columns = all_stats_names)
+    stats_dataframe = pd.DataFrame([], columns = all_stats_names)
 
-directory_stats = directory.replace('comps', 'stats')
-directory_stats_2 = directory.replace('comps', 'elastic_stats')
+    directory_stats = directory.replace('comps', 'stats')
+    directory_stats_2 = directory.replace('comps', 'elastic_stats')
 
-for k, comp_to_process in comps.iterrows():
-    if os.path.isfile(directory_stats):
-        continue
-    content = process_stats(comp_to_process)
-    stats_dataframe = stats_dataframe.append(content, ignore_index = True)
+    for k, comp_to_process in comps.iterrows():
+        if os.path.isfile(directory_stats):
+            continue
+        content = process_stats(comp_to_process)
+        stats_dataframe = stats_dataframe.append(content, ignore_index = True)
 
-stats_dataframe = stats_dataframe[stats_dataframe['round_type']!='error']
-if not os.path.isfile(directory_stats):
-    stats_dataframe.to_csv(directory_stats, index=False)
-stats_dataframe.to_csv(directory_stats_2, index=False)    
+    stats_dataframe = stats_dataframe[stats_dataframe['round_type']!='error']
+    if not os.path.isfile(directory_stats):
+        stats_dataframe.to_csv(directory_stats, index=False)
+    stats_dataframe.to_csv(directory_stats_2, index=False)    
 
 comps = pd.read_csv(directory)
 for k, comp_to_process in comps.iterrows():

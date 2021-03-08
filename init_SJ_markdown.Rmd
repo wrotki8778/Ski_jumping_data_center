@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 # Introduction
 
-The analysis below corresponds with the data uploaded yesterday (27.01.21) on kaggle.com. In this case we will not go beyond the basic EDA. I will mainly concentrate on the file containing information about competitions. 
+The analysis below corresponds with the data uploaded yesterday (08.03.21) on kaggle.com. In this case we will not go beyond the basic EDA. I will mainly concentrate on the file containing information about competitions. 
 
 # How these data look like?
 
@@ -23,6 +23,7 @@ library(e1071)
 competitions = read.csv('all_comps_r.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 results = read.csv('all_results.csv',sep=',',dec='.')
 names = read.csv('all_names.csv',sep=',',dec='.',stringsAsFactors = TRUE)
+stats  = read.csv('all_stats_r.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 
 summary(competitions)
 summary(results)
