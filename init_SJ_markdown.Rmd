@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 # Introduction
 
-The analysis below corresponds with the data uploaded yesterday (08.03.21) on kaggle.com. In this case we will not go beyond the basic EDA. I will mainly concentrate on the file containing information about competitions. 
+The analysis below corresponds with the data uploaded recently (08.03.21) on kaggle.com. In this case we will not go beyond the basic EDA. I will mainly concentrate on the file containing information about competitions. 
 
 # How these data look like?
 
@@ -24,19 +24,21 @@ competitions = read.csv('all_comps_r.csv',sep=',',dec='.',stringsAsFactors = TRU
 results = read.csv('all_results.csv',sep=',',dec='.')
 names = read.csv('all_names.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 stats  = read.csv('all_stats_r.csv',sep=',',dec='.',stringsAsFactors = TRUE)
-
-summary(competitions)
-summary(results)
 ```
-In fact in competitions dataset we have mostly integer variables. What is interesting only from this code is that
-
-* the NA values are apparent - mostly in these cases, when 
-  + the wind/gate factor was not taken into account (roughly 25% of competitions and 20% of jumps, mainly in COC/FC competitions)
-  + the style was not counted (all training rounds, roughly 45% of total number of jumps)
-  + parsing of PDF file was not successful (roughly 6% of competitions, mainly before 2012/13 and for COC/FC types)
-* most competitions was held in Germany and in Norway.
 
 # Some insight plots - competitions dataset
+
+We begin with the summary of this dataset:
+```{r summary_comp}
+summary(competitions)
+```
+
+In fact in competitions dataset we have mostly integer variables. What is interesting only from this code is that
+
+* the NA values are apparent - mostly in these cases, when parsing of PDF file was not successful (roughly 6% of competitions, mainly before 2012/13 and for COC/FC types)
+* most competitions was held in Germany and in Norway
+* the most popular type of the competition is World Cup (type 0) and Continental Cup (type 1)
+* the most popular type of hill is normal (hill size between 85 and 109 meters) and large (hill size between 110 and 184 meters).
 
 Lets see the most fashioned places and countries, grouped also by the type of competition
 ```{r barplots, echo=FALSE}
@@ -96,6 +98,47 @@ From these figures we can see that
 * most NAs come from COC competitions (season 2010/11 with different format of PDF files),
 * the leagues with lower rank (COC, GP, FC) tend to organize competitions on smaller hills, what doesn't surprise.
 
+# Some insight plots - stats dataset
+
+We also obtained a dataset with the additional statistics, which contains weather information, but also the data like base start gate (gate variable) and name of the given round. First lets see the summary:
+
+```{r summary_stats}
+summary(stats)
+```
+The most apparent conclusions:
+
+* statistically in each round we have 30-60 jumpers from 10-15 countries
+* some data are absurd like 515% humidity or -87 Celsius degrees of snow temp. This is not the error in parsing - these are the "real" values from PDFs.
+* almost all variables have some NAs - it follows from the errors while parsing.
+
+Now we can plot some figures of single variables. We will accomplish that step by step.
+
+```{r stats_plots}
+stats['summer'] = apply(stats[,c('snow','air')], 1, function(y){
+  if (is.na(y['snow'])==1 & is.na(y['air']) == 0) return('summer')
+  else if (is.na(y['snow']) == 0 & is.na(y['air']) == 0) return('winter')
+  return(NA)
+  })
+ggplot(stats) +
+  geom_density(aes(x = air, color = summer),fill="white", alpha = 0.6)+labs(title='Temperature plot')
+ggplot(stats) +
+  geom_density(aes(x = humid, color = summer),fill="white", alpha = 0.6)+labs(title='Humidity plot')+xlim(0,100)
+ggplot(stats) +
+  geom_density(aes(x = snow),fill="white", alpha = 0.6)+labs(title='Snow temperature plot in winter')+xlim(-25,5)
+```
+
+We can see that the temperatures in winter varies around the zero value, in the summer it is about 20 degrees. We observe also the differences in humidity - in the winter months the percentage values are substantially higher than in the summer. Snow temperature has skewed distribution with the mode around -6 degrees. In the dataset we can obtain also the number of athletes. We will divide our results by gender and the type of competition.
+
+```{r athletes_stats}
+unique_stats = stats[!duplicated(stats$fis_code),]
+tmp_data = merge(unique_stats,competitions,by.x = 'fis_code', by.y = 'id')
+ggplot(tmp_data) +
+  geom_density(aes(x = all_jumpers, color=gender),fill="white", alpha = 0.6, position="dodge")
+ggplot(tmp_data) +
+  geom_density(aes(x = all_jumpers, color=type_str),fill="white", alpha = 0.6, position="dodge")
+```
+
+
 # Some insight plots - results dataset
 
 Now we will try to say something about the "main" dataset, which comprises the results of the competitions mentioned above. First thing is that (unfortunately) some competitions from the competitions dataset don't appear in the main dataset, exactly we have the number of not-processed PDFs:
@@ -104,7 +147,14 @@ Now we will try to say something about the "main" dataset, which comprises the r
 length(setdiff(competitions$id,results$id))
 ```
 That is about 10% of "missing" comps, and this is the result of problems while parsing (mainly from the years before 2012). I still try to include this files into the dataset, but that won't be easy.
-Now we can plot the basic facts about the key columns. First we plot the density of speed variable:
+Now we can plot the basic facts about the key columns. First we write down the summary of our dataset:
+```{r summary_results}
+summary(results)
+```
+
+In fact we observe a lot of NAs, but mainly in the cases where the considered variable was not measured. For instance, variables with "note" appear only in the competition rounds, not in the training or trial rounds.
+
+Next plot the density of speed variable:
 ```{r speed}
 ggplot(subset(results, speed > 60 & speed < 120)) +
   geom_density(aes(x = speed),fill="white", alpha = 0.6)
