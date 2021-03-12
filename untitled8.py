@@ -132,7 +132,7 @@ def new_rating(ratingi, k):
 
 
 def doklej_rating(results, i, comp, rating_db, k):
-    ratingi = results.loc[:, 'rating']
+    ratingi = results['rating']
     delty = pd.DataFrame(new_rating(ratingi, k))
     delty.columns = ['rating']
     codeksy = results['codex'].reset_index()
@@ -150,9 +150,9 @@ def build_rating(comps, results, names):
     rating_db['rating'] = 1000
     rating_db['number'] = 0
     rating_act = rating_db[['codex', 'rating']]
-    omit_sort=0
     for i, comp in comps.iterrows():
         k = 8
+        omit_sort=0
         print(k)
         all_results = results[results['id'] == comp['id']]
         if all_results.empty:
@@ -177,7 +177,7 @@ def build_rating(comps, results, names):
         for round_name in round_names:
             result = all_results[all_results['round'] == round_name][['codex','points']]
             if not omit_sort:
-                result = result.sort_values(['points'], ascending=[False])['codex']
+                result = result.sort_values(['points'], ascending=[False]).reset_index()['codex']
             else:
                 result = result['codex']
             print(comp)
@@ -233,6 +233,6 @@ actual_comps = actual_comps.reset_index()
 actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
-actual_standings = show_rating(actual_comps, actual_names, actual_rating, False,2083)
+actual_standings = show_rating(actual_comps, actual_names, actual_rating, False,1252)
 ryoyu = actual_rating[actual_rating['codex'] == 5585]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
