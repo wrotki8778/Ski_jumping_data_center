@@ -132,12 +132,14 @@ We can see that the temperatures in winter varies around the zero value, in the 
 ```{r athletes_stats}
 unique_stats = stats[!duplicated(stats$fis_code),]
 tmp_data = merge(unique_stats,competitions,by.x = 'fis_code', by.y = 'id')
+tmp_data['jumpers']= cut(tmp_data$all_jumpers, breaks = c(0,35,45,55,65,75,110)) 
 ggplot(tmp_data) +
-  geom_density(aes(x = all_jumpers, color=gender),fill="white", alpha = 0.6, position="dodge")
+  geom_bar(aes(x = jumpers, color=gender),fill="white", alpha = 0.6, position="dodge")
 ggplot(tmp_data) +
-  geom_density(aes(x = all_jumpers, color=type_str),fill="white", alpha = 0.6, position="dodge")
+  geom_bar(aes(x = jumpers, color=type_str),fill="white", alpha = 0.6, position="dodge")
 ```
 
+That is quite interesting because the distribution of participating jumpers is much more uniform or even convex, when we consider Continental Cup or especially FIS Cup instead of World Cup, where the values concentrate about 50 athletes. Much of this is the effect of the qualification rounds, when a priori we choose 40/50 (depends on the gender) best jumpers to further jumps.
 
 # Some insight plots - results dataset
 

@@ -150,45 +150,41 @@ def build_rating(comps, results, names):
     rating_db['rating'] = 1000
     rating_db['number'] = 0
     rating_act = rating_db[['codex', 'rating']]
+    omit_sort=0
     for i, comp in comps.iterrows():
-        k = 16
-        if comp['id'].count("Q"):
-            k = k/2
+        k = 8
         print(k)
-        if not comp['team']:
-            print(comp)
-            part_results = results[results['id'] == comp['id']]
-            if part_results.empty:
-                try:
-                    file_name = os.getcwd()+'\\nazwy\\'+comp['id'][:10]+'nazfis.csv'
-                    part_results = pd.read_csv(file_name, sep=';', header=None)
-                    part_results.columns = ['bib', 'codex', 'name']
-                    print('imported from nazfis.csv file')
-                except pd.errors.EmptyDataError:
+        all_results = results[results['id'] == comp['id']]
+        if all_results.empty:
+            omit_sort=1
+            try:
+                file_name = os.getcwd()+'\\nazwy\\'+comp['id'][:10]+'nazfis.csv'
+                all_results = pd.read_csv(file_name, sep=';', header=None)
+                print(all_results)
+                if comp['team']:
                     continue
-            part_results = pd.DataFrame(part_results['codex'])
-            part_results = [part_results.drop_duplicates()]
+                else:
+                    all_results.columns = ['bib', 'codex', 'name']
+                all_results['round'] = 'whole competition '
+                all_results['points'] = 1
+                print('imported from nazfis.csv file')
+                round_names = ['whole competition ']
+            except pd.errors.EmptyDataError:
+                continue
         else:
-            k = k/2
+            round_names = np.unique([x['round'] for i,x in all_results.iterrows()])
+        all_results = pd.DataFrame(all_results[['codex', 'round', 'points']])
+        for round_name in round_names:
+            result = all_results[all_results['round'] == round_name][['codex','points']]
+            if not omit_sort:
+                result = result.sort_values(['points'], ascending=[False])['codex']
+            else:
+                result = result['codex']
             print(comp)
-            team_results = results[results['id'] == comp['id']]
-            second_round = [i for i, x in team_results.iloc[1:].iterrows()
-                            if team_results.loc[i-1]['codex'] == x['codex']]
-            first_round = [i for i, x in team_results.iterrows() 
-                           if i not in second_round]
-            first_round_results = team_results.loc[first_round]
-            second_round_results = team_results.loc[second_round]
-            first_round_results = first_round_results.sort_values(['points'], ascending=[False])
-            second_round_results = second_round_results.sort_values(['points'], ascending=[False])
-            part_results = [pd.DataFrame(first_round_results['codex'])] + \
-                           [pd.DataFrame(second_round_results['codex'])]
-            if second_round_results.empty:
-                part_results = [pd.DataFrame(first_round_results['codex'])]
-        for result in part_results:
+            print(round_name)
             if result.empty:
                 print('omitted')
                 continue
-            result = result.drop_duplicates()
             result = pd.merge(result, rating_act, how='left')
             result.columns = ['codex', 'rating']
             rating_db = doklej_rating(result, i, comp, rating_db, k)
@@ -196,8 +192,6 @@ def build_rating(comps, results, names):
             rating_act.columns = ['codex', 'next_rating']
             result = pd.merge(result, rating_act, how='left')
             result['delta'] = result['next_rating']-result['rating']
-            if comp['team']:
-                print(comp)
     return rating_db
 
 
@@ -239,6 +233,6 @@ actual_comps = actual_comps.reset_index()
 actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
 actual_rating = build_rating(actual_comps, actual_results, actual_names)
-actual_standings = show_rating(actual_comps, actual_names, actual_rating, True)
+actual_standings = show_rating(actual_comps, actual_names, actual_rating, False,2083)
 ryoyu = actual_rating[actual_rating['codex'] == 5585]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
