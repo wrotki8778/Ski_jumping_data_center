@@ -112,6 +112,7 @@ def new_rating(ratingi, k):
     delty = []
     for i, ocena in enumerate(ratingi):
         if np.isnan(ocena):
+            delty.append(0)
             continue
         delta = 0
         exp_score = 0
@@ -131,25 +132,30 @@ def new_rating(ratingi, k):
     return delty
 
 
-def doklej_rating(results, i, comp, rating_db, k):
-    ratingi = results['rating']
-    delty = pd.DataFrame(new_rating(ratingi, k))
-    delty.columns = ['rating']
+def append_rating(results, i, comp, rating_act, rating_db, k, round_name):
+    ratingi = results['cumm_rating']
+    print(new_rating(ratingi, k), len(new_rating(ratingi, k)), len(results['codex']))
+    results['delty'] = new_rating(ratingi, k)
     codeksy = results['codex'].reset_index()
-    delty['codex'] = codeksy['codex']
-    delty['id'] = comp['id']
-    delty['number'] = i
-    new_rating_db = rating_db.append(delty, ignore_index=True)
-    return new_rating_db
+    print(codeksy)
+    old_ratings = pd.merge(rating_db,results,how='left')
+    print(pd.DataFrame(old_ratings).reset_index())
+    results['id'] = comp['id']
+    results['round'] = round_name
+    results['number'] = i
+    new_rating_act = rating_act.append(results, ignore_index=True)
+    new_rating_db = pd.merge(rating_db,results[['codex','delty']],on = 'codex', how='left')
+    print(new_rating_db)
+    new_rating_db['cumm_rating'] = new_rating_db['cumm_rating'] + new_rating_db.fillna(0)['delty']
+    new_rating_db = new_rating_db.drop(['delty'], axis = 1)
+    return [new_rating_act, new_rating_db]
 
 
 def build_rating(comps, results, names):
     rating_db = pd.DataFrame(names['codex'])
     rating_db = rating_db.drop_duplicates()
-    rating_db['id'] = '2000JP0000RL'
-    rating_db['rating'] = 1000
-    rating_db['number'] = 0
-    rating_act = rating_db[['codex', 'rating']]
+    rating_db['cumm_rating'] = 1000
+    rating_act = pd.DataFrame()
     for i, comp in comps.iterrows():
         k = 8
         omit_sort=0
@@ -185,38 +191,23 @@ def build_rating(comps, results, names):
             if result.empty:
                 print('omitted')
                 continue
-            result = pd.merge(result, rating_act, how='left')
             result.columns = ['codex', 'rating']
-            rating_db = doklej_rating(result, i, comp, rating_db, k)
-            rating_act = rating_db.groupby('codex')['rating'].sum().reset_index()[['codex', 'rating']]
-            rating_act.columns = ['codex', 'next_rating']
-            result = pd.merge(result, rating_act, how='left')
-            result['delta'] = result['next_rating']-result['rating']
-    return rating_db
+            result = pd.merge(result, rating_db, how='left', on = 'codex')
+            print(result)
+            rating_act, rating_db = append_rating(result, i, comp, rating_act, rating_db, k, round_name)
+    return rating_act, rating_db
 
 
-def show_rating(comps, names, rating_db, take_all=True, index = False):
+def show_rating(comps, names, rating_act, take_all=True, index = False):
+    names = names.drop_duplicates(subset=['codex'])
     if not index:
         index = len(comps) - 1
-    names = names.drop_duplicates(subset=['codex'])
-    pre_comps = comps.iloc[:index]['id'].values.tolist()+['2000JP0000RL']
-    comp = comps.iloc[index]
     if take_all:
-        rating_cut = rating_db[rating_db['id'].isin(pre_comps)]
-    else:
-        comp_codex = rating_db[rating_db['id'] == comp['id']]['codex']
-        rating_cut = rating_db[rating_db['id'].isin(pre_comps) & (rating_db['codex'].isin(comp_codex))]
-    rating_cut = rating_cut.groupby('codex')['rating'].sum().reset_index()
-    rating_cut = pd.merge(names, rating_cut, how='inner')
-    rating_prev = rating_cut.groupby('codex')['rating'].sum().reset_index()
-    new_results = pd.merge(names, rating_prev, how='inner', on='codex')
-    if not take_all:
-        rating_after = rating_db[(rating_db['id'] == comp['id']) & (rating_db['codex'].isin(comp_codex))]
-        rating_after['position'] = rating_after.index
-        new_results = pd.merge(new_results, rating_after, on='codex', how='inner')
-        print(new_results)
-    # new_results = new_results.drop_duplicates(subset=['codex'])
-    return new_results
+        results = rating_act[rating_act['number'] == index]
+    else:    
+        results = rating_act[rating_act['number'] == index]
+    results = pd.merge(results,names, how='left')
+    return results
 
 
 actual_comps = merge_infos(os.getcwd()+'\\comps\\')
@@ -232,7 +223,7 @@ actual_comps = actual_comps.reset_index()
 # actual_results.to_csv(os.getcwd()+'\\results\\all_results.csv',index=False)
 actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
-actual_rating = build_rating(actual_comps, actual_results, actual_names)
-actual_standings = show_rating(actual_comps, actual_names, actual_rating, False,1252)
+actual_rating = build_rating(actual_comps[:100], actual_results, actual_names)
+actual_standings = show_rating(actual_comps, actual_names, actual_rating[0], False,62)
 ryoyu = actual_rating[actual_rating['codex'] == 5585]
 ryoyu['progress'] = np.cumsum(ryoyu['rating'])
