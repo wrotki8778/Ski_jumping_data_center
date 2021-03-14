@@ -134,18 +134,14 @@ def new_rating(ratingi, k):
 
 def append_rating(results, i, comp, rating_act, rating_db, k, round_name):
     ratingi = results['cumm_rating']
-    print(new_rating(ratingi, k), len(new_rating(ratingi, k)), len(results['codex']))
     results['delty'] = new_rating(ratingi, k)
     codeksy = results['codex'].reset_index()
-    print(codeksy)
     old_ratings = pd.merge(rating_db,results,how='left')
-    print(pd.DataFrame(old_ratings).reset_index())
     results['id'] = comp['id']
     results['round'] = round_name
     results['number'] = i
     new_rating_act = rating_act.append(results, ignore_index=True)
     new_rating_db = pd.merge(rating_db,results[['codex','delty']],on = 'codex', how='left')
-    print(new_rating_db)
     new_rating_db['cumm_rating'] = new_rating_db['cumm_rating'] + new_rating_db.fillna(0)['delty']
     new_rating_db = new_rating_db.drop(['delty'], axis = 1)
     return [new_rating_act, new_rating_db]
@@ -154,19 +150,20 @@ def append_rating(results, i, comp, rating_act, rating_db, k, round_name):
 def build_rating(comps, results, names):
     rating_db = pd.DataFrame(names['codex'])
     rating_db = rating_db.drop_duplicates()
+    rating_db.dropna()
     rating_db['cumm_rating'] = 1000
     rating_act = pd.DataFrame()
     for i, comp in comps.iterrows():
         k = 8
         omit_sort=0
         print(k)
-        all_results = results[results['id'] == comp['id']]
+        all_results = results[(results['id'] == comp['id'])
+                              & (results['codex'].notna())]
         if all_results.empty:
             omit_sort=1
             try:
                 file_name = os.getcwd()+'\\nazwy\\'+comp['id'][:10]+'nazfis.csv'
                 all_results = pd.read_csv(file_name, sep=';', header=None)
-                print(all_results)
                 if comp['team']:
                     continue
                 else:
@@ -193,7 +190,6 @@ def build_rating(comps, results, names):
                 continue
             result.columns = ['codex', 'rating']
             result = pd.merge(result, rating_db, how='left', on = 'codex')
-            print(result)
             rating_act, rating_db = append_rating(result, i, comp, rating_act, rating_db, k, round_name)
     return rating_act, rating_db
 
@@ -203,7 +199,11 @@ def show_rating(comps, names, rating_act, take_all=True, index = False):
     if not index:
         index = len(comps) - 1
     if take_all:
-        results = rating_act[rating_act['number'] == index]
+        results = rating_act[(rating_act['number'] <= index)
+                             & (rating_act['number'] > index - 150)]
+        results = results.sort_values(['number'], ascending=False)
+        results = results.drop_duplicates(['codex'])
+        results = results.drop(['delty', 'id','round'], axis = 1)
     else:    
         results = rating_act[rating_act['number'] == index]
     results = pd.merge(results,names, how='left')
@@ -223,7 +223,8 @@ actual_comps = actual_comps.reset_index()
 # actual_results.to_csv(os.getcwd()+'\\results\\all_results.csv',index=False)
 actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
-actual_rating = build_rating(actual_comps[:100], actual_results, actual_names)
-actual_standings = show_rating(actual_comps, actual_names, actual_rating[0], False,62)
-ryoyu = actual_rating[actual_rating['codex'] == 5585]
-ryoyu['progress'] = np.cumsum(ryoyu['rating'])
+comps_to_process = actual_comps
+actual_rating = build_rating(comps_to_process, actual_results, actual_names)
+actual_standings = show_rating(comps_to_process, actual_names, actual_rating[0], False, 1587)
+ryoyu = actual_rating[0][actual_rating[0]['codex'] == 5585]
+
