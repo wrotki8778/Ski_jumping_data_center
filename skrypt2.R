@@ -3,6 +3,8 @@ setwd('C://Users//kubaf//Documents//Skoki//')
 
 dir = paste(getwd(), '/all_names.csv', sep = '')
 names <- read.csv2(dir, header = TRUE, sep = ',')
+dir = paste(getwd(), '/all_ratings.csv', sep = '')
+ratings <- read.csv2(dir, header = TRUE, sep = ',',dec = '.')
 
 files_RL <-
   list.files(
@@ -178,3 +180,10 @@ boxplot(
   ylab = "Speed (km/h)",
   varwidth = TRUE
 )
+
+filtered_ratings = filter(ratings, codex == 6288)[,c('delty','id')]
+filtered_ratings = merge(filtered_ratings, competitions, by.x='id', by.y = 'id')[,c('delty','id','hill_size_x')]
+library(mgcv)
+model<-gam(delty~s(hill_size_x),data=filtered_ratings)
+plot(model,main='Denoised function',residuals=TRUE, ylim = c(-20,20))
+abline(h=0, col='red')

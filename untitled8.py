@@ -135,8 +135,6 @@ def new_rating(ratingi, k):
 def append_rating(results, i, comp, rating_act, rating_db, k, round_name):
     ratingi = results['cumm_rating']
     results['delty'] = new_rating(ratingi, k)
-    codeksy = results['codex'].reset_index()
-    old_ratings = pd.merge(rating_db,results,how='left')
     results['id'] = comp['id']
     results['round'] = round_name
     results['number'] = i
@@ -166,8 +164,7 @@ def build_rating(comps, results, names):
                 all_results = pd.read_csv(file_name, sep=';', header=None)
                 if comp['team']:
                     continue
-                else:
-                    all_results.columns = ['bib', 'codex', 'name']
+                all_results.columns = ['bib', 'codex', 'name']
                 all_results['round'] = 'whole competition '
                 all_results['points'] = 1
                 print('imported from nazfis.csv file')
@@ -204,7 +201,7 @@ def show_rating(comps, names, rating_act, take_all=True, index = False):
         results = results.sort_values(['number'], ascending=False)
         results = results.drop_duplicates(['codex'])
         results = results.drop(['delty', 'id','round'], axis = 1)
-    else:    
+    else:
         results = rating_act[rating_act['number'] == index]
     results = pd.merge(results,names, how='left')
     return results
@@ -227,4 +224,14 @@ comps_to_process = actual_comps
 actual_rating = build_rating(comps_to_process, actual_results, actual_names)
 actual_standings = show_rating(comps_to_process, actual_names, actual_rating[0], False, 1587)
 ryoyu = actual_rating[0][actual_rating[0]['codex'] == 5585]
+actual_rating[0].to_csv(os.getcwd()+'\\all_ratings.csv',index=False,na_rep='NA')
+
+gp_dataset = pd.merge(actual_rating[0],
+                      actual_stats,how='left',left_on = ['id','round'],
+                      right_on=['fis_code','round_type'])[['codex','delty','fis_code']]
+gp_dataset = pd.merge(gp_dataset, actual_comps, how='left',
+                      left_on = 'fis_code', right_on = 'id')[['codex_x','delty','hill_size_x']]
+gp_dataset = gp_dataset[gp_dataset['codex_x']==6551][['delty','hill_size_x']]
+X = gp_dataset[['hill_size_x']].to_numpy()
+y = gp_dataset[['delty']].to_numpy()
 
