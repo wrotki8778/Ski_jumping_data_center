@@ -85,11 +85,12 @@ def validate(date_text):
         return False
 
 
-def rozdziel(string):
+def disperse_text(string):
     """Process a string to split a multi-'.'-substrings."""
     new_string = string
     if string.count('-'):
-        new_string = string.split('-')[0]+' '+' '.join(['-'+e for e in string.split('-')[1:] if e])
+        new_string = string.split('-')[0]+' '\
+            + ' '.join(['-'+e for e in string.split('-')[1:] if e])
     tmp = new_string.split(' ')
     if not([i for i in tmp if i.count('.') > 1]):
         return new_string
@@ -107,7 +108,7 @@ def validate_number(line):
     return cond_1 and (cond_2 or cond_3)
 
 
-def find_names(comp, tekst_lin, year, tick):
+def find_names(comp, line_text, year, tick):
     """
     Return a list of athletes participating in a comp. with their BIBs.
 
@@ -116,7 +117,7 @@ def find_names(comp, tekst_lin, year, tick):
     comp : Pandas series
         Infos about competition gathered in a way provided by import_links
         function (check "database" output for details).
-    tekst_lin : list of strings
+    line_text : list of strings
         A list with parsed PDF file.
     year : integer
         A season when the competition was held
@@ -128,59 +129,64 @@ def find_names(comp, tekst_lin, year, tick):
             0 - World Cup,
             1 - Continental Cup (summer+winter edition),
             2 - Grand Prix/Summer Grand Prix,
-            3 - Ski Flying World Championships,
-            4 - World Ski Championships,
+            3 - FIS Cup,
+            4 - Ski Flying World Championships,
+            5 - World Ski Championships,
+            6 - Junior World Ski Championships.
 
     Returns
     -------
-    lista : list
+    full_list : list
         A list containing a BIB of every athlete with his/her name,
         which was found in a parsed PDF.
     """
-    lista = []
-    tekst_lin = [x.replace(' *', '') for x in tekst_lin]
+    full_list = []
+    line_text = [x.replace(' *', '') for x in line_text]
     if tick not in (1, 3, 6):
         names = []
         bibs = []
         if comp['team'] == 1 and int(year) < 2016:
-            indexes = [i for i, x in enumerate(tekst_lin) if validate_number(x)]
-            lista = [[tekst_lin[i]]+[tekst_lin[i+1]] for i in indexes]
-            return lista
-        indexes = [i for i, x in enumerate(tekst_lin) if validate(x)]
-        check_club = [validate_number(tekst_lin[x-3]) for x in indexes]
-        check_club_two = [bool(len(tekst_lin[x-1].split(' '))-1) for x in indexes]
+            indexes = [i for i, x in enumerate(line_text)
+                       if validate_number(x)]
+            full_list = [[line_text[i]]+[line_text[i+1]] for i in indexes]
+            return full_list
+        indexes = [i for i, x in enumerate(line_text) if validate(x)]
+        check_club = [validate_number(line_text[x-3]) for x in indexes]
+        check_club_two = [bool(len(line_text[x-1].split(' '))-1)
+                          for x in indexes]
         for i, x in enumerate(indexes):
             if int(year) < 2016:
                 if 1-check_club_two[i]:
-                    names.append(tekst_lin[x-3])
-                    bibs.append(tekst_lin[x-4])
+                    names.append(line_text[x-3])
+                    bibs.append(line_text[x-4])
                 else:
-                    names.append(tekst_lin[x-1][:-4])
-                    bibs.append(tekst_lin[x-2])
+                    names.append(line_text[x-1][:-4])
+                    bibs.append(line_text[x-2])
             elif check_club[i]:
-                names.append(tekst_lin[x-1])
-                bibs.append(tekst_lin[x-3])
+                names.append(line_text[x-1])
+                bibs.append(line_text[x-3])
             else:
-                # tmp = tekst_lin[x-1].split(' ')
+                # tmp = line_text[x-1].split(' ')
                 # names.append(' '.join(tmp[1:]))
                 # bibs.append(tmp[0])
-                names.append(tekst_lin[x-1])
-                bibs.append(tekst_lin[x-2])
-        lista = [[bibs[i]]+[names[i]] for i, x in enumerate(indexes)]
+                names.append(line_text[x-1])
+                bibs.append(line_text[x-2])
+        full_list = [[bibs[i]]+[names[i]] for i, x in enumerate(indexes)]
     else:
-        indexes = [i for i, x in enumerate(tekst_lin) if validate(x)]
-        check_club = [bool(len(tekst_lin[x-1].split(' '))-1) for x in indexes]
+        indexes = [i for i, x in enumerate(line_text) if validate(x)]
+        check_club = [bool(len(line_text[x-1].split(' '))-1) for x in indexes]
         names = []
         for i, x in enumerate(indexes):
             if check_club[i]:
-                names.append(tekst_lin[x-1][:-4])
+                names.append(line_text[x-1][:-4])
             else:
-                names.append(tekst_lin[x-3])
-        lista = [[tekst_lin[x+1]]+[names[i]] for i, x in enumerate(indexes)]
-    return lista
+                names.append(line_text[x-3])
+        full_list = [[line_text[x+1]]+[names[i]]
+                     for i, x in enumerate(indexes)]
+    return full_list
 
 
-def import_start_list(comp, pdf_name, block=False, tekstlin=False):
+def import_start_list(comp, pdf_name, block=False, manual_text=False):
     """
     Scrap information from FIS start list PDF files.
 
@@ -197,14 +203,14 @@ def import_start_list(comp, pdf_name, block=False, tekstlin=False):
     block : True/False, optional
         If True, then the command does not return list of athletes,
         only infos about a competition. The default is False.
-    tekstlin : list of strings, optional
+    manual_text : list of strings, optional
         If provided, function does not parse the PDF
         and takes alternative (corrected) version in the same format.
         The default is False.
 
     Returns
     -------
-    lista : list
+    full_list : list
         list of athletes (output from find_names function)
     comps_infos : Pandas series
         series with the additional information parsed from PDF, like:
@@ -249,16 +255,16 @@ def import_start_list(comp, pdf_name, block=False, tekstlin=False):
     else:
         file_name = name+'SLR1.pdf'
         parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+file_name)
-    tekst = parsed["content"]
-    tekst = tekst.replace(' *', '')
-    tekst = tekst.replace('* ', '')
-    tekst = tekst.replace('*', '')
-    tekst = tekst.lower()
-    tekst_lin = tekst.splitlines()
-    tekst_lin = [i for i in tekst_lin if i]
-    if tekstlin:
-        tekst_lin = tekstlin
-    lista = find_names(comp, tekst_lin, year, tick)
+    text = parsed["content"]
+    text = text.replace(' *', '')
+    text = text.replace('* ', '')
+    text = text.replace('*', '')
+    text = text.lower()
+    line_text = text.splitlines()
+    line_text = [i for i in line_text if i]
+    if manual_text:
+        line_text = manual_text
+    full_list = find_names(comp, line_text, year, tick)
     info = ['season',
             'codex',
             'hill_size',
@@ -276,34 +282,35 @@ def import_start_list(comp, pdf_name, block=False, tekstlin=False):
             'wind factor']
     infos = []
     for words in word:
-        add = [i for i in tekst_lin if words in i]
+        add = [i for i in line_text if words in i]
         if add:
             infos.append(take_number(add[0]))
         else:
             infos.append(np.nan)
     training = pdf_name.count('RLT') or pdf_name.count('RTRIA')
-    new_info = pd.Series([year]+[codex]+infos+[pdf_name]+[training], index=comps_infos.columns)
+    new_info = pd.Series([year]+[codex]+infos+[pdf_name]+[training],
+                         index=comps_infos.columns)
     comps_infos = comps_infos.append(new_info, ignore_index=True)
     file_name = str(year)+'JP'+str(codex)+'naz.csv'
     if not os.path.isfile(os.getcwd()+'\\nazwy\\'+file_name):
         with open(os.getcwd()+'\\nazwy\\'+file_name, 'w+') as result_file:
-            for i, line in enumerate(lista):
+            for i, line in enumerate(full_list):
                 mod_line = ';'.join(line)
                 result_file.write(mod_line)
                 result_file.write('\n')
         result_file.close()
     with open(os.getcwd()+'\\elastic_nazwy\\'+file_name, 'w+') as result_file:
-        for i, line in enumerate(lista):
+        for i, line in enumerate(full_list):
             mod_line = ';'.join(line)
             result_file.write(mod_line)
             result_file.write('\n')
     result_file.close()
     if not block:
-        return([lista, comps_infos])
+        return([full_list, comps_infos])
     return([[], comps_infos])
 
 
-def zwroc_skoki(comp, tekstlin=False, tekst_import=False, TCS=0):
+def get_jumps(comp, manual_text=False, import_text=False, TCS=0):
     """
     Return a list of athletes with all single jumps made in a competition.
 
@@ -312,13 +319,13 @@ def zwroc_skoki(comp, tekstlin=False, tekst_import=False, TCS=0):
     comp : Pandas series
         Infos about competition gathered in a way provided by import_links
         function (check "database" output for details).
-    tekstlin : list of strings, optional
+    manual_text : list of strings, optional
         If provided, function does not parse the PDF of the competition
         and takes alternative (corrected) version in the same format.
         The default is [].
-    tekst_import : list of strings, optional
+    import_text : list of strings, optional
         If provided, is used as a list of names of the
-        consequent athletes. Formatting should be compatible with 
+        consequent athletes. Formatting should be compatible with
         the import_start_list function. The default is False.
     TCS : integer, optional
         Variable, which determines type of formatting in WC/WSC/SFWC
@@ -329,11 +336,11 @@ def zwroc_skoki(comp, tekstlin=False, tekst_import=False, TCS=0):
 
     Returns
     -------
-    next_skoki : list
+    results_list : list
         List of list of strings which contains chunks of parsed PDF lines
         connected with each jumper. Information about each jump is in
         a separate line.
-    kwale : integer
+    no_rounds : integer
         Variable equal to:
             0 - if we have a competition which consists of 2 or more rounds
             or a training/trial round,
@@ -344,83 +351,98 @@ def zwroc_skoki(comp, tekstlin=False, tekst_import=False, TCS=0):
     team : True/False variable, which indicates team competitions
     TCS : integer, the same as in input
     """
-    nazwa = comp['id']+'.pdf'
-    kwale = 1
+    comp_name = comp['id']+'.pdf'
+    no_rounds = 1
     team = 0
     names_list = []
-    if nazwa[-5] == 'Q':
-        kwale = 2
-    names_list = pd.DataFrame(import_start_list(comp, comp['id']+'.pdf', tekstlin=tekst_import)[0], columns=['bib', 'name'])
-    parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+nazwa)
-    tekst = parsed["content"]
-    tekst = tekst.lower()
-    tekst_lin = tekst.splitlines()
-    tekst_lin = [i for i in tekst_lin if i]
-    if tekstlin:
-        tekst_lin = tekstlin
-    for line in range(len(tekst_lin[0:8])):
-        if tekst_lin[line].count('team') > 0:
+    if comp_name[-5] == 'Q':
+        no_rounds = 2
+    names_list = pd.DataFrame(import_start_list(comp, comp['id']+'.pdf',
+                                                manual_text=import_text)[0],
+                              columns=['bib', 'name'])
+    parsed = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_name)
+    text = parsed["content"]
+    text = text.lower()
+    line_text = text.splitlines()
+    line_text = [i for i in line_text if i]
+    if manual_text:
+        line_text = manual_text
+    for line in range(len(line_text[0:8])):
+        if line_text[line].count('team') > 0:
             team = 1
     end = []
     word = 'round'
     word2 = 'weather information'
     word2_q = 'prequalified'
     word3 = 'large hill ko'
-    for i, line in enumerate(tekst_lin):
+    for i, line in enumerate(line_text):
         if word2 in line or word2_q in line:
             end.append(i)
         if word in line and i <= 80:
-            kwale = 0
+            no_rounds = 0
         if word3 in line and i <= 80:
             TCS = 1
     if end:
-        tekst_lin = tekst_lin[:end[0]]
-    lista = [(i, [t for t in names_list['name'] if x.count(t)][0]) for i, x in enumerate(tekst_lin) if any(t for t in names_list['name'] if x.count(t))]+[(len(tekst_lin), 'end')]
-    indices = [(lista[i][0], lista[i+1][0], x[1]) for i, x in enumerate(lista[:-1])]
-    skoki = [[x]+tekst_lin[s:e] for s, e, x in indices]
+        line_text = line_text[:end[0]]
+    full_list = [(i, [t for t in names_list['name'] if x.count(t)][0])
+                 for i, x in enumerate(line_text)
+                 if any(t for t in names_list['name'] if x.count(t))]\
+        + [(len(line_text), 'end')]
+    indices = [(full_list[i][0], full_list[i+1][0], x[1])
+               for i, x in enumerate(full_list[:-1])]
+    jumps = [[x]+line_text[s:e] for s, e, x in indices]
     if len(indices) < len(names_list):
-        print('Warning: in '+comp['id']+' '+str(len(names_list) - len(indices))+' not found!')
-    next_skoki = [conc_numbers(skok, comp, TCS) for i, skok in enumerate(skoki)]
-    return([next_skoki, kwale, team, TCS])
+        print('Warning: in '+comp['id']+' '
+              + str(len(names_list) - len(indices))+' not found!')
+    results_list = [conc_numbers(jump, comp, TCS)
+                    for i, jump in enumerate(jumps)]
+    return([results_list, no_rounds, team, TCS])
 
 
-def conc_numbers(skok, comp, TCS=0):
+def conc_numbers(jump, comp, TCS=0):
     if comp['type'] in (1, 3, 6):
-        return conc_numbers_coc(skok, comp, TCS)
+        return conc_numbers_coc(jump, comp, TCS)
     if not comp['training']:
-        return skok
+        return jump
     try:
-        start = min([i for i, x in enumerate(skok) if x.count('.') and sum([t.isnumeric() for t in x if t.isnumeric()])])
-        end = max([i for i, x in enumerate(skok) if min(x.count('.'), sum([t.isnumeric() for t in x if t.isnumeric()]))])
+        start = min([i for i, x in enumerate(jump)
+                     if x.count('.')
+                     and sum([t.isnumeric() for t in x if t.isnumeric()])])
+        end = max([i for i, x in enumerate(jump)
+                   if min(x.count('.'),
+                          sum([t.isnumeric() for t in x if t.isnumeric()]))])
     except ValueError:
-        return [skok[0]]
+        return [jump[0]]
     try:
-        end_2 = min([i for i, x in enumerate(skok) if x.count('page')])-1
+        end_2 = min([i for i, x in enumerate(jump) if x.count('page')])-1
     except ValueError:
         end_2 = end
     if comp['id'].count('RTRIA'):
-        line = ' '.join([skok[start]]+skok[start+2:min(end, end_2)+1])
+        line = ' '.join([jump[start]]+jump[start+2:min(end, end_2)+1])
         if int(comp['season']) >= 2016:
             line = line[4:]
-        if skok[start].count('.') == 1:
+        if jump[start].count('.') == 1:
             line = '0.0 '+line
-        return [skok[0], line]
+        return [jump[0], line]
     if comp['id'].count('RLT'):
         no_factor = math.isnan(comp['wind factor'])
         if no_factor:
             shift = 2
-            indexes = [(i, i+shift) for i in range(start, min(end, end_2)) if not (i-start) % shift]
-            lines = [' '.join(skok[i:j]) for i, j in indexes]
+            indexes = [(i, i+shift) for i in range(start, min(end, end_2))
+                       if not (i-start) % shift]
+            lines = [' '.join(jump[i:j]) for i, j in indexes]
         else:
             shift = 4
-            indexes = [(i, i+shift) for i in range(start, min(end, end_2)) if not (i-start) % shift]
-            lines = [' '.join(skok[i:i+1]+skok[i+2:j]) for i, j in indexes]
-        no_speed = [2 - skok[i].count('.') for i, j in indexes]
+            indexes = [(i, i+shift) for i in range(start, min(end, end_2))
+                       if not (i-start) % shift]
+            lines = [' '.join(jump[i:i+1]+jump[i+2:j]) for i, j in indexes]
+        no_speed = [2 - jump[i].count('.') for i, j in indexes]
         lines = [no_speed[i]*'0.0 ' + line for i, line in enumerate(lines)]
-        new_lines = [skok[0]]
+        new_lines = [jump[0]]
         for i, line in enumerate(lines):
             tmp = line.split(' ')
-            tmp = [x for x in tmp if x == 'dns' or not sum([t.isalpha() for t in x])]
+            tmp = [x for x in tmp if x == 'dns'
+                   or not sum([t.isalpha() for t in x])]
             while tmp[0] == 'dns':
                 if comp['training']:
                     new_lines.append(8 * '0.0 ')
@@ -429,111 +451,118 @@ def conc_numbers(skok, comp, TCS=0):
                 tmp = tmp[1:]
             new_lines.append(' '.join(tmp))
         return new_lines
-    return skok
+    return jump
 
 
-def conc_numbers_coc(skok, comp, TCS=0):
+def conc_numbers_coc(jump, comp, TCS=0):
     try:
-        start = min([i for i, x in enumerate(skok) if x.count('.') and sum([t.isnumeric() for t in x if t.isnumeric()])])
+        start = min([i for i, x in enumerate(jump)
+                     if x.count('.')
+                     and sum([t.isnumeric() for t in x if t.isnumeric()])])
     except ValueError:
-        return [skok[0]]
-    ciach_skok = skok[start:]
+        return [jump[0]]
+    cutted_jump = jump[start:]
     try:
-        end = start+min([i for i, x in enumerate(ciach_skok) if sum([t.isalpha() for t in x if t.isalpha()])])
+        end = start+min([i for i, x in enumerate(cutted_jump)
+                         if sum([t.isalpha() for t in x if t.isalpha()])])
     except ValueError:
-        end = len(skok)
+        end = len(jump)
     if comp['id'].count('RTRIA'):
-        if skok[start].count('.') == 1:
-            line = skok[start]+'0.0 0.'
+        if jump[start].count('.') == 1:
+            line = jump[start]+'0.0 0.'
         else:
-            line = skok[start]
-        return [skok[0]]+[' '.join([line]+skok[start+1:end])]
+            line = jump[start]
+        return [jump[0]]+[' '.join([line]+jump[start+1:end])]
     if comp['training']:
         if TCS == 1:
             if end-start < 7:
-                return [skok[0]]+[' '.join(skok[start:end])]
-            if skok[end-1].count('.') == 1:
-                if skok[end-1][0] == ' ':
-                    skok[end-1] = '0.0 '+skok[end-1]
+                return [jump[0]]+[' '.join(jump[start:end])]
+            if jump[end-1].count('.') == 1:
+                if jump[end-1][0] == ' ':
+                    jump[end-1] = '0.0 '+jump[end-1]
                 else:
-                    skok[end-1] = skok[end-1]+' 0.0'
+                    jump[end-1] = jump[end-1]+' 0.0'
             elif end-start == 7:
-                skok[end-1] = skok[end-1] + ' 0.0 0.0'
-        return [skok[0]]+[' '.join(skok[start:end])]
+                jump[end-1] = jump[end-1] + ' 0.0 0.0'
+        return [jump[0]]+[' '.join(jump[start:end])]
     if end-start-1:
         pierwszy = [i for i in range(start, end) if not (i-start) % 2]
-        drugi = [i for i in range(start, end) if (i-start) % 2 and i != start+3]
-        return [skok[0]]+[' '.join([skok[i] for i in pierwszy])]+[' '.join([skok[i] for i in drugi])]
-    return [skok[0], skok[start]]
+        drugi = [i for i in range(start, end)
+                 if (i-start) % 2 and i != start+3]
+        return [jump[0]]+[' '.join([jump[i] for i in pierwszy])]\
+            + [' '.join([jump[i] for i in drugi])]
+    return [jump[0], jump[start]]
 
 
-def przeksztalc(comp, string, kwale=0, team=0, TCS=0):
+def transform(comp, string, no_rounds=0, team=0, TCS=0):
     if comp['type'] in (1, 3, 6) and TCS == 1:
-        return przeksztalc_coc_tr(string, comp)
+        return transform_coc_training(string, comp)
     if comp['type'] in (1, 3, 6):
-        return przeksztalc_coc(string, kwale, comp)
-    nazwa = comp['id']
-    if nazwa.count('RTRIA') or nazwa.count('RLT'):
-        return przeksztalc_rlt(comp, string)
-    if nazwa.count('RL'):
-        return przeksztalc_rl_rlq(comp, string, kwale, team, TCS)
+        return transform_coc(string, no_rounds, comp)
+    comp_name = comp['id']
+    if comp_name.count('RTRIA') or comp_name.count('RLT'):
+        return transform_rlt(comp, string)
+    if comp_name.count('RL'):
+        return transform_rl_rlq(comp, string, no_rounds, team, TCS)
     return []
 
 
-def przeksztalc_coc_tr(string, comp):
+def transform_coc_training(string, comp):
     no_factor = math.isnan(comp['wind factor'])
     sep = 10
     if no_factor:
         sep = 7
-    string = rozdziel(string)
+    string = disperse_text(string)
     if string.count('.') < sep and string[2] != '.':
-        n = [0]
+        placement = [0]
         offset = [-2]
     elif string.count('.') < sep:
-        n = []
+        placement = []
         offset = []
     else:
-        n = [2, 7]
+        placement = [2, 7]
         offset = [-2, 1]
     kropki = [i for i, a in enumerate(string) if a == '.']
-    kropki = [kropki[i] for i in n]
-    if n:
-        nofy_string = [string[0:kropki[0]+offset[0]]]+[string[kropki[i]+offset[i]:kropki[i+1]+offset[i+1]] for i in range(len(kropki)-1)]+[string[kropki[-1]+offset[-1]:]]
-        nofy_string = ' '.join(nofy_string)
-        wyrazy = nofy_string.split(' ')
-        wyrazy = [x for x in wyrazy if x]
+    kropki = [kropki[i] for i in placement]
+    if placement:
+        tmp_new_string = [string[0:kropki[0]+offset[0]]]\
+            + [string[kropki[i]+offset[i]:kropki[i+1]+offset[i+1]]
+              for i in range(len(kropki)-1)]+[string[kropki[-1]+offset[-1]:]]
+        tmp_new_string = ' '.join(tmp_new_string)
+        parts = tmp_new_string.split(' ')
+        parts = [x for x in parts if x]
     else:
-        wyrazy = string.split(' ')
-        wyrazy = [x for x in wyrazy if x]
+        parts = string.split(' ')
+        parts = [x for x in parts if x]
     if string.count('.') < sep and string[2] != '.':
         filter_1 = [1, 2, 0, 7, 5, 6, 8]
         if no_factor:
             filter_1 = [1, 2, 0, 4]
-        string_1 = [wyrazy[i] for i in filter_1]
+        string_1 = [parts[i] for i in filter_1]
         return [string_1]
     if string.count('.') < sep:
         filter_1 = [0, 1, 2, 4, 5, 6, 7]
         if no_factor:
             filter_1 = [0, 1, 2, 4]
-        string_1 = [wyrazy[i] for i in filter_1]
+        string_1 = [parts[i] for i in filter_1]
         return [string_1]
     filter_1 = [0, 1, 2, 9, 10, 11, 15, 17]
     filter_2 = [4, 5, 3, 14, 12, 13, 16, 18]
     if no_factor:
         filter_1 = [0, 1, 2, 7]
         filter_2 = [4, 5, 3, 10]
-    string_1 = [wyrazy[i] for i in filter_1]
-    string_2 = [wyrazy[i] for i in filter_2]
+    string_1 = [parts[i] for i in filter_1]
+    string_2 = [parts[i] for i in filter_2]
     return [string_1, string_2]
 
 
-def przeksztalc_coc(string, kwale, comp):
+def transform_coc(string, no_rounds, comp):
     nq = 0
     team_nq = 0
     tmp = string.split(' ')
     new_string = string
     if comp['id'].count('RTRIA'):
-        tmp = [rozdziel(x) for x in tmp]
+        tmp = [disperse_text(x) for x in tmp]
         tmp = [tmp[0]]+tmp[3:]
         new_string = ' '.join(tmp)
         return new_string
@@ -544,13 +573,13 @@ def przeksztalc_coc(string, kwale, comp):
     if not tmp[0].count('.'):
         tmp = tmp[1:]
         nq = 1
-    if tmp[0] != rozdziel(tmp[0]):
-        tmp_tmp = rozdziel(tmp[0]).split(' ')
+    if tmp[0] != disperse_text(tmp[0]):
+        tmp_tmp = disperse_text(tmp[0]).split(' ')
         tmp[0] = tmp_tmp[1]+' ' + tmp_tmp[0]
         team_nq = 1
-    tmp = [rozdziel(x) for x in tmp]
+    tmp = [disperse_text(x) for x in tmp]
     new_string = ' '.join(tmp)
-    if nq and not kwale:
+    if nq and not no_rounds:
         tmp = new_string.split(' ')
         tmp = [x for x in tmp if x]
         if len(tmp) == 15:
@@ -562,7 +591,7 @@ def przeksztalc_coc(string, kwale, comp):
         if nq and team_nq and len(tmp) == 15:
             tmp = tmp[:-3] + tmp[-2:] + [tmp[-3]]
         if not(nq) and team_nq:
-            tmp = tmp[:11] + [tmp[-1]] + [tmp[11]] + [tmp[-2]] + tmp[12:-2]  
+            tmp = tmp[:11] + [tmp[-1]] + [tmp[11]] + [tmp[-2]] + tmp[12:-2]
         if not(nq) and not(team_nq):
             tmp = tmp[:11] + [tmp[-2]] + [tmp[11]] + [tmp[-1]] + tmp[12:-2]
         new_string = ' '.join(tmp)
@@ -570,37 +599,37 @@ def przeksztalc_coc(string, kwale, comp):
     return new_string
 
 
-def rozdziel_rl_rlq(comp, kwale, team, TCS):
+def disperse_rl_rlq(comp, no_rounds, team, TCS):
     no_factor = math.isnan(comp['wind factor'])
-    n = [12]
+    placement = [12]
     offset = [1]
-    if TCS and kwale == 2 and no_factor:
-        n = [0, 10]
+    if TCS and no_rounds == 2 and no_factor:
+        placement = [0, 10]
         offset = [2, 2]
-        return([n, offset])
-    if kwale:
-        n = []
+        return([placement, offset])
+    if no_rounds:
+        placement = []
         offset = []
-    if kwale and team:
-        n = [12]
+    if no_rounds and team:
+        placement = [12]
         offset = [1]
-    if TCS and kwale == 2 and not no_factor:
-        n = [12]
+    if TCS and no_rounds == 2 and not no_factor:
+        placement = [12]
         offset = [2]
     if TCS == 2:
-        n = [1, 12]
+        placement = [1, 12]
         offset = [2, 1]
     if no_factor:
-        if kwale:
-            n = [0]
+        if no_rounds:
+            placement = [0]
             offset = [2]
         else:
-            n = []
+            placement = []
             offset = []
-    return([n, offset])
+    return([placement, offset])
 
 
-def przeksztalc_rl_rlq(comp, string, kwale, team, TCS):
+def transform_rl_rlq(comp, string, no_rounds, team, TCS):
     no_factor = math.isnan(comp['wind factor'])
     string = string.replace('pq', '0.')
     string = string.replace('©', '')
@@ -609,83 +638,88 @@ def przeksztalc_rl_rlq(comp, string, kwale, team, TCS):
         string = string[limit+2:]
     except ValueError:
         pass
-    nowy_string = string.replace('©', '')
-    tmp = nowy_string.split(' ')
+    new_string = string.replace('©', '')
+    tmp = new_string.split(' ')
     if team and tmp[0].count('-'):
         del tmp[0]
     tmp = [x for x in tmp if not sum(i.isalpha() for i in x)]
-    nowy_string = ' '.join(tmp)
-    pozycja = nowy_string.find('.')+2
-    nowy_string = nowy_string[:pozycja]+' '+nowy_string[pozycja:]
-    nowy_string = re.sub(r'[a-z]+', '', nowy_string, re.I)
-    nowy_string = nowy_string.replace('©', '')
-    nowy_string = nowy_string.replace('#', '')
-    znacznik = nowy_string.find('*')
-    if znacznik:
-        nowy_string = nowy_string[(znacznik+1):]
-    wyrazy = nowy_string.rsplit(' ', 2)
-    nowy_string = wyrazy[1] + ' ' + wyrazy[2] + ' ' + wyrazy[0]
+    new_string = ' '.join(tmp)
+    pozycja = new_string.find('.')+2
+    new_string = new_string[:pozycja]+' '+new_string[pozycja:]
+    new_string = re.sub(r'[a-z]+', '', new_string, re.I)
+    new_string = new_string.replace('©', '')
+    new_string = new_string.replace('#', '')
+    star_pointer = new_string.find('*')
+    if star_pointer:
+        new_string = new_string[(star_pointer+1):]
+    parts = new_string.rsplit(' ', 2)
+    new_string = parts[1] + ' ' + parts[2] + ' ' + parts[0]
     if TCS == 2:
         string = string.replace('©', '')
         tmp = string.split(' ')
         tmp = [x for x in tmp if x]
         tmp = tmp[-10:] + tmp[:-10]
-        nowy_string = ' '.join(tmp)
+        new_string = ' '.join(tmp)
     if no_factor:
         if comp['id'].count('RLQ'):
             tmp = string.split(' ')
             tmp = [x for x in tmp if x]
             tmp = tmp[1:] + tmp[:1]
-            nowy_string = ' '.join(tmp)
+            new_string = ' '.join(tmp)
         else:
-            nowy_string = string
-    n, offset = rozdziel_rl_rlq(comp, kwale, team, TCS)
-    kropki = [i for i, a in enumerate(nowy_string) if a == '.']
-    kropki = [kropki[i] for i in n]
-    if n:
-        nofy_string = [nowy_string[0:kropki[0]+offset[0]]]+[nowy_string[kropki[i]+offset[i]:kropki[i+1]+offset[i+1]] for i in range(len(kropki)-1)]+[nowy_string[kropki[-1]+offset[-1]:]]
-        nofy_string = ' '.join(nofy_string)
-        wyrazy = nofy_string.split(' ')
+            new_string = string
+    placement, offset = disperse_rl_rlq(comp, no_rounds, team, TCS)
+    kropki = [i for i, a in enumerate(new_string) if a == '.']
+    kropki = [kropki[i] for i in placement]
+    if placement:
+        tmp_new_string = [new_string[0:kropki[0]+offset[0]]]\
+            + [new_string[kropki[i]+offset[i]:kropki[i+1]+offset[i+1]]
+               for i in range(len(kropki)-1)]\
+                + [new_string[kropki[-1]+offset[-1]:]]
+        tmp_new_string = ' '.join(tmp_new_string)
+        parts = tmp_new_string.split(' ')
     else:
-        nofy_string = nowy_string
-    if TCS == 1 and kwale == 2 and not no_factor:
-        nofy_string = ' '.join(wyrazy[0:3]) + ' ' + ' '.join(wyrazy[4:13]) + ' ' + ' '.join(wyrazy[14:])
-    elif TCS == 1 and kwale == 2 and no_factor:
-        nofy_string = ' '.join(wyrazy[0:1]) + ' ' + ' '.join(wyrazy[2:11]) + ' ' + ' '.join(wyrazy[12:])
-    return nofy_string
+        tmp_new_string = new_string
+    if TCS == 1 and no_rounds == 2 and not no_factor:
+        tmp_new_string = ' '.join(parts[0:3]) + ' ' \
+            + ' '.join(parts[4:13]) + ' ' + ' '.join(parts[14:])
+    elif TCS == 1 and no_rounds == 2 and no_factor:
+        tmp_new_string = ' '.join(parts[0:1]) + ' ' \
+            + ' '.join(parts[2:11]) + ' ' + ' '.join(parts[12:])
+    return tmp_new_string
 
 
-def przeksztalc_rlt(comp, string):
+def transform_rlt(comp, string):
     string = string.replace('©', '')
-    nowy_string = string.split()
-    nowy_string = [x for x in nowy_string if x]
-    if nowy_string.count('dns') and comp['id'].count('rtria'):
+    new_string = string.split()
+    new_string = [x for x in new_string if x]
+    if new_string.count('dns') and comp['id'].count('rtria'):
         return [0, 0, 0, 0, 0, 0, 0, 0]
-    if nowy_string.count('dns') and comp['id'].count('rlt'):
+    if new_string.count('dns') and comp['id'].count('rlt'):
         return [0, 0, 0, 0, 0, 0, 0, 0]
     if comp['id'].count('RTRIA'):
-        nofy_string = nowy_string[:2]+nowy_string[-4:]+nowy_string[2:-4]
+        tmp_new_string = new_string[:2]+new_string[-4:]+new_string[2:-4]
     else:
-        nofy_string = nowy_string[:2]+nowy_string[-2:]+nowy_string[2:-2]
+        tmp_new_string = new_string[:2]+new_string[-2:]+new_string[2:-2]
     if not math.isnan(comp['wind factor']):
-        return nofy_string+(8-len(nofy_string))*['0.0']
+        return tmp_new_string+(8-len(tmp_new_string))*['0.0']
     if comp['id'].count('RTRIA'):
-        nofy_string = nowy_string[:3]
-        return nofy_string
+        tmp_new_string = new_string[:3]
+        return tmp_new_string
     try:
         limit = max([i for i, x in enumerate(string) if x.isalpha()])
         tmp_string = string[limit+2:]
     except ValueError:
         tmp_string = string
-    nowy_string = tmp_string.split()
-    if nowy_string[2].count('.')==2:
-        nowy_string = nowy_string[:2] + [nowy_string[2][:4]]
+    new_string = tmp_string.split()
+    if new_string[2].count('.') == 2:
+        new_string = new_string[:2] + [new_string[2][:4]]
     else:
-        nowy_string = nowy_string[:2] + [nowy_string[2][:2]]
-    return nowy_string
+        new_string = new_string[:2] + [new_string[2][:2]]
+    return new_string
 
 
-def column_info(comp, kwale, team):
+def column_info(comp, no_rounds, team):
     no_factor = math.isnan(comp['wind factor'])
     names = ['name',
              'wind',
@@ -706,34 +740,34 @@ def column_info(comp, kwale, team):
     indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     if no_factor:
         indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    if kwale and not team:
+    if no_rounds and not team:
         indices = [0, 1, 2, 12, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15]
-        if no_factor and kwale == 2:
+        if no_factor and no_rounds == 2:
             indices = [0, 12, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14]
-        if no_factor and kwale == 1:
+        if no_factor and no_rounds == 1:
             indices = [0, 12, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-    nazwa = comp['id']
-    if nazwa.count('RTRIA'):
+    comp_name = comp['id']
+    if comp_name.count('RTRIA'):
         indices = [0, 3, 4, 1, 2, 5, 13, 14, 15]
         if no_factor:
             indices = [0, 3, 4, 14]
-    elif nazwa.count('RLT'):
+    elif comp_name.count('RLT'):
         indices = [0, 3, 4, 2, 13, 14, 1, 5, 15]
         if no_factor:
             indices = [0, 3, 4, 14]
-    if comp['type'] in (1, 3, 6) and not kwale:
+    if comp['type'] in (1, 3, 6) and not no_rounds:
         indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 2, 1, 14, 15]
         if no_factor:
             indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    if comp['type'] in (1, 3, 6) and kwale:
+    if comp['type'] in (1, 3, 6) and no_rounds:
         indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1, 2, 14, 15]
         if no_factor:
             indices = [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    if comp['type'] in (1, 3, 6) and nazwa.count('RLT'):
+    if comp['type'] in (1, 3, 6) and comp_name.count('RLT'):
         indices = [0, 3, 4, 14, 2, 5, 13, 1, 15]
         if no_factor:
             indices = [0, 3, 4, 14, 13]
-    if comp['type'] in (1, 3, 6) and nazwa.count('RTRIA'):
+    if comp['type'] in (1, 3, 6) and comp_name.count('RTRIA'):
         indices = [0, 4, 3, 14, 2, 5, 13, 1, 15]
         if no_factor:
             indices = [0, 4, 3, 14, 13]
@@ -742,27 +776,30 @@ def column_info(comp, kwale, team):
     return([names[k] for k in indices])
 
 
-def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0, show_all=0):
+def further_transform(comp, jump, no_rounds=0, team=0, TCS=0, show_all=0):
     exit_code = 0
-    output = [idx for idx, line in enumerate(skok) if line.count('.') > 4 and sum(x.isdigit() for x in line)]
+    output = [idx for idx, line in enumerate(jump)
+              if line.count('.') > 4 and sum(x.isdigit() for x in line)]
     output = [x for x in output if x <= 10]
     if TCS == 1 and (comp['type'] in (1, 3, 6)):
-        if len(skok) > 1:
-            skok = [skok[0]]+przeksztalc(comp, skok[1], kwale, team, TCS)
-            output = list(range(1,len(skok)))
+        if len(jump) > 1:
+            jump = [jump[0]]+transform(comp, jump[1], no_rounds, team, TCS)
+            output = list(range(1,len(jump)))
     if len(output) > 2 and not comp['training']:
-        print('Uwaga: zawodnik '+skok[0]+' oddał '+str(len(output))+" skoki!")
-    if kwale and len(output) > 1:
-        print('Uwaga: zawodnik '+skok[0]+' oddał '+str(len(output))+" skoki w jednoseryjnym konkursie!")
-    info = column_info(comp, kwale, team)
+        print('Uwaga: zawodnik '+jump[0]+' oddał '+str(len(output))+" skoki!")
+    if no_rounds and len(output) > 1:
+        print('Uwaga: zawodnik '+jump[0]+' oddał '
+              + str(len(output))+" skoki w jednoseryjnym konkursie!")
+    info = column_info(comp, no_rounds, team)
     new_jump = pd.DataFrame([], columns=info)
     for line in output:
-        name = skok[0]
+        name = jump[0]
         if TCS == 1 and comp['type'] in (1, 3, 6):
-            notes_pre = skok[line]
+            notes_pre = jump[line]
         else:
-            notes_pre = przeksztalc(comp, skok[line], kwale, team, TCS)
-            if not comp['training'] or (comp['type'] in (1, 3, 6) and comp['training']):
+            notes_pre = transform(comp, jump[line], no_rounds, team, TCS)
+            if not comp['training'] or (comp['type'] in (1, 3, 6)
+                                        and comp['training']):
                 notes_pre = [x for x in notes_pre.split(' ') if x]
         if show_all:
             print(notes_pre)
@@ -774,16 +811,25 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0, show_all=0):
             notes.append(0)
         data = pd.Series([name]+notes, index=new_jump.columns)
         if not(math.isnan(comp['wind factor'])) and comp['training']:
-            conds = [((data['speed'] > 115) or (data['speed'] < 60)) and data['speed'] != 0] + decimal([data['speed'], data['dist_points'], data['dist']], [10, 10, 2])
+            conds = [((data['speed'] > 115) or (data['speed'] < 60))
+                     and data['speed'] != 0]\
+                + decimal([data['speed'], data['dist_points'], data['dist']],
+                          [10, 10, 2])
         else:
-            conds = [((data['speed'] > 115) or (data['speed'] < 60)) and data['speed'] != 0] + decimal([data['speed'], data['dist']], [10, 2])
+            conds = [((data['speed'] > 115) or (data['speed'] < 60))
+                     and data['speed'] != 0]\
+                + decimal([data['speed'], data['dist']], [10, 2])
         conds_comp = []
         conds_wind = []
         if not comp['training']:
-            conds_comp = [data['note_points'] > 60, data['note_5'] > 20]+decimal([data['points'], data['note_1'], data['note_5'], data['note_points']], [10, 2, 2, 2])
+            conds_comp = [data['note_points'] > 60, data['note_5'] > 20]\
+                + decimal([data['points'], data['note_1'], data['note_5'],
+                           data['note_points']], [10, 2, 2, 2])
         condition = any(conds)
         if not math.isnan(comp['wind factor']):
-            conds_wind = [abs(data['wind']) > 5, abs(data['wind_comp']) > 60] + decimal([data['wind_comp'], data['gate_points'], data['gate']], [10, 10, 1])
+            conds_wind = [abs(data['wind']) > 5, abs(data['wind_comp']) > 60]\
+                + decimal([data['wind_comp'], data['gate_points'],
+                           data['gate']], [10, 10, 1])
         condition = any(conds+conds_comp+conds_wind)
         if condition:
             exit_code = 1
@@ -794,21 +840,23 @@ def znowu_przeksztalc(comp, skok, kwale=0, team=0, TCS=0, show_all=0):
     return [new_jump, exit_code]
 
 
-def collect(comp, tekstlin=False, tekst_start=False, TCS=0, show_all=0):
-    jumps, kwale, team, TCS = zwroc_skoki(comp, tekstlin=tekstlin, tekst_import=tekst_start, TCS=TCS)
+def collect(comp, manual_text=False, tekst_start=False, TCS=0, show_all=0):
+    jumps, no_rounds, team, TCS = get_jumps(comp, manual_text=manual_text,
+                                              import_text=tekst_start, TCS=TCS)
     exit_code = 0
-    info = column_info(comp, kwale, team)
+    info = column_info(comp, no_rounds, team)
     database = pd.DataFrame([], columns=info)
     for jump in jumps:
-        new_jumps, exit_code_tmp = znowu_przeksztalc(comp, jump, kwale, team, TCS, show_all)
+        new_jumps, exit_code_tmp = further_transform(comp, jump, no_rounds,
+                                                     team, TCS, show_all)
         exit_code = exit_code+exit_code_tmp
         database = database.append(new_jumps, ignore_index=True)
     return([database, exit_code])
 
+
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 directory = max(list_of_files, key=os.path.getctime)
 # directory = os.getcwd()+'/comps/2021_COC_2021-02-15.csv'
-directory = list_of_files[17]
 comps = pd.read_csv(directory)
 comps = comps[comps['k-point'].notnull()]
 
@@ -820,7 +868,7 @@ for k, comp_to_process in comps.iterrows():
     if os.path.isfile(directory_res):
         continue
     try:
-        content = zwroc_skoki(comp_to_process)
+        content = get_jumps(comp_to_process)
         [dalej, warn] = collect(comp_to_process)
         if (warn or dalej.empty) and not os.path.isfile(directory_res):
             exit_codes.append(comp_to_process)
@@ -828,13 +876,14 @@ for k, comp_to_process in comps.iterrows():
             continue
         if not warn and not os.path.isfile(directory_res):
             dalej.to_csv(directory_res, index=False)
-        dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_process['id']+'.csv', index=False)
+        dalej.to_csv(os.getcwd()+'\\elastic_results\\'
+                     + comp_to_process['id']+'.csv', index=False)
     except:
         if not os.path.isfile(directory_res):
             errors.append(comp_to_process)
             print(comp_to_process)
 
-
+"""
 to_fix = errors
 
 exit_codes = []
@@ -845,7 +894,7 @@ for comp_to_fix in to_fix:
     if os.path.isfile(file_name):
         continue
     template = 1
-    content = zwroc_skoki(comp_to_fix, TCS=template)
+    content = get_jumps(comp_to_fix, TCS=template)
     [dalej, warn] = collect(comp_to_fix, TCS=template)
     old_comp = math.isnan(comp_to_fix['wind factor'])
     if template == 1 and comp_to_fix['type'] in (1, 3, 6) and not old_comp:
@@ -858,7 +907,7 @@ for comp_to_fix in to_fix:
         dalej.to_csv(file_name, index=False)
     dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-n = 111
+n = 0
 comp_manual = comps.loc[n]
 # comp_manual['type'] = 0
 template = 0
@@ -879,9 +928,10 @@ tekst_start = tekst_start.lower()
 tekst_start = tekst_start.splitlines()
 tekst_start = [i for i in tekst_start if i]
 content_start = import_start_list(comp_manual, comp_manual['id']+'.pdf')
-content = zwroc_skoki(comp_manual, tekst_manual, tekst_start, TCS=template)
+content = get_jumps(comp_manual, tekst_manual, tekst_start, TCS=template)
 dalej, warn = collect(comp_manual, tekst_manual, tekst_start, TCS=template, show_all=True)
 old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3, 6) and not old_comp:
     dalej = dalej.drop(['gate_points'], axis=1)
 dalej.to_csv(comp_manual['id']+'.csv', index=False)
+"""
