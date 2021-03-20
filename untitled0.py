@@ -166,9 +166,6 @@ def find_names(comp, line_text, year, tick):
                 names.append(line_text[x-1])
                 bibs.append(line_text[x-3])
             else:
-                # tmp = line_text[x-1].split(' ')
-                # names.append(' '.join(tmp[1:]))
-                # bibs.append(tmp[0])
                 names.append(line_text[x-1])
                 bibs.append(line_text[x-2])
         full_list = [[bibs[i]]+[names[i]] for i, x in enumerate(indexes)]
@@ -310,7 +307,7 @@ def import_start_list(comp, pdf_name, block=False, manual_text=False):
     return([[], comps_infos])
 
 
-def get_jumps(comp, manual_text=False, import_text=False, TCS=0):
+def get_jumps(comp, manual_text=False, import_text=False, pdf_format=0):
     """
     Return a list of athletes with all single jumps made in a competition.
 
@@ -327,7 +324,7 @@ def get_jumps(comp, manual_text=False, import_text=False, TCS=0):
         If provided, is used as a list of names of the
         consequent athletes. Formatting should be compatible with
         the import_start_list function. The default is False.
-    TCS : integer, optional
+    pdf_format : integer, optional
         Variable, which determines type of formatting in WC/WSC/SFWC
         competitions. Standard cases are:
             0 (default) - standard formatting,
@@ -349,7 +346,7 @@ def get_jumps(comp, manual_text=False, import_text=False, TCS=0):
             2 - if we have a qualification round
             (i.e. file name contains 'RLQ')
     team : True/False variable, which indicates team competitions
-    TCS : integer, the same as in input
+    pdf_format : integer, the same as in input
     """
     comp_name = comp['id']+'.pdf'
     no_rounds = 1
@@ -381,7 +378,7 @@ def get_jumps(comp, manual_text=False, import_text=False, TCS=0):
         if word in line and i <= 80:
             no_rounds = 0
         if word3 in line and i <= 80:
-            TCS = 1
+            pdf_format = 1
     if end:
         line_text = line_text[:end[0]]
     full_list = [(i, [t for t in names_list['name'] if x.count(t)][0])
@@ -394,14 +391,14 @@ def get_jumps(comp, manual_text=False, import_text=False, TCS=0):
     if len(indices) < len(names_list):
         print('Warning: in '+comp['id']+' '
               + str(len(names_list) - len(indices))+' not found!')
-    results_list = [conc_numbers(jump, comp, TCS)
+    results_list = [conc_numbers(jump, comp, pdf_format)
                     for i, jump in enumerate(jumps)]
-    return([results_list, no_rounds, team, TCS])
+    return([results_list, no_rounds, team, pdf_format])
 
 
-def conc_numbers(jump, comp, TCS=0):
+def conc_numbers(jump, comp, pdf_format=0):
     if comp['type'] in (1, 3, 6):
-        return conc_numbers_coc(jump, comp, TCS)
+        return conc_numbers_coc(jump, comp, pdf_format)
     if not comp['training']:
         return jump
     try:
@@ -454,7 +451,7 @@ def conc_numbers(jump, comp, TCS=0):
     return jump
 
 
-def conc_numbers_coc(jump, comp, TCS=0):
+def conc_numbers_coc(jump, comp, pdf_format=0):
     try:
         start = min([i for i, x in enumerate(jump)
                      if x.count('.')
@@ -474,7 +471,7 @@ def conc_numbers_coc(jump, comp, TCS=0):
             line = jump[start]
         return [jump[0]]+[' '.join([line]+jump[start+1:end])]
     if comp['training']:
-        if TCS == 1:
+        if pdf_format == 1:
             if end-start < 7:
                 return [jump[0]]+[' '.join(jump[start:end])]
             if jump[end-1].count('.') == 1:
@@ -494,8 +491,8 @@ def conc_numbers_coc(jump, comp, TCS=0):
     return [jump[0], jump[start]]
 
 
-def transform(comp, string, no_rounds=0, team=0, TCS=0):
-    if comp['type'] in (1, 3, 6) and TCS == 1:
+def transform(comp, string, no_rounds=0, team=0, pdf_format=0):
+    if comp['type'] in (1, 3, 6) and pdf_format == 1:
         return transform_coc_training(string, comp)
     if comp['type'] in (1, 3, 6):
         return transform_coc(string, no_rounds, comp)
@@ -503,7 +500,7 @@ def transform(comp, string, no_rounds=0, team=0, TCS=0):
     if comp_name.count('RTRIA') or comp_name.count('RLT'):
         return transform_rlt(comp, string)
     if comp_name.count('RL'):
-        return transform_rl_rlq(comp, string, no_rounds, team, TCS)
+        return transform_rl_rlq(comp, string, no_rounds, team, pdf_format)
     return []
 
 
@@ -557,8 +554,8 @@ def transform_coc_training(string, comp):
 
 
 def transform_coc(string, no_rounds, comp):
-    nq = 0
-    team_nq = 0
+    not_qual = 0
+    team_not_qual = 0
     tmp = string.split(' ')
     new_string = string
     if comp['id'].count('RTRIA'):
@@ -572,14 +569,14 @@ def transform_coc(string, no_rounds, comp):
         return new_string
     if not tmp[0].count('.'):
         tmp = tmp[1:]
-        nq = 1
+        not_qual = 1
     if tmp[0] != disperse_text(tmp[0]):
         tmp_tmp = disperse_text(tmp[0]).split(' ')
         tmp[0] = tmp_tmp[1]+' ' + tmp_tmp[0]
-        team_nq = 1
+        team_not_qual = 1
     tmp = [disperse_text(x) for x in tmp]
     new_string = ' '.join(tmp)
-    if nq and not no_rounds:
+    if not_qual and not no_rounds:
         tmp = new_string.split(' ')
         tmp = [x for x in tmp if x]
         if len(tmp) == 15:
@@ -588,22 +585,22 @@ def transform_coc(string, no_rounds, comp):
     if comp['team']:
         tmp = new_string.split(' ')
         tmp = [x for x in tmp if x]
-        if nq and team_nq and len(tmp) == 15:
+        if not_qual and team_not_qual and len(tmp) == 15:
             tmp = tmp[:-3] + tmp[-2:] + [tmp[-3]]
-        if not(nq) and team_nq:
+        if not(not_qual) and team_not_qual:
             tmp = tmp[:11] + [tmp[-1]] + [tmp[11]] + [tmp[-2]] + tmp[12:-2]
-        if not(nq) and not(team_nq):
+        if not(not_qual) and not(team_not_qual):
             tmp = tmp[:11] + [tmp[-2]] + [tmp[11]] + [tmp[-1]] + tmp[12:-2]
         new_string = ' '.join(tmp)
         print(tmp)
     return new_string
 
 
-def disperse_rl_rlq(comp, no_rounds, team, TCS):
+def disperse_rl_rlq(comp, no_rounds, team, pdf_format):
     no_factor = math.isnan(comp['wind factor'])
     placement = [12]
     offset = [1]
-    if TCS and no_rounds == 2 and no_factor:
+    if pdf_format and no_rounds == 2 and no_factor:
         placement = [0, 10]
         offset = [2, 2]
         return([placement, offset])
@@ -613,10 +610,10 @@ def disperse_rl_rlq(comp, no_rounds, team, TCS):
     if no_rounds and team:
         placement = [12]
         offset = [1]
-    if TCS and no_rounds == 2 and not no_factor:
+    if pdf_format and no_rounds == 2 and not no_factor:
         placement = [12]
         offset = [2]
-    if TCS == 2:
+    if pdf_format == 2:
         placement = [1, 12]
         offset = [2, 1]
     if no_factor:
@@ -629,7 +626,7 @@ def disperse_rl_rlq(comp, no_rounds, team, TCS):
     return([placement, offset])
 
 
-def transform_rl_rlq(comp, string, no_rounds, team, TCS):
+def transform_rl_rlq(comp, string, no_rounds, team, pdf_format):
     no_factor = math.isnan(comp['wind factor'])
     string = string.replace('pq', '0.')
     string = string.replace('©', '')
@@ -654,7 +651,7 @@ def transform_rl_rlq(comp, string, no_rounds, team, TCS):
         new_string = new_string[(star_pointer+1):]
     parts = new_string.rsplit(' ', 2)
     new_string = parts[1] + ' ' + parts[2] + ' ' + parts[0]
-    if TCS == 2:
+    if pdf_format == 2:
         string = string.replace('©', '')
         tmp = string.split(' ')
         tmp = [x for x in tmp if x]
@@ -668,7 +665,7 @@ def transform_rl_rlq(comp, string, no_rounds, team, TCS):
             new_string = ' '.join(tmp)
         else:
             new_string = string
-    placement, offset = disperse_rl_rlq(comp, no_rounds, team, TCS)
+    placement, offset = disperse_rl_rlq(comp, no_rounds, team, pdf_format)
     kropki = [i for i, a in enumerate(new_string) if a == '.']
     kropki = [kropki[i] for i in placement]
     if placement:
@@ -680,10 +677,10 @@ def transform_rl_rlq(comp, string, no_rounds, team, TCS):
         parts = tmp_new_string.split(' ')
     else:
         tmp_new_string = new_string
-    if TCS == 1 and no_rounds == 2 and not no_factor:
+    if pdf_format == 1 and no_rounds == 2 and not no_factor:
         tmp_new_string = ' '.join(parts[0:3]) + ' ' \
             + ' '.join(parts[4:13]) + ' ' + ' '.join(parts[14:])
-    elif TCS == 1 and no_rounds == 2 and no_factor:
+    elif pdf_format == 1 and no_rounds == 2 and no_factor:
         tmp_new_string = ' '.join(parts[0:1]) + ' ' \
             + ' '.join(parts[2:11]) + ' ' + ' '.join(parts[12:])
     return tmp_new_string
@@ -776,15 +773,16 @@ def column_info(comp, no_rounds, team):
     return([names[k] for k in indices])
 
 
-def further_transform(comp, jump, no_rounds=0, team=0, TCS=0, show_all=0):
+def further_transform(comp, jump, no_rounds=0, team=0, pdf_format=0, show_all=0):
     exit_code = 0
     output = [idx for idx, line in enumerate(jump)
               if line.count('.') > 4 and sum(x.isdigit() for x in line)]
     output = [x for x in output if x <= 10]
-    if TCS == 1 and (comp['type'] in (1, 3, 6)):
+    if pdf_format == 1 and (comp['type'] in (1, 3, 6)):
         if len(jump) > 1:
-            jump = [jump[0]]+transform(comp, jump[1], no_rounds, team, TCS)
-            output = list(range(1,len(jump)))
+            jump = [jump[0]]+transform(comp, jump[1], no_rounds,
+                                       team, pdf_format)
+            output = list(range(1, len(jump)))
     if len(output) > 2 and not comp['training']:
         print('Uwaga: zawodnik '+jump[0]+' oddał '+str(len(output))+" skoki!")
     if no_rounds and len(output) > 1:
@@ -794,10 +792,11 @@ def further_transform(comp, jump, no_rounds=0, team=0, TCS=0, show_all=0):
     new_jump = pd.DataFrame([], columns=info)
     for line in output:
         name = jump[0]
-        if TCS == 1 and comp['type'] in (1, 3, 6):
+        if pdf_format == 1 and comp['type'] in (1, 3, 6):
             notes_pre = jump[line]
         else:
-            notes_pre = transform(comp, jump[line], no_rounds, team, TCS)
+            notes_pre = transform(comp, jump[line], no_rounds,
+                                  team, pdf_format)
             if not comp['training'] or (comp['type'] in (1, 3, 6)
                                         and comp['training']):
                 notes_pre = [x for x in notes_pre.split(' ') if x]
@@ -840,15 +839,18 @@ def further_transform(comp, jump, no_rounds=0, team=0, TCS=0, show_all=0):
     return [new_jump, exit_code]
 
 
-def collect(comp, manual_text=False, tekst_start=False, TCS=0, show_all=0):
-    jumps, no_rounds, team, TCS = get_jumps(comp, manual_text=manual_text,
-                                              import_text=tekst_start, TCS=TCS)
+def collect(comp, manual_text=False, start_text=False, pdf_format=0, show_all=0):
+    jumps, no_rounds, team, pdf_format = get_jumps(comp,
+                                                   manual_text=manual_text,
+                                                   import_text=start_text,
+                                                   pdf_format=pdf_format)
     exit_code = 0
     info = column_info(comp, no_rounds, team)
     database = pd.DataFrame([], columns=info)
     for jump in jumps:
         new_jumps, exit_code_tmp = further_transform(comp, jump, no_rounds,
-                                                     team, TCS, show_all)
+                                                     team, pdf_format,
+                                                     show_all)
         exit_code = exit_code+exit_code_tmp
         database = database.append(new_jumps, ignore_index=True)
     return([database, exit_code])
@@ -869,15 +871,15 @@ for k, comp_to_process in comps.iterrows():
         continue
     try:
         content = get_jumps(comp_to_process)
-        [dalej, warn] = collect(comp_to_process)
-        if (warn or dalej.empty) and not os.path.isfile(directory_res):
+        [results, warn] = collect(comp_to_process)
+        if (warn or results.empty) and not os.path.isfile(directory_res):
             exit_codes.append(comp_to_process)
             print(comp_to_process)
             continue
         if not warn and not os.path.isfile(directory_res):
-            dalej.to_csv(directory_res, index=False)
-        dalej.to_csv(os.getcwd()+'\\elastic_results\\'
-                     + comp_to_process['id']+'.csv', index=False)
+            results.to_csv(directory_res, index=False)
+        results.to_csv(os.getcwd()+'\\elastic_results\\'
+                       + comp_to_process['id']+'.csv', index=False)
     except:
         if not os.path.isfile(directory_res):
             errors.append(comp_to_process)
@@ -894,28 +896,28 @@ for comp_to_fix in to_fix:
     if os.path.isfile(file_name):
         continue
     template = 1
-    content = get_jumps(comp_to_fix, TCS=template)
-    [dalej, warn] = collect(comp_to_fix, TCS=template)
+    content = get_jumps(comp_to_fix, pdf_format=template)
+    [results, warn] = collect(comp_to_fix, pdf_format=template)
     old_comp = math.isnan(comp_to_fix['wind factor'])
     if template == 1 and comp_to_fix['type'] in (1, 3, 6) and not old_comp:
-        dalej = dalej.drop(['gate_points'], axis=1)
-    if (warn or dalej.empty) and not os.path.isfile(file_name):
+        results = results.drop(['gate_points'], axis=1)
+    if (warn or results.empty) and not os.path.isfile(file_name):
         exit_codes.append(comp_to_fix)
         print(comp_to_fix)
         continue
     if not warn and not os.path.isfile(file_name):
-        dalej.to_csv(file_name, index=False)
-    dalej.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
+        results.to_csv(file_name, index=False)
+    results.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
 
-n = 0
+n = 6
 comp_manual = comps.loc[n]
 # comp_manual['type'] = 0
 template = 0
 parsed_manual = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_manual['id']+'.pdf')
-tekst_manual = parsed_manual["content"]
-tekst_manual = tekst_manual.lower()
-tekst_manual = tekst_manual.splitlines()
-tekst_manual = [i for i in tekst_manual if i]
+text_manual = parsed_manual["content"]
+text_manual = text_manual.lower()
+text_manual = text_manual.splitlines()
+text_manual = [i for i in text_manual if i]
 try:
     parsed_start = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_manual['id'][:10]+'SLT.pdf')
 except FileNotFoundError:
@@ -923,15 +925,15 @@ except FileNotFoundError:
         parsed_start = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_manual['id'][:10]+'SLQ.pdf')
     except FileNotFoundError:
         parsed_start = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_manual['id'][:10]+'SLR1.pdf')
-tekst_start = parsed_start["content"]
-tekst_start = tekst_start.lower()
-tekst_start = tekst_start.splitlines()
-tekst_start = [i for i in tekst_start if i]
+start_text = parsed_start["content"]
+start_text = start_text.lower()
+start_text = start_text.splitlines()
+start_text = [i for i in start_text if i]
 content_start = import_start_list(comp_manual, comp_manual['id']+'.pdf')
-content = get_jumps(comp_manual, tekst_manual, tekst_start, TCS=template)
-dalej, warn = collect(comp_manual, tekst_manual, tekst_start, TCS=template, show_all=True)
+content = get_jumps(comp_manual, text_manual, start_text, pdf_format=template)
+results, warn = collect(comp_manual, text_manual, start_text, pdf_format=template, show_all=True)
 old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3, 6) and not old_comp:
-    dalej = dalej.drop(['gate_points'], axis=1)
-dalej.to_csv(comp_manual['id']+'.csv', index=False)
+    results = results.drop(['gate_points'], axis=1)
+results.to_csv(comp_manual['id']+'.csv', index=False)
 """

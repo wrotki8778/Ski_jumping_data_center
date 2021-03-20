@@ -24,7 +24,8 @@ def merge_names(comps, directory):
         except pd.errors.EmptyDataError:
             pass
         try:
-            tmp_nazfis = pd.read_csv(file_name+'nazfis.csv', sep=';', header=None)
+            tmp_nazfis = pd.read_csv(file_name+'nazfis.csv',
+                                     sep=';', header=None)
             if not comp['team']:
                 tmp_nazfis.columns = ['bib', 'codex', 'name']
             else:
@@ -55,7 +56,8 @@ def merge_comps(names, comps, directory):
     for i, comp in comps.iterrows():
         print(i)
         try:
-            tmp = pd.read_csv(directory+str(comp['id'])+'.csv', sep=',', na_values=['','NA'])
+            tmp = pd.read_csv(directory+str(comp['id'])+'.csv',
+                              sep=',', na_values=['', 'NA'])
             tmp['id'] = comp['id']
             results = results.append(tmp)
         except FileNotFoundError:
@@ -76,14 +78,15 @@ def merge_stats(directory):
     for item in list_of_files:
         tmp = pd.read_csv(directory+'\\'+item, sep=',')
         stats = stats.append(tmp)
-    stats = stats.drop_duplicates(['fis_code','round_type'])
-    stats[['humid','snow', 'air', 'max_wind',
+    stats = stats.drop_duplicates(['fis_code', 'round_type'])
+    stats[['humid', 'snow', 'air', 'max_wind',
            'avg_wind', 'min_wind', 'gate', 'counted_jumpers',
            'all_jumpers', 'all_countries']] =\
-    stats[['humid','snow', 'air', 'max_wind',
-           'avg_wind', 'min_wind', 'gate', 'counted_jumpers',
-           'all_jumpers', 'all_countries']].apply(pd.to_numeric)
+        stats[['humid', 'snow', 'air', 'max_wind',
+               'avg_wind', 'min_wind', 'gate', 'counted_jumpers',
+               'all_jumpers', 'all_countries']].apply(pd.to_numeric)
     return stats
+
 
 def merge_infos(directory):
     columns_names = ['codex', 'place', 'gender', 'hill_size_x',
@@ -94,17 +97,18 @@ def merge_infos(directory):
     list_of_files = os.listdir(directory)
     for item in list_of_files:
         tmp = pd.read_csv(directory+'\\'+item, sep=',')
-        country = [x.rsplit(' ',1)[1][1:4] for x in tmp['place']]
-        new_place = [x.rsplit(' ',1)[0] for x in tmp['place']]
-        tmp['place']=pd.DataFrame(new_place)
-        tmp['country']=pd.DataFrame(country)
+        country = [x.rsplit(' ', 1)[1][1:4] for x in tmp['place']]
+        new_place = [x.rsplit(' ', 1)[0] for x in tmp['place']]
+        tmp['place'] = pd.DataFrame(new_place)
+        tmp['country'] = pd.DataFrame(country)
         comps = comps.append(tmp)
     comps = comps.drop_duplicates(['id'])
-    comps[['hill_size_x','team', 'season', 'hill_size_y', 'k-point',
+    comps[['hill_size_x', 'team', 'season', 'hill_size_y', 'k-point',
            'meter value', 'gate factor', 'wind factor', 'type', 'training']] =\
-    comps[['hill_size_x','team', 'season', 'hill_size_y', 'k-point',
-           'meter value', 'gate factor', 'wind factor', 'type', 'training']].apply(pd.to_numeric)
-
+        comps[['hill_size_x', 'team',
+               'season', 'hill_size_y', 'k-point',
+               'meter value', 'gate factor',
+               'wind factor', 'type', 'training']].apply(pd.to_numeric)
     return comps
 
 
@@ -139,9 +143,11 @@ def append_rating(results, i, comp, rating_act, rating_db, k, round_name):
     results['round'] = round_name
     results['number'] = i
     new_rating_act = rating_act.append(results, ignore_index=True)
-    new_rating_db = pd.merge(rating_db,results[['codex','delty']],on = 'codex', how='left')
-    new_rating_db['cumm_rating'] = new_rating_db['cumm_rating'] + new_rating_db.fillna(0)['delty']
-    new_rating_db = new_rating_db.drop(['delty'], axis = 1)
+    new_rating_db = pd.merge(rating_db, results[['codex', 'delty']],
+                             on='codex', how='left')
+    new_rating_db['cumm_rating'] = new_rating_db['cumm_rating']\
+        + new_rating_db.fillna(0)['delty']
+    new_rating_db = new_rating_db.drop(['delty'], axis=1)
     return [new_rating_act, new_rating_db]
 
 
@@ -172,7 +178,8 @@ def build_rating(comps, results, names):
             except pd.errors.EmptyDataError:
                 continue
         else:
-            round_names = np.unique([x['round'] for i,x in all_results.iterrows()])
+            round_names = np.unique([x['round']
+                                     for i, x in all_results.iterrows()])
         all_results = pd.DataFrame(all_results[['codex', 'round', 'points']])
         for round_name in round_names:
             result = all_results[all_results['round'] == round_name][['codex','points']]
@@ -186,12 +193,13 @@ def build_rating(comps, results, names):
                 print('omitted')
                 continue
             result.columns = ['codex', 'rating']
-            result = pd.merge(result, rating_db, how='left', on = 'codex')
-            rating_act, rating_db = append_rating(result, i, comp, rating_act, rating_db, k, round_name)
+            result = pd.merge(result, rating_db, how='left', on='codex')
+            rating_act, rating_db = append_rating(result, i, comp, rating_act,
+                                                  rating_db, k, round_name)
     return rating_act, rating_db
 
 
-def show_rating(comps, names, rating_act, take_all=True, index = False):
+def show_rating(comps, names, rating_act, take_all=True, index=False):
     names = names.drop_duplicates(subset=['codex'])
     if not index:
         index = len(comps) - 1
@@ -200,38 +208,28 @@ def show_rating(comps, names, rating_act, take_all=True, index = False):
                              & (rating_act['number'] > index - 150)]
         results = results.sort_values(['number'], ascending=False)
         results = results.drop_duplicates(['codex'])
-        results = results.drop(['delty', 'id','round'], axis = 1)
+        results = results.drop(['delty', 'id', 'round'], axis = 1)
     else:
         results = rating_act[rating_act['number'] == index]
-    results = pd.merge(results,names, how='left')
+    results = pd.merge(results, names, how='left')
     return results
 
 
 actual_comps = merge_infos(os.getcwd()+'\\comps\\')
-actual_comps.to_csv(os.getcwd()+'\\all_comps.csv',index=False,na_rep='NA')
+actual_comps.to_csv(os.getcwd()+'\\all_comps.csv', index=False, na_rep='NA')
 actual_stats = merge_stats(os.getcwd()+'\\stats\\')
-actual_stats.to_csv(os.getcwd()+'\\all_stats.csv',index=False,na_rep='NA')
-actual_comps = actual_comps[actual_comps['training']==0]
-actual_comps = actual_comps.sort_values(['date', 'id'], ascending=[True, False])
+actual_stats.to_csv(os.getcwd()+'\\all_stats.csv', index=False, na_rep='NA')
+actual_comps = actual_comps[actual_comps['training'] == 0]
+actual_comps = actual_comps.sort_values(['date', 'id'],
+                                        ascending=[True, False])
 actual_comps = actual_comps.reset_index()
-# actual_names = merge_names(actual_comps, os.getcwd()+'\\nazwy\\')
-# actual_names.to_csv(os.getcwd()+'\\nazwy\\all_names.csv',index=False)
-# actual_results = merge_comps(actual_names, actual_comps, os.getcwd()+'\\results\\')
-# actual_results.to_csv(os.getcwd()+'\\results\\all_results.csv',index=False)
 actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
 comps_to_process = actual_comps
-actual_rating = build_rating(comps_to_process, actual_results, actual_names)
-actual_standings = show_rating(comps_to_process, actual_names, actual_rating[0], False, 1587)
+actual_rating = build_rating(comps_to_process,
+                             actual_results, actual_names)
+actual_standings = show_rating(comps_to_process, actual_names,
+                               actual_rating[0], False, 1587)
 ryoyu = actual_rating[0][actual_rating[0]['codex'] == 5585]
-actual_rating[0].to_csv(os.getcwd()+'\\all_ratings.csv',index=False,na_rep='NA')
-
-gp_dataset = pd.merge(actual_rating[0],
-                      actual_stats,how='left',left_on = ['id','round'],
-                      right_on=['fis_code','round_type'])[['codex','delty','fis_code']]
-gp_dataset = pd.merge(gp_dataset, actual_comps, how='left',
-                      left_on = 'fis_code', right_on = 'id')[['codex_x','delty','hill_size_x']]
-gp_dataset = gp_dataset[gp_dataset['codex_x']==6551][['delty','hill_size_x']]
-X = gp_dataset[['hill_size_x']].to_numpy()
-y = gp_dataset[['delty']].to_numpy()
-
+actual_rating[0].to_csv(os.getcwd()+'\\all_ratings.csv',
+                        index=False, na_rep='NA')
