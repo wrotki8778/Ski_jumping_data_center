@@ -171,7 +171,8 @@ def import_links(years=[2021], genre='GP',
         with the following meaning:
             WC - World Cup,
             COC - Continental Cup (summer+winter edition),
-            GP - Grand Prix/Summer Grand Prix
+            GP - Grand Prix/Summer Grand Prix,
+            FC - FIS Cup
             WSC - World Ski Championships,
             SFWC - Ski Flying World Championships,
             WJC - Junior World Ski Championships.
@@ -190,7 +191,8 @@ def import_links(years=[2021], genre='GP',
     Outputs:
         grouped_links - contains list of links with consequent weekends
         (competition groups),
-        single_links - contains list of links with consequent single competitions,
+        single_links - contains list of links with consequent single
+        competitions,
         fis_codes - contains list of unique codes for each competition found
         (in the form xxxxJPyyyy, where xxxx is the year and yyyy is
          a codex of a competition)

@@ -1,5 +1,5 @@
 """
-Script to analyze results from untitled0.py and untitled6.py.
+Script to analyze results from untitled0/2/6.py and compute ratings.
 
 @author: wrotki8778
 """
@@ -9,66 +9,22 @@ import numpy as np
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 
 
-def merge_names(comps, directory):
-    names = pd.DataFrame([], columns=['bib', 'name'])
-    names_fis = pd.DataFrame([], columns=['bib', 'codex', 'name'])
-    for i, comp in comps.iterrows():
-        print(i)
-        file_name = directory+str(comp['season'])+'JP'+str(comp['codex'])
-        try:
-            tmp_naz = pd.read_csv(file_name+'naz.csv', sep=';', header=None)
-            tmp_naz.columns = ['bib', 'name']
-            names = names.append(tmp_naz)
-        except FileNotFoundError:
-            pass
-        except pd.errors.EmptyDataError:
-            pass
-        try:
-            tmp_nazfis = pd.read_csv(file_name+'nazfis.csv',
-                                     sep=';', header=None)
-            if not comp['team']:
-                tmp_nazfis.columns = ['bib', 'codex', 'name']
-            else:
-                tmp_nazfis.columns = ['codex', 'name']
-            names_fis = names_fis.append(tmp_nazfis)
-        except FileNotFoundError:
-            pass
-        except pd.errors.EmptyDataError:
-            pass
-    names_fis['name'] = names_fis['name'].str.lower()
-    names_fis = pd.merge(names_fis, names, how='right', on=['name'])
-    names_fis = names_fis.drop_duplicates(['name', 'codex'])
-    names_fis = names_fis.drop(['bib_x', 'bib_y'], axis=1)
-    names = names.drop(['bib'], axis=1)
-    names = names.drop_duplicates()
-    names_fis = pd.merge(names_fis, names, how='left', on=['name'])
-    return names_fis
-
-
-def merge_comps(names, comps, directory):
-    columns_names = ['name', 'wind', 'wind_comp',
-                     'dist', 'speed', 'dist_points',
-                     'note_1', 'note_2', 'note_3',
-                     'note_4', 'note_5', 'note_points',
-                     'points', 'loc', 'gate',
-                     'gate_points', 'id']
-    results = pd.DataFrame([], columns=columns_names)
-    for i, comp in comps.iterrows():
-        print(i)
-        try:
-            tmp = pd.read_csv(directory+str(comp['id'])+'.csv',
-                              sep=',', na_values=['', 'NA'])
-            tmp['id'] = comp['id']
-            results = results.append(tmp)
-        except FileNotFoundError:
-            pass
-        except pd.errors.EmptyDataError:
-            pass
-    results = pd.merge(results, names, how='left', on=['name'])
-    results = results.drop(['name', 'Unnamed: 0'], axis=1)
-    return results
-
 def merge_stats(directory):
+    """
+    Merge all dataframes containing get_round outputs -
+    untitled2.py file for reference.
+
+    Parameters
+    ----------
+    directory : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    stats : TYPE
+        DESCRIPTION.
+
+    """
     columns_names = ['fis_code', 'humid', 'snow',
                      'air', 'weather_type', 'round_type', 'max_wind',
                      'avg_wind', 'min_wind', 'gate', 'counted_jumpers',
@@ -89,6 +45,21 @@ def merge_stats(directory):
 
 
 def merge_infos(directory):
+    """
+    Merge all files which contain outputs from untitled6.py module
+    (competitions dataframe).
+
+    Parameters
+    ----------
+    directory : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    comps : TYPE
+        DESCRIPTION.
+
+    """
     columns_names = ['codex', 'place', 'gender', 'hill_size_x',
                      'team', 'season', 'hill_size_y', 'k-point',
                      'meter value', 'gate factor', 'wind factor',
@@ -113,6 +84,22 @@ def merge_infos(directory):
 
 
 def new_rating(ratingi, k):
+    """
+    Compute deltas to update ratings.
+
+    Parameters
+    ----------
+    ratingi : TYPE
+        DESCRIPTION.
+    k : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    delty : TYPE
+        DESCRIPTION.
+
+    """
     delty = []
     for i, ocena in enumerate(ratingi):
         if np.isnan(ocena):
@@ -137,6 +124,32 @@ def new_rating(ratingi, k):
 
 
 def append_rating(results, i, comp, rating_act, rating_db, k, round_name):
+    """
+    Update ratings.
+
+    Parameters
+    ----------
+    results : TYPE
+        DESCRIPTION.
+    i : TYPE
+        DESCRIPTION.
+    comp : TYPE
+        DESCRIPTION.
+    rating_act : TYPE
+        DESCRIPTION.
+    rating_db : TYPE
+        DESCRIPTION.
+    k : TYPE
+        DESCRIPTION.
+    round_name : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    list
+        DESCRIPTION.
+
+    """
     ratingi = results['cumm_rating']
     results['delty'] = new_rating(ratingi, k)
     results['id'] = comp['id']
@@ -152,6 +165,27 @@ def append_rating(results, i, comp, rating_act, rating_db, k, round_name):
 
 
 def build_rating(comps, results, names):
+    """
+    Create a dataframe with ratings of all athletes
+    indicating their level over time.
+
+    Parameters
+    ----------
+    comps : TYPE
+        DESCRIPTION.
+    results : TYPE
+        DESCRIPTION.
+    names : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    rating_act : TYPE
+        DESCRIPTION.
+    rating_db : TYPE
+        DESCRIPTION.
+
+    """
     rating_db = pd.DataFrame(names['codex'])
     rating_db = rating_db.drop_duplicates()
     rating_db.dropna()
@@ -200,6 +234,28 @@ def build_rating(comps, results, names):
 
 
 def show_rating(comps, names, rating_act, take_all=True, index=False):
+    """
+    Show an output of the build_rating in user-friendly manner.
+
+    Parameters
+    ----------
+    comps : TYPE
+        DESCRIPTION.
+    names : TYPE
+        DESCRIPTION.
+    rating_act : TYPE
+        DESCRIPTION.
+    take_all : TYPE, optional
+        DESCRIPTION. The default is True.
+    index : TYPE, optional
+        DESCRIPTION. The default is False.
+
+    Returns
+    -------
+    results : TYPE
+        DESCRIPTION.
+
+    """
     names = names.drop_duplicates(subset=['codex'])
     if not index:
         index = len(comps) - 1
@@ -208,7 +264,7 @@ def show_rating(comps, names, rating_act, take_all=True, index=False):
                              & (rating_act['number'] > index - 150)]
         results = results.sort_values(['number'], ascending=False)
         results = results.drop_duplicates(['codex'])
-        results = results.drop(['delty', 'id', 'round'], axis = 1)
+        results = results.drop(['delty', 'id', 'round'], axis=1)
     else:
         results = rating_act[rating_act['number'] == index]
     results = pd.merge(results, names, how='left')

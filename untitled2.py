@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Test module
+Module to parse stats, weather infos
+and to include round information in a results .csv file.
+
+@author: wrotki8778
 """
 import os
 import os.path
-import re
-from datetime import datetime
-import math
 import glob
 import pandas as pd
 import numpy as np
@@ -30,6 +30,22 @@ def disperse_text(string):
 
 
 def parse_weather(comp):
+    """
+    Return lines from a PDF with stats and weather information.
+
+    Parameters
+    ----------
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py file (check "database" output for details)..
+
+    Returns
+    -------
+    list
+        List containing two list of strings - one for weather information,
+        second for statistics.
+
+    """
     if not os.path.isfile(os.getcwd()+'//PDFs//'+comp['id']+'.pdf'):
         return ['', '']
     parsed = parser.from_file(os.getcwd()+'//PDFs//'+comp['id']+'.pdf')
@@ -60,6 +76,33 @@ def parse_weather(comp):
 
 
 def process_weather_init(data, comp):
+    """
+    Return a list with extracted values from data about weather.
+
+    Parameters
+    ----------
+    data : string
+        Initial string containing weather data.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py file (check "database" output for details).
+
+    Returns
+    -------
+    list
+        List with following information from the day of the competition:
+            - humid - humidity in percent (0%-100%),
+            - snow - snow temperature in Celsius degrees,
+            - air - air temperature in Celsius degrees,
+            - weather_type - string with description of weather
+            (sunny, cloudy etc.)
+            - round_type - string with the name of round
+            (1st round, 2nd round, trial round etc.)
+            - max_wind/avg_wind/min_wind - three numbers which describes the
+            variability of wind in a given round. Negative values indicate
+            tail wind and vice versa - positive values suggest head wind.
+
+    """
     fis_code = comp['id']
     if not data:
         return [fis_code, np.nan, np.nan, np.nan, np.nan, np.nan]
@@ -103,42 +146,65 @@ def process_weather_init(data, comp):
                 break
         return [fis_code, humid, snow, air, weather_type,
                 round_type, max_wind, avg_wind, min_wind]
+    for tag in round_types:
+        if line.count(tag):
+            round_type = tag
+            line = line.replace(tag, '')
+            break
+    tmp = line.split(' ')
+    tmp = [x for x in tmp if x]
+    humid = float(tmp[-4])
+    wind = sorted([float(tmp[-1]), float(tmp[-2]), float(tmp[-3])])
+    max_wind = wind[2]
+    avg_wind = wind[1]
+    min_wind = wind[0]
+    if 4 < month < 11:
+        snow, air = [np.nan, float(tmp[-5])]
     else:
-        for tag in round_types:
-            if line.count(tag):
-                round_type = tag
-                line = line.replace(tag, '')
-                break
-        tmp = line.split(' ')
-        tmp = [x for x in tmp if x]
-        humid = float(tmp[-4])
-        wind = sorted([float(tmp[-1]), float(tmp[-2]), float(tmp[-3])])
-        max_wind = wind[2]
-        avg_wind = wind[1]
-        min_wind = wind[0]
-        if month > 4 and month < 11:
-            snow, air = \
-                [np.nan, float(tmp[-5])]
+        if len(tmp[-5]) == 2:
+            snow, air = [float(tmp[-5][0]), float(tmp[-5][1])]
         else:
-            if len(tmp[-5]) == 2:
-                snow, air = \
-                    [float(tmp[-5][0]), float(tmp[-5][1])]
-            else:
-                last_minus = max([i for i, x in enumerate(tmp[-5])
-                                  if x == '-'])
-                air, snow = \
-                    [float(tmp[-5][:last_minus]), float(tmp[-5][last_minus:])]
-        weather_type = tmp[0]
-        i = 1
-        while not sum(c.isdigit() for c in tmp[i]):
-            weather_type = weather_type + ' ' + tmp[i]
-            i = i+1
-        return [fis_code, humid, snow, air, weather_type,
-                round_type, max_wind, avg_wind, min_wind]
-    return [fis_code, np.nan, np.nan, np.nan, np.nan, np.nan]
+            last_minus = max([i for i, x in enumerate(tmp[-5])
+                              if x == '-'])
+            air, snow = \
+                [float(tmp[-5][:last_minus]), float(tmp[-5][last_minus:])]
+    weather_type = tmp[0]
+    i = 1
+    while not sum(c.isdigit() for c in tmp[i]):
+        weather_type = weather_type + ' ' + tmp[i]
+        i = i+1
+    return [fis_code, humid, snow, air, weather_type,
+            round_type, max_wind, avg_wind, min_wind]
 
 
 def process_stats_init(data, comp):
+    """
+    Return a list with extracted values from data about stats.
+
+    Parameters
+    ----------
+    data : string
+        Initial string containing weather data.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py file (check "database" output for details).
+
+    Returns
+    -------
+    list
+        List with following information from the day of the competition:
+            - fis_code - FIS code of a competition in a ,
+            - snow - snow temperature in Celsius degrees,
+            - air - air temperature in Celsius degrees,
+            - weather_type - string with description of weather
+            (sunny, cloudy etc.)
+            - round_type - string with the name of round
+            (1st round, 2nd round, trial round etc.)
+            - max_wind/avg_wind/min_wind - three numbers which describes the
+            variability of wind in a given round. Negative values indicate
+            tail wind and vice versa - positive values suggest head wind.
+
+    """
     fis_code = comp['id']
     line = data
     line = line.replace('/', ' ')
@@ -170,16 +236,30 @@ def process_stats_init(data, comp):
         all_countries = float(tmp[-3])
         return [fis_code, round_type, gate, counted_jumpers,
                 all_jumpers, all_countries]
-    else:
-        gate = float(tmp[0])
-        counted_jumpers = float(tmp[-2])
-        all_jumpers = float(tmp[-4])
-        all_countries = float(tmp[-3])
-        return [fis_code, round_type, gate, counted_jumpers,
-                all_jumpers, all_countries]
+    gate = float(tmp[0])
+    counted_jumpers = float(tmp[-2])
+    all_jumpers = float(tmp[-4])
+    all_countries = float(tmp[-3])
+    return [fis_code, round_type, gate, counted_jumpers,
+            all_jumpers, all_countries]
 
 
 def process_stats(comp):
+    """
+    Merge infos from process_weather_init and process_stats_init
+    into a single Pandas series.
+
+    Parameters
+    ----------
+    comp : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    complete_series : TYPE
+        DESCRIPTION.
+
+    """
     data = parse_weather(comp)
     try:
         weather_data = [process_weather_init(x, comp) for x in data[0]]
@@ -202,11 +282,13 @@ def process_stats(comp):
                                on=['fis_code', 'round_type'], how='outer')
     return complete_series
 
+
 def get_round_names(comp):
+    """Return names of all counted rounds in a competition from comp variable."""
     types = ['WC', 'COC', 'GP', 'FC', 'SFWC', 'WSC', 'WJC']
     list_of_files = glob.glob(os.getcwd()+'/stats/*'+str(comp['season'])
                               + '*'+types[comp['type']]+'*')
-    if not(list_of_files):
+    if not list_of_files:
         return []
     names = []
     for item in list_of_files:
@@ -216,12 +298,29 @@ def get_round_names(comp):
     names = ['NA']+[str(x) for x in list(np.unique(names))]
     return names
 
+
 def cummulative(vector, comp):
+    """
+    Return a vector of integers containing information about round.
+
+    Parameters
+    ----------
+    vector : TYPE
+        DESCRIPTION.
+    comp : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    output : TYPE
+        DESCRIPTION.
+
+    """
     i = 1
     counter = 1
     no_comps = len(get_round_names(comp))
     output = [counter]
-    while (i < len(vector)):
+    while i < len(vector):
         if vector[i] == vector[i-1]:
             counter = counter + 1
         else:
@@ -238,22 +337,37 @@ def cummulative(vector, comp):
                 if (output[i] + 1 < no_comps and output[i+1] == 1):
                     print('replace')
                     output[i-output[i]+1:i+1] = np.repeat(0, output[i], axis=0)
-            elif (output[i] + 1 < no_comps):
+            elif output[i] + 1 < no_comps:
                 output[i-output[i]+1:i+1] = np.repeat(0, output[i], axis=0)
     print(output)
     return output
 
+
 def get_round(comp):
-    u = get_round_names(comp)
-    print(u)
-    if u == ['NA'] or u == ['NA', 'error']:
+    """
+    Return a improved results containing information about round.
+
+    Parameters
+    ----------
+    comp : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
+    round_names = get_round_names(comp)
+    print(round_names)
+    if round_names in (['NA'], ['NA', 'error']):
         return []
     directory = os.getcwd()+'/results/'+comp['id']+'.csv'
     if not os.path.isfile(directory):
         return []
     results = pd.read_csv(os.getcwd()+'/results/'+comp['id']+'.csv')
     print(results)
-    tmp = [u[i] for i in cummulative(results['name'], comp)]
+    tmp = [round_names[i] for i in cummulative(results['name'], comp)]
     print(tmp)
     results['round'] = tmp
     return results

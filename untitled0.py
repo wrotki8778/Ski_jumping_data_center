@@ -397,6 +397,24 @@ def get_jumps(comp, manual_text=False, import_text=False, pdf_format=0):
 
 
 def conc_numbers(jump, comp, pdf_format=0):
+    """
+    Concatenate some lines in a jump list to generate a pre-jump-string.
+
+    Parameters
+    ----------
+    jump : TYPE
+        DESCRIPTION.
+    comp : TYPE
+        DESCRIPTION.
+    pdf_format : TYPE, optional
+        DESCRIPTION. The default is 0.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
     if comp['type'] in (1, 3, 6):
         return conc_numbers_coc(jump, comp, pdf_format)
     if not comp['training']:
@@ -452,6 +470,24 @@ def conc_numbers(jump, comp, pdf_format=0):
 
 
 def conc_numbers_coc(jump, comp, pdf_format=0):
+    """
+    Concatenate some lines in a jump list to generate a pre-jump-string.
+
+    Parameters
+    ----------
+    jump : TYPE
+        DESCRIPTION.
+    comp : TYPE
+        DESCRIPTION.
+    pdf_format : TYPE, optional
+        DESCRIPTION. The default is 0.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
     try:
         start = min([i for i, x in enumerate(jump)
                      if x.count('.')
@@ -492,6 +528,28 @@ def conc_numbers_coc(jump, comp, pdf_format=0):
 
 
 def transform(comp, string, no_rounds=0, team=0, pdf_format=0):
+    """
+    General procedure to generate a suitable jump-string to further processing.
+
+    Parameters
+    ----------
+    comp : TYPE
+        DESCRIPTION.
+    string : TYPE
+        DESCRIPTION.
+    no_rounds : TYPE, optional
+        DESCRIPTION. The default is 0.
+    team : TYPE, optional
+        DESCRIPTION. The default is 0.
+    pdf_format : TYPE, optional
+        DESCRIPTION. The default is 0.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
     if comp['type'] in (1, 3, 6) and pdf_format == 1:
         return transform_coc_training(string, comp)
     if comp['type'] in (1, 3, 6):
@@ -505,6 +563,22 @@ def transform(comp, string, no_rounds=0, team=0, pdf_format=0):
 
 
 def transform_coc_training(string, comp):
+    """
+    Process a jump-string from the COC rounds where we have a 2 training rounds in a PDF.
+
+    Parameters
+    ----------
+    string : TYPE
+        DESCRIPTION.
+    comp : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    list
+        DESCRIPTION.
+
+    """
     no_factor = math.isnan(comp['wind factor'])
     sep = 10
     if no_factor:
@@ -554,6 +628,24 @@ def transform_coc_training(string, comp):
 
 
 def transform_coc(string, no_rounds, comp):
+    """
+    Process a jump-string from the COC rounds (training + official rounds).
+
+    Parameters
+    ----------
+    string : TYPE
+        DESCRIPTION.
+    no_rounds : TYPE
+        DESCRIPTION.
+    comp : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    new_string : TYPE
+        DESCRIPTION.
+
+    """
     not_qual = 0
     team_not_qual = 0
     tmp = string.split(' ')
@@ -597,6 +689,25 @@ def transform_coc(string, no_rounds, comp):
 
 
 def disperse_rl_rlq(comp, no_rounds, team, pdf_format):
+    """
+    Return an instruction which dots in the string should be shifted and in which way.
+
+    Parameters
+    ----------
+    comp : TYPE
+        DESCRIPTION.
+    no_rounds : TYPE
+        DESCRIPTION.
+    team : TYPE
+        DESCRIPTION.
+    pdf_format : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
     no_factor = math.isnan(comp['wind factor'])
     placement = [12]
     offset = [1]
@@ -627,6 +738,28 @@ def disperse_rl_rlq(comp, no_rounds, team, pdf_format):
 
 
 def transform_rl_rlq(comp, string, no_rounds, team, pdf_format):
+    """
+    Process a jump-string from the WC official rounds.
+
+    Parameters
+    ----------
+    comp : TYPE
+        DESCRIPTION.
+    string : TYPE
+        DESCRIPTION.
+    no_rounds : TYPE
+        DESCRIPTION.
+    team : TYPE
+        DESCRIPTION.
+    pdf_format : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    tmp_new_string : TYPE
+        DESCRIPTION.
+
+    """
     no_factor = math.isnan(comp['wind factor'])
     string = string.replace('pq', '0.')
     string = string.replace('©', '')
@@ -687,6 +820,22 @@ def transform_rl_rlq(comp, string, no_rounds, team, pdf_format):
 
 
 def transform_rlt(comp, string):
+    """
+    Process a jump-string from the WC training/trial round.
+
+    Parameters
+    ----------
+    comp : TYPE
+        DESCRIPTION.
+    string : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
     string = string.replace('©', '')
     new_string = string.split()
     new_string = [x for x in new_string if x]
@@ -717,6 +866,23 @@ def transform_rlt(comp, string):
 
 
 def column_info(comp, no_rounds, team):
+    """
+    Return the names of variables extracted from transform function.
+
+    Parameters
+    ----------
+    comp : TYPE
+        DESCRIPTION.
+    no_rounds : TYPE
+        DESCRIPTION.
+    team : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
     no_factor = math.isnan(comp['wind factor'])
     names = ['name',
              'wind',
@@ -773,7 +939,32 @@ def column_info(comp, no_rounds, team):
     return([names[k] for k in indices])
 
 
-def further_transform(comp, jump, no_rounds=0, team=0, pdf_format=0, show_all=0):
+def further_transform(comp, jump, no_rounds=0,
+                      team=0, pdf_format=0, show_all=0):
+    """
+    Return a dataframe with all jumps of an athlete from the jump string.
+
+    Parameters
+    ----------
+    comp : TYPE
+        DESCRIPTION.
+    jump : TYPE
+        DESCRIPTION.
+    no_rounds : TYPE, optional
+        DESCRIPTION. The default is 0.
+    team : TYPE, optional
+        DESCRIPTION. The default is 0.
+    pdf_format : TYPE, optional
+        DESCRIPTION. The default is 0.
+    show_all : TYPE, optional
+        DESCRIPTION. The default is 0.
+
+    Returns
+    -------
+    list
+        DESCRIPTION.
+
+    """
     exit_code = 0
     output = [idx for idx, line in enumerate(jump)
               if line.count('.') > 4 and sum(x.isdigit() for x in line)]
@@ -839,7 +1030,29 @@ def further_transform(comp, jump, no_rounds=0, team=0, pdf_format=0, show_all=0)
     return [new_jump, exit_code]
 
 
-def collect(comp, manual_text=False, start_text=False, pdf_format=0, show_all=0):
+def collect(comp, manual_text=False, start_text=False,
+            pdf_format=0, show_all=0):
+    """
+    Process all rows from the parsed PDF into a target dataframe.
+
+    Parameters
+    ----------
+    comp : TYPE
+        DESCRIPTION.
+    manual_text : TYPE, optional
+        DESCRIPTION. The default is False.
+    start_text : TYPE, optional
+        DESCRIPTION. The default is False.
+    pdf_format : TYPE, optional
+        DESCRIPTION. The default is 0.
+    show_all : TYPE, optional
+        DESCRIPTION. The default is 0.
+
+    Returns
+    -------
+    None.
+
+    """
     jumps, no_rounds, team, pdf_format = get_jumps(comp,
                                                    manual_text=manual_text,
                                                    import_text=start_text,
