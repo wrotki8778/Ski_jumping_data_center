@@ -181,9 +181,19 @@ boxplot(
   varwidth = TRUE
 )
 
-filtered_ratings = filter(ratings, codex == 6288)[,c('delty','id')]
-filtered_ratings = merge(filtered_ratings, competitions, by.x='id', by.y = 'id')[,c('delty','id','hill_size_x')]
-library(mgcv)
-model<-gam(delty~s(hill_size_x),data=filtered_ratings)
-plot(model,main='Denoised function',residuals=TRUE, ylim = c(-20,20))
-abline(h=0, col='red')
+filtered_ratings = filter(ratings, codex == 6151)[, c('delty', 'id', 'number')]
+filtered_ratings = merge(filtered_ratings,
+                         competitions,
+                         by.x = 'id',
+                         by.y = 'id')[, c('delty', 'id', 'meter.value', 'number')]
+filtered_ratings['size'] = cut(
+  filtered_ratings$meter.value,
+  breaks = c(0, 1.3, 1.9, 2.3, 2.5),
+  labels = c('flying hill', 'large', 'normal', 'medium')
+)
+filtered_ratings$csum <- ave(filtered_ratings$delty, filtered_ratings$size, FUN=cumsum)
+filtered_ratings = merge(filtered_ratings, as.data.frame(table(filtered_ratings$size)),how='left', by.x='size',by.y='Var1')
+#filtered_ratings$csum = 1000 + filtered_ratings$csum/filtered_ratings$Freq *sum(table(filtered_ratings$size))
+ggplot(filtered_ratings, aes(size, delty, fill = size)) + geom_boxplot() + ylim(-20, 20)
+
+ggplot(filtered_ratings, aes(number, csum, color = size)) + geom_smooth() + geom_line()
