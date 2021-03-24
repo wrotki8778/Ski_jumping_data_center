@@ -44,8 +44,8 @@ As we can see, Schattenbergschanze (the name of this hill) hosts mainly World Cu
 To see how the variables are correlated, we made a scatterplot and a correlation matrix:
 
 ```{r}
-plot(actual_results[,c(1,2,9,11,13,15)])
-round(cor(actual_results[,c(1,2,9,11,13,15)],use = 'complete.obs'),2)
+plot(actual_results[,c(1,2,9,11,14,16)])
+round(cor(actual_results[,c(1,2,9,11,14,16)],use = 'complete.obs'),2)
 ```
 This chunk suggests that
 
@@ -57,9 +57,9 @@ We can plot, how speed and distance varies
 
 ```{r}
 ggplot(subset(actual_results[,c('dist','id')], dist>0)) +
-  geom_density(aes(x = dist),fill="white", alpha = 0.6)+labs(title='Normalized plots of conditional densities')
+  geom_density(aes(x = dist),fill="white", alpha = 0.6)+labs(title='Normalized density of distances')
 ggplot(subset(actual_results[,c('speed','id')], speed>85)) +
-  geom_density(aes(x = speed),fill="white", alpha = 0.6)+labs(title='Normalized plots of conditional densities')
+  geom_density(aes(x = speed),fill="white", alpha = 0.6)+labs(title='Normalized density of speed')
 ggplot(subset(actual_results[,c('speed','dist')], speed>85 & dist>0)) +
   geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution')
 ```
@@ -69,10 +69,10 @@ The last plot can be quite surprising -- is that real, that the higher/lower spe
 ```{r}
 obe_men = subset(obe_ids, gender=='Men')$id
 ggplot(subset(actual_results[,c('speed','dist','id')], speed>85 & dist>0 & id %in% obe_men)) +
-  geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution for men') + xlim(87,100) + ylim(80,140)
+  geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution for men') + xlim(86,100) + ylim(80,140)
 obe_men = subset(obe_ids, gender=='Men')$id
 ggplot(subset(actual_results[,c('speed','dist','id')], speed>85 & dist>0 & !(id %in% obe_men))) +
-  geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution for women') + xlim(87,100) + ylim(80,140)
+  geom_density_2d_filled(aes(x = speed, y= dist))+labs(title='Normalized bivariate distribution for women') + xlim(86,100) + ylim(80,140)
 ```
 
 We can see that these conditional distributions are quite different and most "probable" distance varies from case to case. We can also explain why the correlation between the speed and distance is negative - simply bigger speed is connected with women rather than men and their distances are smaller. Later we will see that in fact the correlation is positive, if the gate is fixed.
@@ -97,7 +97,7 @@ server_gate <- function(input, output) {
   N_1 = nrow(gate_results()[gate_results()$gender == 'Women',])
   N = paste('Women jumps count: ', N_1, ', Men jumps count: ', nrow(gate_results()) - N_1)
   ggplot(gate_results()) +
-  geom_histogram(aes(x = speed, color = gender),fill = "white", alpha = 0.6) + labs(title = N) + xlim(87.5,97.5)
+  geom_histogram(aes(x = speed, color = gender),fill = "white", alpha = 0.6) + labs(title = N) + xlim(85,97.5)
 })
   observeEvent(input$button, stopApp())
 }
@@ -165,7 +165,7 @@ server_dist <- function(input, output) {
   gate_results  = reactive(subset(merge(actual_results[,c('speed','id', 'gate', 'wind', 'dist')],
                                competitions[,c('id', 'season', 'gender')],by = 'id'), 
                          season %in% input$years & gender == input$gender & speed > 85 & dist > 0))
-  N = paste('Results from : ', input$year, ' Gender:', input$gender)
+  N = paste('Results from : ', input$years, ' Gender:', input$gender)
   ggplot(gate_results()) +
   geom_jitter(aes(x = speed, y = wind, color = dist)) + labs(title=N) + xlim(87.5,97.5) + ylim(-2,2) +
   scale_color_gradientn(colours =  rev(rainbow(3)), limits = c(90,145))
