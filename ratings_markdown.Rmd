@@ -28,6 +28,8 @@ summary(ratings)
 
 The main "star" of this dataset is "delty" variable. This vector informs about *relative* performance of every athlete in a given round. For example, if we have two athletes with ratings 1600 and 1300 respectively and the first is worse that the latter, then delty variable is highly negative in the first case and highly positive in the second case. If the 1600-rating player wins with the 1300-rating player, then delty variable is mildly positive in the first case and mildly positive in the second case. The baseline ratings are stored in *cumm_rating* variable for each competition. 
 
+# First insights
+
 We can now see, how this rating reflexes the performance of every athlete. For that we will need some instance of a rating graph:
 
 ```{r rating_graph_1}
@@ -78,5 +80,26 @@ for (name in graph_names) {
   tmp_title_2 <- paste('Performance graph by hill type of: ', name)
   print(ggplot(filtered_ratings, aes(number, csum, color = size)) + geom_smooth() + geom_line() + labs(title=tmp_title_2)+ xlim(0,2110) + ylim(-500,1000))
 }
+```
+
+These graphs suggests that indeed some athletes perform much better on normal hills, some on flying hills. Now we will create a barplot with the top athletes to see which of them correspond to which category.
+
+```{r}
+selected_ids = unique(filter(competitions,season == 2021, gender == 'Men')[['id']])
+selected_codex = unique(filter(ratings, id %in% selected_ids & cumm_rating > 1500)[['codex']])
+selected_ratings = filter(ratings, codex %in% selected_codex)
+selected_ratings = merge(selected_ratings,
+                           competitions,
+                           by.x = 'id',
+                           by.y = 'id')[, c('id', 'delty', 'meter.value', 'codex.x')]
+selected_ratings['size'] = cut(
+    selected_ratings$meter.value,
+    breaks = c(0, 1.3, 1.9, 2.3, 2.5),
+    labels = c('flying hill', 'large', 'normal', 'medium')
+  )
+size_ratings = selected_ratings %>% group_by(size,codex.x) %>% summarize(delty = sum(delty, na.rm = TRUE)) %>% na.omit()
+size_ratings = merge(size_ratings,names[!duplicated(names[,c('codex')]),], how='left', by.x='codex.x', by.y='codex')
+tmp_title <- 'Performance on all types of hills'
+ggplot(size_ratings, aes(name,delty, fill = size)) + geom_bar(stat='identity') + labs(title=tmp_title)+coord_flip()
 ```
 
