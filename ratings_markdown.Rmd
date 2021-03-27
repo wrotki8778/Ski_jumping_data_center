@@ -49,8 +49,8 @@ Therefore we can see that this rating system quite well describes the level of p
 
 ```{r rating_graph_by_hill}
 graph_names = c('kraft stefan',
-                'leihe stephan',
-                'johansson robert',
+                'kubacki dawid',
+                'kasai noriaki',
                 'lundby maren')
 
 for (name in graph_names) {
@@ -84,7 +84,7 @@ for (name in graph_names) {
 
 These graphs suggests that indeed some athletes perform much better on normal hills, some on flying hills. Now we will create a barplot with the top athletes to see which of them correspond to which category.
 
-```{r}
+```{r top_athletes}
 selected_ids = unique(filter(competitions,season == 2021, gender == 'Men')[['id']])
 selected_codex = unique(filter(ratings, id %in% selected_ids & cumm_rating > 1500)[['codex']])
 selected_ratings = filter(ratings, codex %in% selected_codex)
@@ -100,6 +100,44 @@ selected_ratings['size'] = cut(
 size_ratings = selected_ratings %>% group_by(size,codex.x) %>% summarize(delty = sum(delty, na.rm = TRUE)) %>% na.omit()
 size_ratings = merge(size_ratings,names[!duplicated(names[,c('codex')]),], how='left', by.x='codex.x', by.y='codex')
 tmp_title <- 'Performance on all types of hills'
-ggplot(size_ratings, aes(name,delty, fill = size)) + geom_bar(stat='identity') + labs(title=tmp_title)+coord_flip()
+size_ratings %>% mutate(name=fct_reorder(name,delty,sum)) %>% ggplot(aes(name,delty, fill = size)) + geom_bar(stat='identity') + labs(title=tmp_title)+coord_flip()
+```
+
+We observe that all top jumpers are quite good on large hills. In the other cases it can vary quite substantially -- some of them prefer normal hills, some of them are good on flying hills and the most surprising case is *Junshiro Kobayashi*, who jumps well only on large hills and loses on both normal and flying hills. Now we will provide a graph with top athletes on each type of hill
+
+```{r top_by_hill_type}
+selected_ids = unique(filter(competitions,season == 2021, gender == 'Men')[['id']])
+selected_codex = unique(filter(ratings, id %in% selected_ids)[['codex']])
+selected_ratings = filter(ratings, codex %in% selected_codex)
+selected_ratings = merge(selected_ratings,
+                           competitions,
+                           by.x = 'id',
+                           by.y = 'id')[, c('id', 'delty', 'meter.value', 'codex.x')]
+selected_ratings['size'] = cut(
+    selected_ratings$meter.value,
+    breaks = c(0, 1.3, 1.9, 2.3, 2.5),
+    labels = c('flying hill', 'large', 'normal', 'medium')
+  )
+size_ratings = selected_ratings %>% group_by(size,codex.x) %>% summarize(delty = sum(delty, na.rm = TRUE)) %>% na.omit()
+size_ratings = merge(size_ratings,names[!duplicated(names[,c('codex')]),], how='left', by.x='codex.x', by.y='codex')
+for (hill_type in levels(size_ratings$size)){
+size_ratings_type = filter(size_ratings, size == hill_type & delty > 0)
+size_ratings_type = size_ratings_type %>% arrange(desc(delty)) %>% slice(1:15)
+tmp_title <- paste('Performance on', hill_type)
+print(size_ratings_type %>% mutate(name=fct_reorder(name,delty,sum)) %>% ggplot(aes(name,delty, fill = size)) + geom_bar(stat='identity') + labs(title=tmp_title)+coord_flip())
+}
+```
+
+Now we will analyze the *peaks* of ratings of particular jumpers.
+
+```{r peaks}
+peak_ratings = ratings %>% arrange(desc(cumm_rating)) %>% distinct(codex, .keep_all = TRUE)  %>% slice(1:30)
+peak_ratings = merge(peak_ratings,
+                           competitions,
+                           by.x = 'id',
+                           by.y = 'id')[, c('id', 'cumm_rating', 'date', 'codex.x')]
+peak_ratings = merge(peak_ratings,names[!duplicated(names[,c('codex')]),], how='left', by.x='codex.x', by.y='codex')
+tmp_title <- paste('Peak ratings')
+peak_ratings %>% mutate(name=fct_reorder(name,cumm_rating,sum)) %>% ggplot(aes(name,cumm_rating, fill=date)) + geom_bar(stat='identity') + labs(title=tmp_title)+coord_flip()
 ```
 
