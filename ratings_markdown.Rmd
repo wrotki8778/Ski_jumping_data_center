@@ -78,7 +78,7 @@ for (name in graph_names) {
   tmp_title <- paste('Performance boxplot by hill of: ', name)
   print(ggplot(filtered_ratings, aes(size, delty, fill = size)) + geom_boxplot() + ylim(-20, 20) + labs(title=tmp_title))
   tmp_title_2 <- paste('Performance graph by hill type of: ', name)
-  print(ggplot(filtered_ratings, aes(number, csum, color = size)) + geom_smooth() + geom_line() + labs(title=tmp_title_2)+ xlim(0,2110) + ylim(-500,1000))
+  print(ggplot(filtered_ratings, aes(number, csum, color = size)) + geom_smooth() + geom_line() + labs(title=tmp_title_2)+ xlim(0,2150) + ylim(-500,1000))
 }
 ```
 
