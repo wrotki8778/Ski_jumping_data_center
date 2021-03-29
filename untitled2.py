@@ -378,6 +378,7 @@ directory = max(list_of_files, key=os.path.getctime)
 
 comps = pd.read_csv(directory)
 comps = comps[comps['k-point'].notnull()]
+# comps['type'] = 0
 all_stats_names = ['fis_code', 'humid', 'snow', 'air', 'weather_type',
                    'round_type', 'max_wind', 'avg_wind', 'min_wind',
                    'gate', 'counted_jumpers', 'all_jumpers', 'all_countries']

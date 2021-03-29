@@ -40,7 +40,7 @@ for (name in graph_names){
 
   filtered_ratings = filter(ratings, codex == jumper_id)[, c('cumm_rating', 'id', 'number')]
   tmp_title <- paste('Performance graph of: ', name)
-  graph <- ggplot(filtered_ratings, aes(number, cumm_rating)) + geom_smooth() + geom_line() + labs(title=tmp_title) + xlim(0,2110) + ylim(600,2000)
+  graph <- ggplot(filtered_ratings, aes(number, cumm_rating)) + geom_smooth() + geom_line() + labs(title=tmp_title) + xlim(0,2150) + ylim(600,2000)
   print(graph)
 }
 ```

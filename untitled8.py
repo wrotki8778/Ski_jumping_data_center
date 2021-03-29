@@ -261,7 +261,7 @@ def show_rating(comps, names, rating_act, take_all=True, index=False):
         index = len(comps) - 1
     if take_all:
         results = rating_act[(rating_act['number'] <= index)
-                             & (rating_act['number'] > index - 150)]
+                             & (rating_act['number'] > index - 100)]
         results = results.sort_values(['number'], ascending=False)
         results = results.drop_duplicates(['codex'])
         results = results.drop(['delty', 'id', 'round'], axis=1)
@@ -275,6 +275,7 @@ actual_comps = merge_infos(os.getcwd()+'\\comps\\')
 actual_comps.to_csv(os.getcwd()+'\\all_comps.csv', index=False, na_rep='NA')
 actual_stats = merge_stats(os.getcwd()+'\\stats\\')
 actual_stats.to_csv(os.getcwd()+'\\all_stats.csv', index=False, na_rep='NA')
+# here execute skrypt2.R
 actual_comps = actual_comps[actual_comps['training'] == 0]
 actual_comps = actual_comps.sort_values(['date', 'id'],
                                         ascending=[True, False])
@@ -285,7 +286,7 @@ comps_to_process = actual_comps
 actual_rating = build_rating(comps_to_process,
                              actual_results, actual_names)
 actual_standings = show_rating(comps_to_process, actual_names,
-                               actual_rating[0], False, 1587)
+                               actual_rating[0], True)
 ryoyu = actual_rating[0][actual_rating[0]['codex'] == 5585]
 actual_rating[0].to_csv(os.getcwd()+'\\all_ratings.csv',
                         index=False, na_rep='NA')
