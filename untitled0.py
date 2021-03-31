@@ -166,6 +166,7 @@ def find_names(comp, line_text, year, tick):
                 names.append(line_text[x-1])
                 bibs.append(line_text[x-3])
             else:
+                print(line_text[x-1])
                 names.append(line_text[x-1])
                 bibs.append(line_text[x-2])
         full_list = [[bibs[i]]+[names[i]] for i, x in enumerate(indexes)]
@@ -418,6 +419,10 @@ def conc_numbers(jump, comp, pdf_format=0):
     if comp['type'] in (1, 3, 6):
         return conc_numbers_coc(jump, comp, pdf_format)
     if not comp['training']:
+        if math.isnan(comp['gate factor']) and comp['team']:
+            if len(jump) > 2:
+                jump[2] = ' '.join(jump[1].split(' ')[-3:])+' '+jump[2]
+                print(jump[2])
         return jump
     try:
         start = min([i for i, x in enumerate(jump)
@@ -1121,10 +1126,10 @@ for comp_to_fix in to_fix:
     if not warn and not os.path.isfile(file_name):
         results.to_csv(file_name, index=False)
     results.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
-
-n = 6
+"""
+n = 46
 comp_manual = comps.loc[n]
-# comp_manual['type'] = 0
+comp_manual['type'] = 0
 template = 0
 parsed_manual = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_manual['id']+'.pdf')
 text_manual = parsed_manual["content"]
@@ -1142,11 +1147,10 @@ start_text = parsed_start["content"]
 start_text = start_text.lower()
 start_text = start_text.splitlines()
 start_text = [i for i in start_text if i]
-content_start = import_start_list(comp_manual, comp_manual['id']+'.pdf')
+content_start = import_start_list(comp_manual, comp_manual['id']+'.pdf', manual_text=start_text)
 content = get_jumps(comp_manual, text_manual, start_text, pdf_format=template)
 results, warn = collect(comp_manual, text_manual, start_text, pdf_format=template, show_all=True)
 old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3, 6) and not old_comp:
     results = results.drop(['gate_points'], axis=1)
 results.to_csv(comp_manual['id']+'.csv', index=False)
-"""
