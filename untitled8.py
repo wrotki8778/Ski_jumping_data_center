@@ -209,6 +209,7 @@ def build_rating(comps, results, names):
                 all_results['points'] = 1
                 print('imported from nazfis.csv file')
                 round_names = ['whole competition ']
+                k = 16
             except pd.errors.EmptyDataError:
                 continue
         else:
@@ -277,6 +278,7 @@ actual_stats = merge_stats(os.getcwd()+'\\stats\\')
 actual_stats.to_csv(os.getcwd()+'\\all_stats.csv', index=False, na_rep='NA')
 # here execute skrypt2.R
 actual_comps = actual_comps[actual_comps['training'] == 0]
+actual_comps = actual_comps[actual_comps['season'] > 2009]
 actual_comps = actual_comps.sort_values(['date', 'id'],
                                         ascending=[True, False])
 actual_comps = actual_comps.reset_index()
@@ -286,7 +288,7 @@ comps_to_process = actual_comps
 actual_rating = build_rating(comps_to_process,
                              actual_results, actual_names)
 actual_standings = show_rating(comps_to_process, actual_names,
-                               actual_rating[0], True)
-ryoyu = actual_rating[0][actual_rating[0]['codex'] == 5585]
+                               actual_rating[0], False, 2123)
+ryoyu = actual_rating[0][actual_rating[0]['codex'] == 2088]
 actual_rating[0].to_csv(os.getcwd()+'\\all_ratings.csv',
                         index=False, na_rep='NA')
