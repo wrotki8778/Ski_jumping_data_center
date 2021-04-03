@@ -98,10 +98,15 @@ selected_ratings['size'] = cut(
     breaks = c(0, 1.3, 1.9, 2.3, 2.5),
     labels = c('flying hill', 'large', 'normal', 'medium')
   )
-size_ratings = selected_ratings %>% group_by(size,codex.x) %>% summarize(delty = sum(delty, na.rm = TRUE)) %>% na.omit()
+selected_ratings['performance'] = 2*as.numeric(cut(
+    selected_ratings$delty,
+    breaks = c(-1000,0,1000),
+    labels = c(-1,+1)
+  ))-3
+size_ratings = selected_ratings %>% group_by(size,codex.x) %>% summarize(performance = mean(performance, na.rm = TRUE)) %>% na.omit()
 size_ratings = merge(size_ratings,names[!duplicated(names[,c('codex')]),], how='left', by.x='codex.x', by.y='codex')
 tmp_title <- 'Performance on all types of hills'
-size_ratings %>% mutate(name=fct_reorder(name,delty,sum)) %>% ggplot(aes(name,delty, fill = size)) + geom_bar(stat='identity') + labs(title=tmp_title)+coord_flip()
+size_ratings %>% arrange(name) %>% ggplot(aes(name,performance, fill = size)) + geom_bar(stat='identity') + labs(title=tmp_title)+coord_flip()
 ```
 
 We observe that all top jumpers are quite good on large hills. In the other cases it can vary quite substantially -- some of them prefer normal hills, some of them are good on flying hills and the most surprising case is *Junshiro Kobayashi*, who jumps well only on large hills and loses on both normal and flying hills. Now we will provide a graph with top athletes on each type of hill.
@@ -132,6 +137,7 @@ print(size_ratings_type %>% mutate(name=fct_reorder(name,delty,sum)) %>% ggplot(
 We can also check the performance by other factors like wind factor. The graph below says "Which athletes are better when the wind is disturbing or helping"
 
 ```{r top_by_wind}
+selected_codex = unique(filter(ratings, id %in% selected_ids & cumm_rating > 1550)[['codex']])
 selected_ratings = filter(ratings, codex %in% selected_codex)
 selected_ratings = left_join(selected_ratings, results, by = c('codex','round','id'))[,c('codex','delty','wind')] %>% na.omit()
 selected_ratings['wind_type'] = cut(selected_ratings$wind, breaks = c(-10,0,10), labels=c('tail','head'))
@@ -140,7 +146,8 @@ wind_ratings = merge(wind_ratings,names[!duplicated(names[,c('codex')]),], how='
 tmp_title <- 'Performance while tail or head wind'
 wind_ratings %>% mutate(name=fct_reorder(name,delty,sum)) %>% ggplot(aes(name,delty, fill=wind_type)) + geom_bar(stat='identity')+ coord_flip() + labs(title=tmp_title)
 ```
-We can observe that most of the top athletes deals quite well regardless of the type of wind. However, some are more sensitive to tail wind, in particular Norwegians. The other extreme is when a jumper is better, when tail wind is present. We can see that *Dawid Kubacki* or *Cene Prevc* can be considered as this type of jumper.
+
+We can observe that most of the top athletes deals quite well regardless of the type of wind. However, some are more sensitive to tail wind, in particular Norwegians. The other extreme is when a jumper is better, whenever tail wind is present. We can see that *Dawid Kubacki* or *Cene Prevc* can be considered as this type of jumper.
 
 Now we will analyze the *peaks* of ratings of particular jumpers.
 
@@ -161,3 +168,17 @@ From this chart we can see that ratings over 1700 are impressive and not many ju
 # Conclusions
 
 We can see that the ratings dataset can be used in various ways. We can obtain which athletes are good whenever some conditions are given. In fact this simple system can produce a lot of interesting analysis and this one is only an example. You're invited to try some of these on your own. 
+
+# Experiments
+
+```{r}
+year=2010
+selected_ids = unique(filter(competitions,season == year, gender == 'Men')[['id']])
+selected_codex = unique(filter(ratings, id %in% selected_ids)[['codex']])
+selected_ratings = filter(ratings, codex %in% selected_codex)
+selected_ratings = left_join(selected_ratings, competitions, by = c('id'))[,c('codex.x','season','cumm_rating')]
+selected_ratings = filter(selected_ratings, season < year + 1)
+selected_ratings = selected_ratings[!duplicated(selected_ratings$codex.x, fromLast = TRUE),]
+selected_ratings  %>% ggplot(aes(cumm_rating, y=..density..)) + geom_density() + xlim(500,2000) + ylim(0,0.007)
+```
+

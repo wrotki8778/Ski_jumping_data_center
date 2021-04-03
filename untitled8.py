@@ -114,10 +114,10 @@ def new_rating(ratingi, k):
             if i == j:
                 continue
             if i < j:
-                exp_score = exp_score+1/(10**((inna_ocena-ocena)/400)+1)
+                exp_score = exp_score+1.01/(10**((inna_ocena-ocena)/400)+1)
                 fact_score = fact_score+1
             else:
-                exp_score = exp_score+1/(10**((inna_ocena-ocena)/400)+1)
+                exp_score = exp_score+1.01/(10**((inna_ocena-ocena)/400)+1)
         delta = k*(fact_score-exp_score)/10
         delty.append(delta)
     return delty
@@ -192,13 +192,13 @@ def build_rating(comps, results, names):
     rating_db['cumm_rating'] = 1000
     rating_act = pd.DataFrame()
     for i, comp in comps.iterrows():
-        k = 8
-        omit_sort=0
+        k = 8 * (1 + 2 * np.exp(2010 - comp['season']))
+        omit_sort = 0
         print(k)
         all_results = results[(results['id'] == comp['id'])
                               & (results['codex'].notna())]
         if all_results.empty:
-            omit_sort=1
+            omit_sort = 1
             try:
                 file_name = os.getcwd()+'\\nazwy\\'+comp['id'][:10]+'nazfis.csv'
                 all_results = pd.read_csv(file_name, sep=';', header=None)
@@ -209,7 +209,7 @@ def build_rating(comps, results, names):
                 all_results['points'] = 1
                 print('imported from nazfis.csv file')
                 round_names = ['whole competition ']
-                k = 16
+                k = 2*k
             except pd.errors.EmptyDataError:
                 continue
         else:
@@ -288,7 +288,7 @@ comps_to_process = actual_comps
 actual_rating = build_rating(comps_to_process,
                              actual_results, actual_names)
 actual_standings = show_rating(comps_to_process, actual_names,
-                               actual_rating[0], False, 2123)
+                               actual_rating[0], True, 596)
 ryoyu = actual_rating[0][actual_rating[0]['codex'] == 2088]
 actual_rating[0].to_csv(os.getcwd()+'\\all_ratings.csv',
                         index=False, na_rep='NA')
