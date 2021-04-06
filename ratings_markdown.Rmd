@@ -124,13 +124,20 @@ selected_ratings['size'] = cut(
     breaks = c(0, 1.3, 1.9, 2.3, 2.5),
     labels = c('flying hill', 'large', 'normal', 'medium')
   )
-size_ratings = selected_ratings %>% group_by(size,codex.x) %>% summarize(delty = sum(delty, na.rm = TRUE)) %>% na.omit()
+selected_ratings['performance'] = 2*as.numeric(cut(
+    selected_ratings$delty,
+    breaks = c(-1000,0,1000),
+    labels = c(-1,+1)
+  ))-3
+size_ratings = selected_ratings %>% group_by(size,codex.x) %>% summarize(performance = mean(performance, na.rm = TRUE), n = n()) %>% na.omit()
 size_ratings = merge(size_ratings,names[!duplicated(names[,c('codex')]),], how='left', by.x='codex.x', by.y='codex')
 for (hill_type in levels(size_ratings$size)){
-size_ratings_type = filter(size_ratings, size == hill_type & delty > 0)
-size_ratings_type = size_ratings_type %>% arrange(desc(delty)) %>% slice(1:15)
-tmp_title <- paste('Performance on', hill_type)
-print(size_ratings_type %>% mutate(name=fct_reorder(name,delty,sum)) %>% ggplot(aes(name,delty, fill = size)) + geom_bar(stat='identity') + labs(title=tmp_title)+coord_flip())
+  u=table(levels(size_ratings$size))
+  u[c('large','flying hill','normal','medium')]=c(90,30,60,10)
+  size_ratings_type = filter(size_ratings, size == hill_type & performance > 0 & n>=u[hill_type])
+  size_ratings_type = size_ratings_type %>% arrange(desc(performance)) %>% slice(1:15)
+  tmp_title <- paste('Performance on', hill_type)
+  print(size_ratings_type %>% mutate(name=fct_reorder(name,performance,sum)) %>% ggplot(aes(name,performance, fill = size)) + geom_bar(stat='identity') + labs(title=tmp_title)+coord_flip())
 }
 ```
 

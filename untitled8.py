@@ -192,7 +192,7 @@ def build_rating(comps, results, names):
     rating_db['cumm_rating'] = 1000
     rating_act = pd.DataFrame()
     for i, comp in comps.iterrows():
-        k = 8 * (1 + 2 * np.exp(2010 - comp['season']))
+        k = 8 * (1 + max(2013 - comp['season'],0))
         omit_sort = 0
         print(k)
         all_results = results[(results['id'] == comp['id'])
