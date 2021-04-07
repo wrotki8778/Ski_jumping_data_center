@@ -192,7 +192,7 @@ def import_start_list(comp, pdf_name, block=False, manual_text=False):
     ----------
     comp : Pandas series
         Infos about competition gathered in a way provided by import_links
-        function (check "database" output for details).
+        function in untitled6.py script (check "database" output for details).
     pdf_name : string
         Unique code for a single competition
         (in the form xxxxJPyyyyzzzz, where xxxx is the year, yyyy is
@@ -316,7 +316,7 @@ def get_jumps(comp, manual_text=False, import_text=False, pdf_format=0):
     ----------
     comp : Pandas series
         Infos about competition gathered in a way provided by import_links
-        function (check "database" output for details).
+        function in untitled6.py script (check "database" output for details).
     manual_text : list of strings, optional
         If provided, function does not parse the PDF of the competition
         and takes alternative (corrected) version in the same format.
@@ -403,17 +403,22 @@ def conc_numbers(jump, comp, pdf_format=0):
 
     Parameters
     ----------
-    jump : TYPE
-        DESCRIPTION.
-    comp : TYPE
-        DESCRIPTION.
-    pdf_format : TYPE, optional
-        DESCRIPTION. The default is 0.
+    jump : list of strings
+        Output of get_jumps procedure, see results_list for details.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
+    pdf_format : integer, optional
+        Variable, which determines type of formatting in WC/WSC/SFWC
+        competitions. Standard cases are:
+            0 (default) - standard formatting,
+            1 - formatting to some 4HT competitions (example: 2018JP3059RLQ),
+            2 - formatting to some SFWC competitions (example: 2018JP3265RL).  
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
+    list of strings
+        Concatenated list of lines from the jump variable.
 
     """
     if comp['type'] in (1, 3, 6):
@@ -480,17 +485,22 @@ def conc_numbers_coc(jump, comp, pdf_format=0):
 
     Parameters
     ----------
-    jump : TYPE
-        DESCRIPTION.
-    comp : TYPE
-        DESCRIPTION.
-    pdf_format : TYPE, optional
-        DESCRIPTION. The default is 0.
+    jump : list of strings
+        Output of get_jumps procedure, see results_list for details.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
+    pdf_format : integer, optional
+        Variable, which determines type of formatting in WC/WSC/SFWC
+        competitions. Standard cases are:
+            0 (default) - standard formatting,
+            1 - formatting to some 4HT competitions (example: 2018JP3059RLQ),
+            2 - formatting to some SFWC competitions (example: 2018JP3265RL).
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
+    list of strings
+        Concatenated list of lines from the jump variable.
 
     """
     try:
@@ -538,21 +548,31 @@ def transform(comp, string, no_rounds=0, team=0, pdf_format=0):
 
     Parameters
     ----------
-    comp : TYPE
-        DESCRIPTION.
-    string : TYPE
-        DESCRIPTION.
-    no_rounds : TYPE, optional
-        DESCRIPTION. The default is 0.
-    team : TYPE, optional
-        DESCRIPTION. The default is 0.
-    pdf_format : TYPE, optional
-        DESCRIPTION. The default is 0.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
+    string : string
+        Line with the infos about a given jump.
+    no_rounds : integer
+        Variable equal to:
+            0 - if we have a competition which consists of 2 or more rounds
+            or a training/trial round,
+            1 - if we have a one-round competition (see 2019JP3090RL
+            for instance)
+            2 - if we have a qualification round
+            (i.e. file name contains 'RLQ')
+    team : True/False variable, which indicates team competitions
+    pdf_format : integer, optional
+        Variable, which determines type of formatting in WC/WSC/SFWC
+        competitions. Standard cases are:
+            0 (default) - standard formatting,
+            1 - formatting to some 4HT competitions (example: 2018JP3059RLQ),
+            2 - formatting to some SFWC competitions (example: 2018JP3265RL).
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
+    string or list of strings
+        Extracted values from string input.
 
     """
     if comp['type'] in (1, 3, 6) and pdf_format == 1:
@@ -569,19 +589,20 @@ def transform(comp, string, no_rounds=0, team=0, pdf_format=0):
 
 def transform_coc_training(string, comp):
     """
-    Process a jump-string from the COC rounds where we have a 2 training rounds in a PDF.
+    Process a jump-string from the COC rounds with 2 training rounds in a PDF.
 
     Parameters
     ----------
-    string : TYPE
-        DESCRIPTION.
-    comp : TYPE
-        DESCRIPTION.
+    string : string
+        Line with the infos about a given jump.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
 
     Returns
     -------
     list
-        DESCRIPTION.
+        Extracted values from string input.
 
     """
     no_factor = math.isnan(comp['wind factor'])
@@ -603,7 +624,7 @@ def transform_coc_training(string, comp):
     if placement:
         tmp_new_string = [string[0:kropki[0]+offset[0]]]\
             + [string[kropki[i]+offset[i]:kropki[i+1]+offset[i+1]]
-              for i in range(len(kropki)-1)]+[string[kropki[-1]+offset[-1]:]]
+               for i in range(len(kropki)-1)]+[string[kropki[-1]+offset[-1]:]]
         tmp_new_string = ' '.join(tmp_new_string)
         parts = tmp_new_string.split(' ')
         parts = [x for x in parts if x]
@@ -638,17 +659,24 @@ def transform_coc(string, no_rounds, comp):
 
     Parameters
     ----------
-    string : TYPE
-        DESCRIPTION.
-    no_rounds : TYPE
-        DESCRIPTION.
-    comp : TYPE
-        DESCRIPTION.
+    string : string
+        Line with the infos about a given jump.
+    no_rounds : integer
+        Variable equal to:
+            0 - if we have a competition which consists of 2 or more rounds
+            or a training/trial round,
+            1 - if we have a one-round competition (see 2019JP3090RL
+            for instance)
+            2 - if we have a qualification round
+            (i.e. file name contains 'RLQ')
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
 
     Returns
     -------
-    new_string : TYPE
-        DESCRIPTION.
+    new_string : string
+        Extracted values from string input.
 
     """
     not_qual = 0
@@ -695,22 +723,32 @@ def transform_coc(string, no_rounds, comp):
 
 def disperse_rl_rlq(comp, no_rounds, team, pdf_format):
     """
-    Return an instruction which dots in the string should be shifted and in which way.
+    Return an instruction which dots in the string should be shifted.
 
     Parameters
     ----------
-    comp : TYPE
-        DESCRIPTION.
-    no_rounds : TYPE
-        DESCRIPTION.
-    team : TYPE
-        DESCRIPTION.
-    pdf_format : TYPE
-        DESCRIPTION.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
+    no_rounds : integer
+        Variable equal to:
+            0 - if we have a competition which consists of 2 or more rounds
+            or a training/trial round,
+            1 - if we have a one-round competition (see 2019JP3090RL
+            for instance)
+            2 - if we have a qualification round
+            (i.e. file name contains 'RLQ')
+    team : True/False variable, which indicates team competitions
+    pdf_format : integer, optional
+        Variable, which determines type of formatting in WC/WSC/SFWC
+        competitions. Standard cases are:
+            0 (default) - standard formatting,
+            1 - formatting to some 4HT competitions (example: 2018JP3059RLQ),
+            2 - formatting to some SFWC competitions (example: 2018JP3265RL).
 
     Returns
     -------
-    None.
+    List of dots to shift (placement) and the number of spaces to add (offset).
 
     """
     no_factor = math.isnan(comp['wind factor'])
@@ -748,21 +786,31 @@ def transform_rl_rlq(comp, string, no_rounds, team, pdf_format):
 
     Parameters
     ----------
-    comp : TYPE
-        DESCRIPTION.
-    string : TYPE
-        DESCRIPTION.
-    no_rounds : TYPE
-        DESCRIPTION.
-    team : TYPE
-        DESCRIPTION.
-    pdf_format : TYPE
-        DESCRIPTION.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
+    string : string
+        Line with the infos about a given jump
+    no_rounds : integer
+        Variable equal to:
+            0 - if we have a competition which consists of 2 or more rounds
+            or a training/trial round,
+            1 - if we have a one-round competition (see 2019JP3090RL
+            for instance)
+            2 - if we have a qualification round
+            (i.e. file name contains 'RLQ')
+    team : True/False variable, which indicates team competitions
+    pdf_format : integer, optional
+        Variable, which determines type of formatting in WC/WSC/SFWC
+        competitions. Standard cases are:
+            0 (default) - standard formatting,
+            1 - formatting to some 4HT competitions (example: 2018JP3059RLQ),
+            2 - formatting to some SFWC competitions (example: 2018JP3265RL).
 
     Returns
     -------
-    tmp_new_string : TYPE
-        DESCRIPTION.
+    tmp_new_string : string
+        Extracted values from string input.
 
     """
     no_factor = math.isnan(comp['wind factor'])
@@ -830,15 +878,16 @@ def transform_rlt(comp, string):
 
     Parameters
     ----------
-    comp : TYPE
-        DESCRIPTION.
-    string : TYPE
-        DESCRIPTION.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
+    string : string
+        Line with the infos about a given jump
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
+    list
+        Extracted values from string input.
 
     """
     string = string.replace('©', '')
@@ -876,16 +925,24 @@ def column_info(comp, no_rounds, team):
 
     Parameters
     ----------
-    comp : TYPE
-        DESCRIPTION.
-    no_rounds : TYPE
-        DESCRIPTION.
-    team : TYPE
-        DESCRIPTION.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
+    no_rounds : integer
+        Variable equal to:
+            0 - if we have a competition which consists of 2 or more rounds
+            or a training/trial round,
+            1 - if we have a one-round competition (see 2019JP3090RL
+            for instance)
+            2 - if we have a qualification round
+            (i.e. file name contains 'RLQ')
+    team : True/False variable, which indicates team competitions
 
     Returns
     -------
-    None.
+    list of strings
+       List of tags according to subsequent numbers in output of transform
+       function.
 
     """
     no_factor = math.isnan(comp['wind factor'])

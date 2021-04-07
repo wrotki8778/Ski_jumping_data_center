@@ -24,6 +24,13 @@ ratings = read.csv('all_ratings.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 names = read.csv('all_names.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 competitions = read.csv('all_comps_r.csv',sep=',',dec='.',stringsAsFactors = TRUE)
 results = read.csv('all_results.csv',sep=',',dec='.',stringsAsFactors = TRUE)
+
+ratings['performance'] = 2*as.numeric(cut(
+    ratings$delty,
+    breaks = c(-1000,0,1000),
+    labels = c(-1,+1)
+  ))-3
+
 summary(ratings)
 ```
 
@@ -92,17 +99,12 @@ selected_ratings = filter(ratings, codex %in% selected_codex)
 selected_ratings = merge(selected_ratings,
                            competitions,
                            by.x = 'id',
-                           by.y = 'id')[, c('id', 'delty', 'meter.value', 'codex.x')]
+                           by.y = 'id')[, c('id', 'performance', 'meter.value', 'codex.x')]
 selected_ratings['size'] = cut(
     selected_ratings$meter.value,
     breaks = c(0, 1.3, 1.9, 2.3, 2.5),
     labels = c('flying hill', 'large', 'normal', 'medium')
   )
-selected_ratings['performance'] = 2*as.numeric(cut(
-    selected_ratings$delty,
-    breaks = c(-1000,0,1000),
-    labels = c(-1,+1)
-  ))-3
 size_ratings = selected_ratings %>% group_by(size,codex.x) %>% summarize(performance = mean(performance, na.rm = TRUE)) %>% na.omit()
 size_ratings = merge(size_ratings,names[!duplicated(names[,c('codex')]),], how='left', by.x='codex.x', by.y='codex')
 tmp_title <- 'Performance on all types of hills'
@@ -118,17 +120,12 @@ selected_ratings = filter(ratings, codex %in% selected_codex)
 selected_ratings = merge(selected_ratings,
                            competitions,
                            by.x = 'id',
-                           by.y = 'id')[, c('id', 'delty', 'meter.value', 'codex.x')]
+                           by.y = 'id')[, c('id', 'performance', 'meter.value', 'codex.x')]
 selected_ratings['size'] = cut(
     selected_ratings$meter.value,
     breaks = c(0, 1.3, 1.9, 2.3, 2.5),
     labels = c('flying hill', 'large', 'normal', 'medium')
   )
-selected_ratings['performance'] = 2*as.numeric(cut(
-    selected_ratings$delty,
-    breaks = c(-1000,0,1000),
-    labels = c(-1,+1)
-  ))-3
 size_ratings = selected_ratings %>% group_by(size,codex.x) %>% summarize(performance = mean(performance, na.rm = TRUE), n = n()) %>% na.omit()
 size_ratings = merge(size_ratings,names[!duplicated(names[,c('codex')]),], how='left', by.x='codex.x', by.y='codex')
 for (hill_type in levels(size_ratings$size)){
@@ -144,17 +141,17 @@ for (hill_type in levels(size_ratings$size)){
 We can also check the performance by other factors like wind factor. The graph below says "Which athletes are better when the wind is disturbing or helping"
 
 ```{r top_by_wind}
-selected_codex = unique(filter(ratings, id %in% selected_ids & cumm_rating > 1550)[['codex']])
+selected_codex = unique(filter(ratings, id %in% selected_ids & cumm_rating > 1500)[['codex']])
 selected_ratings = filter(ratings, codex %in% selected_codex)
-selected_ratings = left_join(selected_ratings, results, by = c('codex','round','id'))[,c('codex','delty','wind')] %>% na.omit()
+selected_ratings = left_join(selected_ratings, results, by = c('codex','round','id'))[,c('codex','performance','delty','wind')] %>% na.omit()
 selected_ratings['wind_type'] = cut(selected_ratings$wind, breaks = c(-10,0,10), labels=c('tail','head'))
-wind_ratings = selected_ratings %>% group_by(wind_type,codex) %>% summarize(delty = sum(delty, na.rm = TRUE)) %>% na.omit()
+wind_ratings = selected_ratings %>% group_by(wind_type,codex) %>% summarize(performance = mean(performance, na.rm = TRUE), n = n()) %>% na.omit()
 wind_ratings = merge(wind_ratings,names[!duplicated(names[,c('codex')]),], how='left', by.x='codex', by.y='codex')
 tmp_title <- 'Performance while tail or head wind'
-wind_ratings %>% mutate(name=fct_reorder(name,delty,sum)) %>% ggplot(aes(name,delty, fill=wind_type)) + geom_bar(stat='identity')+ coord_flip() + labs(title=tmp_title)
+wind_ratings %>% mutate(name=fct_reorder(name,performance,sum)) %>% ggplot(aes(name,performance, fill=wind_type)) + geom_bar(stat='identity')+ coord_flip() + labs(title=tmp_title)
 ```
 
-We can observe that most of the top athletes deals quite well regardless of the type of wind. However, some are more sensitive to tail wind, in particular Norwegians. The other extreme is when a jumper is better, whenever tail wind is present. We can see that *Dawid Kubacki* or *Cene Prevc* can be considered as this type of jumper.
+We can observe that most of the top athletes deals quite well regardless of the type of wind. However, some are more sensitive to tail wind, in particular Norwegians. The other extreme is when a jumper is better, whenever tail wind is present. We can see that *Dawid Kubacki* or *Andrzej Stêka³a* can be considered as this type of jumper.
 
 Now we will analyze the *peaks* of ratings of particular jumpers.
 
@@ -170,7 +167,7 @@ peak_ratings['year'] = sapply(peak_ratings['year'],as.numeric)
 tmp_title <- paste('Peak ratings')
 peak_ratings %>% mutate(name=fct_reorder(name,cumm_rating,sum)) %>% ggplot(aes(name,cumm_rating, fill=year)) + geom_bar(stat='identity') + labs(title=tmp_title)+coord_flip(ylim = c(1600, 2000))+scale_fill_gradient(low='red',high='green')
 ```
-From this chart we can see that ratings over 1700 are impressive and not many jumpers (either men or women) can achieve that level of mastery. The record so far is approximately 1950 points and is hold by *Stefan Kraft* since March 2020. These results should be taken seriously only if we consider the 2015-2021 time period, although the data are collected from 2009/2010 season. The reason is that the algorithm needs some time to rating distribution become stationary. 
+From this chart we can see that ratings over 1700 are impressive and not many jumpers (either men or women) can achieve that level of mastery. The record so far is approximately 1870 points and is hold by *Stefan Kraft* since March 2020.
 
 # Conclusions
 
@@ -179,7 +176,7 @@ We can see that the ratings dataset can be used in various ways. We can obtain w
 # Experiments
 
 ```{r}
-year=2010
+year=2014
 selected_ids = unique(filter(competitions,season == year, gender == 'Men')[['id']])
 selected_codex = unique(filter(ratings, id %in% selected_ids)[['codex']])
 selected_ratings = filter(ratings, codex %in% selected_codex)
