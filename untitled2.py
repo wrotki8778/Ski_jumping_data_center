@@ -251,13 +251,16 @@ def process_stats(comp):
 
     Parameters
     ----------
-    comp : TYPE
-        DESCRIPTION.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
 
     Returns
     -------
-    complete_series : TYPE
-        DESCRIPTION.
+    complete_series : Pandas dataframe
+        Merged infos from process_weather_init and process_stats_init
+        for all competition rounds in comp series. For the variables inside
+        you can read the output of the two mentioned procedures.
 
     """
     data = parse_weather(comp)
@@ -305,16 +308,18 @@ def cummulative(vector, comp):
 
     Parameters
     ----------
-    vector : TYPE
-        DESCRIPTION.
-    comp : TYPE
-        DESCRIPTION.
-
+    vector : list of strings
+        List of subsequent names in a given competition round
+        (have to be sorted by the achieved points)
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
     Returns
     -------
-    output : TYPE
-        DESCRIPTION.
-
+    output : list of integers
+        List of subsequent rounds in a given competition round
+        (have to be sorted by the achieved points). 0 means
+        "first (in order) round", 1 means "second (in order) round" etc.
     """
     i = 1
     counter = 1
@@ -349,13 +354,16 @@ def get_round(comp):
 
     Parameters
     ----------
-    comp : TYPE
-        DESCRIPTION.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
 
     Returns
     -------
-    TYPE
-        DESCRIPTION.
+    results: Pandas dataframe
+        File read from the appropriate .csv file
+        (see the untitled0.py script for reference) with attached info about
+        the round (1st round, 2nd round etc.)
 
     """
     round_names = get_round_names(comp)

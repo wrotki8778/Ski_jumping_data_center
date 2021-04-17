@@ -167,6 +167,7 @@ peak_ratings['year'] = sapply(peak_ratings['year'],as.numeric)
 tmp_title <- paste('Peak ratings')
 peak_ratings %>% mutate(name=fct_reorder(name,cumm_rating,sum)) %>% ggplot(aes(name,cumm_rating, fill=year)) + geom_bar(stat='identity') + labs(title=tmp_title)+coord_flip(ylim = c(1600, 2000))+scale_fill_gradient(low='red',high='green')
 ```
+
 From this chart we can see that ratings over 1700 are impressive and not many jumpers (either men or women) can achieve that level of mastery. The record so far is approximately 1870 points and is hold by *Stefan Kraft* since March 2020.
 
 # Conclusions

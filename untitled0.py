@@ -1008,23 +1008,42 @@ def further_transform(comp, jump, no_rounds=0,
 
     Parameters
     ----------
-    comp : TYPE
-        DESCRIPTION.
-    jump : TYPE
-        DESCRIPTION.
-    no_rounds : TYPE, optional
-        DESCRIPTION. The default is 0.
-    team : TYPE, optional
-        DESCRIPTION. The default is 0.
-    pdf_format : TYPE, optional
-        DESCRIPTION. The default is 0.
-    show_all : TYPE, optional
-        DESCRIPTION. The default is 0.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details).
+    jump : list of strings
+        Output of get_jumps procedure, see results_list for details.
+    no_rounds : integer, optional
+        Variable equal to:
+            0 - if we have a competition which consists of 2 or more rounds
+            or a training/trial round,
+            1 - if we have a one-round competition (see 2019JP3090RL
+            for instance)
+            2 - if we have a qualification round
+            (i.e. file name contains 'RLQ')
+        The default is 0.
+    team : Boolean, optional
+        True/False variable, which indicates team competitions.
+        The default is 0.
+    pdf_format : integer, optional
+        Variable, which determines type of formatting in WC/WSC/SFWC
+        competitions. Standard cases are:
+            0 (default) - standard formatting,
+            1 - formatting to some 4HT competitions (example: 2018JP3059RLQ),
+            2 - formatting to some SFWC competitions (example: 2018JP3265RL).
+    show_all : Boolean, optional
+        If non-zero, then some additional intermediate processed data
+        are printed. The default is 0.
 
     Returns
     -------
     list
-        DESCRIPTION.
+        new_jump: Pandas dataframe
+            Dataframe consisting of jumps of a given athlete.
+        exit_come: integer
+            If non-zero, then it produces an alert -- probably data are
+            parsed incorrectly. It can be overcomed by manual procedure
+            at the end of this script.
 
     """
     exit_code = 0
@@ -1037,10 +1056,10 @@ def further_transform(comp, jump, no_rounds=0,
                                        team, pdf_format)
             output = list(range(1, len(jump)))
     if len(output) > 2 and not comp['training']:
-        print('Uwaga: zawodnik '+jump[0]+' oddał '+str(len(output))+" skoki!")
+        print('Alert: jumper '+jump[0]+' jumped '+str(len(output))+" times!")
     if no_rounds and len(output) > 1:
-        print('Uwaga: zawodnik '+jump[0]+' oddał '
-              + str(len(output))+" skoki w jednoseryjnym konkursie!")
+        print('Alert: jumper '+jump[0]+' jumped '
+              + str(len(output))+" times in one-round competition!")
     info = column_info(comp, no_rounds, team)
     new_jump = pd.DataFrame([], columns=info)
     for line in output:
@@ -1099,20 +1118,37 @@ def collect(comp, manual_text=False, start_text=False,
 
     Parameters
     ----------
-    comp : TYPE
-        DESCRIPTION.
-    manual_text : TYPE, optional
-        DESCRIPTION. The default is False.
-    start_text : TYPE, optional
-        DESCRIPTION. The default is False.
-    pdf_format : TYPE, optional
-        DESCRIPTION. The default is 0.
-    show_all : TYPE, optional
-        DESCRIPTION. The default is 0.
+    comp : Pandas series
+        Infos about competition gathered in a way provided by import_links
+        function in untitled6.py script (check "database" output for details)
+    manual_text : list of strings, optional
+        If provided, function does not parse the PDF
+        and takes alternative (corrected) version in the same format.
+        The default is False.
+    start_text : list of strings, optional
+        If provided, function does not parse the PDF with the start list file
+        and takes alternative (corrected) version in the same format.
+        The default is False.
+    pdf_format : integer, optional
+        Variable, which determines type of formatting in WC/WSC/SFWC
+        competitions. Standard cases are:
+            0 (default) - standard formatting,
+            1 - formatting to some 4HT competitions (example: 2018JP3059RLQ),
+            2 - formatting to some SFWC competitions (example: 2018JP3265RL).
+    show_all : Boolean, optional
+        If non-zero, then some additional intermediate processed data
+        are printed. The default is 0.
 
     Returns
     -------
-    None.
+    list
+        new_jump: Pandas dataframe
+            Dataframe consisting of jumps of all athletes
+            in a given competition.
+        exit_come: integer
+            If non-zero, then it produces an alert -- probably data are
+            parsed incorrectly. It can be overcomed by manual procedure
+            at the end of this script.
 
     """
     jumps, no_rounds, team, pdf_format = get_jumps(comp,
@@ -1137,6 +1173,7 @@ directory = max(list_of_files, key=os.path.getctime)
 comps = pd.read_csv(directory)
 comps = comps[comps['k-point'].notnull()]
 
+# Standard procedure
 exit_codes = []
 errors = []
 
@@ -1160,6 +1197,7 @@ for k, comp_to_process in comps.iterrows():
             errors.append(comp_to_process)
             print(comp_to_process)
 
+# Procedure to parse some COC training rounds (do not run if unnecessary)
 """
 to_fix = errors
 
@@ -1183,6 +1221,9 @@ for comp_to_fix in to_fix:
     if not warn and not os.path.isfile(file_name):
         results.to_csv(file_name, index=False)
     results.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
+"""
+# Procedure to parse competitions manually one by one
+# (do not run if unnecessary)
 """
 n = 46
 comp_manual = comps.loc[n]
@@ -1211,3 +1252,4 @@ old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3, 6) and not old_comp:
     results = results.drop(['gate_points'], axis=1)
 results.to_csv(comp_manual['id']+'.csv', index=False)
+"""
