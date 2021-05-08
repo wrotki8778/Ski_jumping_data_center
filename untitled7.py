@@ -12,11 +12,11 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from sklearn.preprocessing import MinMaxScaler
-
-os.chdir('C:/Users/kubaf/Documents/Skoki')
+from matplotlib.pyplot import plot
+os.chdir('C:/Users/HP-PC/Documents/GitHub/Ski_jumping_data_center')
 
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
-actual_comps = pd.read_csv(os.getcwd()+'\\all_comps.csv')
+actual_comps = pd.read_csv(os.getcwd()+'\\all_comps_r.csv')
 
 actual_results_lstm = pd.merge(actual_results, actual_comps,
                                on='id', how='left')[['dist', 'codex_x',
@@ -34,7 +34,7 @@ round_dict = actual_results_lstm[['date', 'round']].drop_duplicates()
 
 splitted_df = [actual_results_lstm[(actual_results_lstm['date'] == x['date']) &
                                    (actual_results_lstm['round'] == x['round'])]
-               for i, x in round_dict.iloc[1:100].iterrows()]
+               for i, x in round_dict.iloc[1:1000].iterrows()]
 x = [x[['norm_dist','codex_x']].values[:,1:]
      for x in splitted_df]
 y = [x[['norm_dist','codex_x']].values[:,:1]
@@ -101,11 +101,11 @@ class LSTM(nn.Module):
         return out
 
 
-num_epochs = 1
+num_epochs = 100
 learning_rate = 0.01
 
 input_size = 1
-hidden_size = 2
+hidden_size = 3
 num_layers = 1
 
 
@@ -114,24 +114,26 @@ lstm = LSTM(input_size, hidden_size, num_layers)
 criterion = torch.nn.MSELoss()    # mean-squared error for regression
 optimizer = torch.optim.Adam(lstm.parameters(), lr=learning_rate)
 # optimizer = torch.optim.SGD(lstm.parameters(), lr=learning_rate)
-
+losses = []
 # Train the model
 for epoch in range(num_epochs):
-    outputs = lstm(x[epoch].unsqueeze(0).float())
-    optimizer.zero_grad()
-
+    for i in range(x[epoch].size(0)):
+        outputs = lstm(x[epoch][i:i+1].unsqueeze(0).float())
+        optimizer.zero_grad()
     # obtain the loss function
-    print(epoch)
-    print(outputs.data.numpy())
-    print(y[epoch].data.numpy())
-    loss = criterion(outputs, y[epoch].float())
+        #print(epoch)
+        #print(outputs.data.numpy())
+        #print(y[epoch][i:i+1].data.numpy())
+        loss = criterion(outputs, y[epoch][i:i+1].float())
 
-    loss.backward()
+        loss.backward()
+        losses = losses + [loss.item()]
+        optimizer.step()
 
-    optimizer.step()
-    if epoch % 10 == 0:
-      print("Epoch: %d, loss: %1.5f" % (epoch, loss.item()))
+def moving_average(x, w):
+    return np.convolve(x, np.ones(w), 'valid') / w
 
+plot(moving_average(np.log10(np.array(losses)),100))
 lstm.eval()
 train_predict = lstm(x[70].unsqueeze(0).float())
 
