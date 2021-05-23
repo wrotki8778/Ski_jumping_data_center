@@ -234,6 +234,7 @@ def import_links(years=[2021], genre='GP',
     for item in single_links:
         time.sleep(4)
         url = item[0]
+        print(url)
         year = item[1]
         r = requests.get(url, headers={'user-agent': 'ejdzent'})
         soup = BeautifulSoup(r.text, "lxml")
@@ -475,8 +476,8 @@ def import_start_list(comp, pdf_name, block=False, manual_text=False):
     return([[], comps_infos])
 
 
-take_years = [2021]
-type_indice = 1
+take_years = [2020]
+type_indice = 0
 types = ['WC', 'COC', 'GP', 'FC', 'SFWC', 'WSC', 'WJC']
 new_data = import_links(years=take_years, genre=types[type_indice],
                         import_num=3)

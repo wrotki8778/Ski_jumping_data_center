@@ -382,7 +382,8 @@ def get_round(comp):
 
 
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
-directory = max(list_of_files, key=os.path.getctime)
+# directory = max(list_of_files, key=os.path.getctime)
+directory = os.getcwd()+'/comps/2020_WC.csv'
 
 comps = pd.read_csv(directory)
 comps = comps[comps['k-point'].notnull()]

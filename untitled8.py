@@ -219,6 +219,7 @@ def build_rating(comps, results, names):
                 all_results.columns = ['bib', 'codex', 'name']
                 all_results['round'] = 'whole competition '
                 all_results['points'] = 1
+                all_results['dist_points'] = 1
                 print('imported from nazfis.csv file')
                 round_names = ['whole competition ']
                 k = 2*k
@@ -227,11 +228,19 @@ def build_rating(comps, results, names):
         else:
             round_names = np.unique([x['round']
                                      for i, x in all_results.iterrows()])
-        all_results = pd.DataFrame(all_results[['codex', 'round', 'points']])
+        all_results = pd.DataFrame(all_results[['codex', 'round',
+                                                'dist_points', 'points']])
         for round_name in round_names:
-            result = all_results[all_results['round'] == round_name][['codex','points']]
+            result = all_results[all_results['round']
+                                 == round_name][['codex', 'points',
+                                                 'dist_points']]
             if not omit_sort:
-                result = result.sort_values(['points'], ascending=[False]).reset_index()['codex']
+                if comp['training']:
+                    result = result.sort_values(['dist_points'],
+                                                ascending=[False]).reset_index()['codex']
+                else:
+                    result = result.sort_values(['points'],
+                                                ascending=[False]).reset_index()['codex']
             else:
                 result = result['codex']
             print(comp)
@@ -293,7 +302,7 @@ actual_comps.to_csv(os.getcwd()+'\\all_comps.csv', index=False, na_rep='NA')
 actual_stats = merge_stats(os.getcwd()+'\\stats\\')
 actual_stats.to_csv(os.getcwd()+'\\all_stats.csv', index=False, na_rep='NA')
 # here execute skrypt2.R
-actual_comps = actual_comps[actual_comps['training'] == 0]
+# actual_comps = actual_comps[actual_comps['training'] == 0]
 actual_comps = actual_comps[actual_comps['season'] > 2009]
 actual_comps = actual_comps.sort_values(['date', 'id'],
                                         ascending=[True, False])
