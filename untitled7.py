@@ -99,10 +99,9 @@ class LSTM(nn.Module):
         self.hidden_size = hidden_size
 
         self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
-                            num_layers=num_layers, batch_first=False,
-                            dropout=0.2)
+                            num_layers=num_layers, batch_first=True)
 
-        self.fc = nn.Linear(hidden_size,1)
+        self.fc = nn.Linear(hidden_size, 1)
     def forward(self, x, h_out):
         c_0 = Variable(torch.zeros(
             self.num_layers, 1, self.hidden_size))
@@ -110,42 +109,42 @@ class LSTM(nn.Module):
         # Propagate input through LSTM
         ula, (h_out, _) = self.lstm(x, (h_out, c_0))
         #print(h_out)
+        self.dropout = nn.Dropout(0.2)
         out = self.fc(ula)
-        #print(out)
         return out, h_out
     def init_h_out(self):
         h_out = Variable(torch.zeros(
             self.num_layers, 1, self.hidden_size))
-        #print(h_out.shape)
+        # print(h_out.shape)
         return h_out
 
 
-num_epochs = 200
-learning_rate = 1e-4
+num_epochs = 40
+learning_rate = 1e-3
+
 
 input_size = 4
+time_delay = 8
 hidden_size = 10
-num_layers = 2
+num_layers = 1
 
 
 lstm = LSTM(input_size, hidden_size, num_layers)
 
 criterion = torch.nn.MSELoss()    # mean-squared error for regression
 # optimizer = torch.optim.Adam(lstm.parameters(), lr=learning_rate)
-optimizer = torch.optim.SGD(lstm.parameters(), lr=learning_rate, momentum=0.99)
+optimizer = torch.optim.SGD(lstm.parameters(), lr=learning_rate, momentum=0.9)
 losses = []
 # Train the model
 for epoch in range(num_epochs):
     h_out = lstm.init_h_out()
-    for i in range(x[epoch].size(0)):
-        outputs, h_out = lstm(x[epoch][i:i+1].unsqueeze(0).float(), h_out)
-        #print(h_out.data.numpy())
-        optimizer.zero_grad()
-    # obtain the loss function
+    optimizer.zero_grad()
+    for i in range(x[epoch].size(0)-time_delay):
+        outputs, h_out = lstm(x[epoch][i:i+1+time_delay].unsqueeze(0).float(), h_out)
         print(epoch)
         print(outputs.data.numpy())
-        print(y[epoch][i:i+1].data.numpy())
-        loss = criterion(outputs.squeeze(0), y[epoch][i:i+1].float())
+        print(y[epoch][i+time_delay:i+1+time_delay].data.numpy())
+        loss = criterion(outputs.squeeze(0), y[epoch][i+time_delay:i+1+time_delay].float())
         loss.backward(retain_graph=True)
         losses = losses + [loss.item()]
         optimizer.step()
@@ -160,7 +159,7 @@ outputs_collect = []
 h_out = lstm.init_h_out()
 epoch = num_epochs
 for i in range(x[epoch].size(0)):
-    print(h_out.data.numpy())
+    # print(h_out.data.numpy())
     outputs, h_out = lstm(x[epoch][i:i+1].unsqueeze(0).float(), h_out)
     # obtain the loss function
     print(epoch)

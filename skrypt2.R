@@ -70,9 +70,10 @@ column_names = c(
   'wind',
   'wind_comp',
   'loc',
+  'bib',
   'round'
 )
-function_names = c('as.character', rep('as.double', 14), 'as.integer','as.character')
+function_names = c('as.character', rep('as.double', 14), rep('as.integer',2),'as.character')
 results_database = lapply(files, function(x) {
   dir = paste(getwd(), '/elastic_results/', x, sep = '')
   t <- read.csv2(dir, header = TRUE, sep = ',') # load file

@@ -347,7 +347,6 @@ def cummulative(vector, comp):
     print(output)
     return output
 
-
 def get_round(comp):
     """
     Return a improved results containing information about round.
@@ -371,10 +370,15 @@ def get_round(comp):
     if round_names in (['NA'], ['NA', 'error']):
         return []
     directory = os.getcwd()+'/results/'+comp['id']+'.csv'
-    if not os.path.isfile(directory):
+    names_directory = os.getcwd()+'/nazwy/'+comp['id'][:10]+'naz.csv'
+    if not os.path.isfile(directory) or not os.path.isfile(names_directory):
         return []
-    results = pd.read_csv(os.getcwd()+'/results/'+comp['id']+'.csv')
-    print(results)
+    results = pd.read_csv(directory)
+    names = pd.read_csv(names_directory, sep=';', header=None)
+    # print(names)
+    names.columns=['bib','name']
+    results = pd.merge(results,names,on=['name'],how='left')
+    # print(results)
     tmp = [round_names[i] for i in cummulative(results['name'], comp)]
     print(tmp)
     results['round'] = tmp
@@ -411,7 +415,6 @@ comps = pd.read_csv(directory)
 for k, comp_to_process in comps.iterrows():
     corrected_results = pd.DataFrame(get_round(comp_to_process))
     if not corrected_results.empty:
-        stats_dataframe =\
-            corrected_results.to_csv(os.getcwd()+'\\elastic_results\\'
-                                     + comp_to_process['id']+'.csv',
-                                     index=False)
+        corrected_results.to_csv(os.getcwd()+'\\elastic_results\\'
+                                 + comp_to_process['id']+'.csv',
+                                 index=False)

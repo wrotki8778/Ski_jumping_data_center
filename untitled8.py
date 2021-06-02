@@ -317,3 +317,5 @@ actual_standings = show_rating(comps_to_process, actual_names,
 ryoyu = actual_rating[0][actual_rating[0]['codex'] == 2088]
 actual_rating[0].to_csv(os.getcwd()+'\\all_ratings.csv',
                         index=False, na_rep='NA')
+
+

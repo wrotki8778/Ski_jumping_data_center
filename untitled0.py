@@ -1169,7 +1169,7 @@ def collect(comp, manual_text=False, start_text=False,
 
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
 # directory = max(list_of_files, key=os.path.getctime)
-directory = os.getcwd()+'/comps/2020_WC.csv'
+directory = os.getcwd()+'/comps/2021_FC_2021-01-11.csv'
 comps = pd.read_csv(directory)
 comps = comps[comps['k-point'].notnull()]
 """
@@ -1225,9 +1225,9 @@ for comp_to_fix in to_fix:
 # Procedure to parse competitions manually one by one
 # (do not run if unnecessary)
 
-n = 136
+n = 17
 comp_manual = comps.loc[n]
-comp_manual['type'] = 0
+# comp_manual['type'] = 0
 template = 0
 parsed_manual = parser.from_file(os.getcwd()+'\\PDFs\\'+comp_manual['id']+'.pdf')
 text_manual = parsed_manual["content"]
