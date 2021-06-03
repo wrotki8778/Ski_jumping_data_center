@@ -380,8 +380,12 @@ def get_round(comp):
     results = pd.merge(results,names,on=['name'],how='left')
     # print(results)
     tmp = [round_names[i] for i in cummulative(results['name'], comp)]
-    print(tmp)
     results['round'] = tmp
+    if not(comp['training']) and 'loc' in results.columns:
+        results['new_bib'] = 30-results['loc'].shift(1)
+        results.loc[results['round']==results.loc[0,'round'],['new_bib']]=results['bib']
+        results['bib']=results['new_bib']
+        results.drop('new_bib',axis=1, inplace=True)
     return results
 
 
@@ -411,10 +415,11 @@ if not os.path.isfile(directory_stats):
     stats_dataframe.to_csv(directory_stats, index=False)
 stats_dataframe.to_csv(directory_stats_2, index=False)
 
-comps = pd.read_csv(directory)
-for k, comp_to_process in comps.iterrows():
-    corrected_results = pd.DataFrame(get_round(comp_to_process))
-    if not corrected_results.empty:
-        corrected_results.to_csv(os.getcwd()+'\\elastic_results\\'
-                                 + comp_to_process['id']+'.csv',
-                                 index=False)
+for directory in list_of_files[1:]:
+    comps = pd.read_csv(directory)
+    for k, comp_to_process in comps.iterrows():
+        corrected_results = pd.DataFrame(get_round(comp_to_process))
+        if not corrected_results.empty:
+            corrected_results.to_csv(os.getcwd()+'\\elastic_results\\'
+                                     + comp_to_process['id']+'.csv',
+                                     index=False)
