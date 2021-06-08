@@ -13,7 +13,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 from sklearn.preprocessing import StandardScaler
 from matplotlib.pyplot import plot
-os.chdir('C:/Users/kubaf/Documents/GitHub/Ski_jumping_data_center')
+os.chdir('C:/Users/HP-PC/Documents/GitHub/Ski_jumping_data_center')
 
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
 actual_results['cutted_id'] = actual_results.id.str.slice(0, 10)
@@ -27,14 +27,14 @@ actual_results_lstm = pd.merge(actual_results, actual_comps,
                                                      'hill_size_x', 'date',
                                                      'id', 'cutted_id_x',
                                                      'training', 'round',
-                                                     'gender']]
+                                                     'gender','bib']]
 actual_results_lstm = pd.merge(actual_results_lstm, actual_ratings,
                                left_on=['id', 'round', 'codex_x'],
                                right_on=['id', 'round', 'codex'],
                                how='left')[['dist', 'codex_x',
                                             'hill_size_x', 'date',
                                             'training', 'round',
-                                            'gender', 'cumm_rating']]
+                                            'gender', 'cumm_rating','bib']]
 actual_results_lstm = actual_results_lstm.sort_values(['date', 'round'],
                                                       ascending=[True, True])
 actual_results_lstm["round"] = actual_results_lstm["round"].astype('category')
@@ -42,6 +42,7 @@ actual_results_lstm["round"] = actual_results_lstm["round"].cat.codes
 actual_results_lstm["gender"] = actual_results_lstm["gender"].astype('category')
 actual_results_lstm["gender"] = actual_results_lstm["gender"].cat.codes
 actual_results_lstm["norm_dist"] = actual_results_lstm["dist"]/actual_results_lstm["hill_size_x"]
+
 actual_results_lstm = actual_results_lstm.dropna()
 sc = StandardScaler()
 actual_results_lstm[['norm_dist','codex_x','hill_size_x','cumm_rating','round']]\
@@ -50,9 +51,9 @@ actual_results_lstm[['norm_dist','codex_x','hill_size_x','cumm_rating','round']]
 round_dict = actual_results_lstm[['date', 'round']].drop_duplicates()
 
 splitted_df = [actual_results_lstm[(actual_results_lstm['date'] == x['date']) &
-                                   (actual_results_lstm['round'] == x['round'])].sample(frac=1)
+                                   (actual_results_lstm['round'] == x['round'])].sort_values('bib')
                for i, x in round_dict.iloc[1:1000].iterrows()]
-x = [x.values[:,[1,2,5,6]].astype(float)
+x = [x.values[:,[1,2,6,7,9]].astype(float)
      for x in splitted_df]
 y = [x[['norm_dist','codex_x']].values[:,:-1].astype(float)
      for x in splitted_df]
@@ -90,64 +91,45 @@ testY = Variable(torch.Tensor(np.array(y[train_size:len(y)])))
 """
 
 class LSTM(nn.Module):
+    def __init__(self, input_size=5, hidden_layer_size=100, output_size=1):
+        super().__init__()
+        self.hidden_layer_size = hidden_layer_size
 
-    def __init__(self, input_size, hidden_size, num_layers):
-        super(LSTM, self).__init__()
+        self.lstm = nn.LSTM(input_size, hidden_layer_size)
 
-        self.num_layers = num_layers
-        self.input_size = input_size
-        self.hidden_size = hidden_size
+        self.linear = nn.Linear(hidden_layer_size, output_size)
 
-        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
-                            num_layers=num_layers, batch_first=True)
+        self.hidden_cell = (torch.zeros(1,1,self.hidden_layer_size),
+                            torch.zeros(1,1,self.hidden_layer_size))
 
-        self.fc = nn.Linear(hidden_size, 1)
-    def forward(self, x, h_out):
-        c_0 = Variable(torch.zeros(
-            self.num_layers, 1, self.hidden_size))
+    def forward(self, input_seq):
+        lstm_out, self.hidden_cell = self.lstm(input_seq.view(len(input_seq) ,1, -1), self.hidden_cell)
+        predictions = self.linear(lstm_out.view(len(input_seq), -1))
+        return predictions[-1]
 
-        # Propagate input through LSTM
-        ula, (h_out, _) = self.lstm(x, (h_out, c_0))
-        #print(h_out)
-        self.dropout = nn.Dropout(0.2)
-        out = self.fc(ula)
-        return out, h_out
-    def init_h_out(self):
-        h_out = Variable(torch.zeros(
-            self.num_layers, 1, self.hidden_size))
-        # print(h_out.shape)
-        return h_out
+model = LSTM()
+loss_function = nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-
-num_epochs = 40
-learning_rate = 1e-3
-
-
-input_size = 4
-time_delay = 8
-hidden_size = 10
-num_layers = 1
-
-
-lstm = LSTM(input_size, hidden_size, num_layers)
-
-criterion = torch.nn.MSELoss()    # mean-squared error for regression
-# optimizer = torch.optim.Adam(lstm.parameters(), lr=learning_rate)
-optimizer = torch.optim.SGD(lstm.parameters(), lr=learning_rate, momentum=0.9)
+num_epochs_start = 500
+num_epochs_finish = 550
 losses = []
 # Train the model
-for epoch in range(num_epochs):
-    h_out = lstm.init_h_out()
+for epoch in range(num_epochs_start, num_epochs_finish):
     optimizer.zero_grad()
-    for i in range(x[epoch].size(0)-time_delay):
-        outputs, h_out = lstm(x[epoch][i:i+1+time_delay].unsqueeze(0).float(), h_out)
-        print(epoch)
-        print(outputs.data.numpy())
-        print(y[epoch][i+time_delay:i+1+time_delay].data.numpy())
-        loss = criterion(outputs.squeeze(0), y[epoch][i+time_delay:i+1+time_delay].float())
-        loss.backward(retain_graph=True)
-        losses = losses + [loss.item()]
+    for i in range(1,x[epoch].shape[0]):
+        model.hidden_cell = (torch.zeros(1, 1, model.hidden_layer_size),
+                        torch.zeros(1, 1, model.hidden_layer_size))
+        x_pred = x[epoch][:i+1].detach().clone()
+        x_pred[-1,-1]=0
+        y_pred = model(x[epoch][:i+1])
+
+        single_loss = loss_function(y_pred, y[epoch][i])
+        single_loss.backward()
+        losses = losses + [single_loss.item()]
         optimizer.step()
+    if epoch%5 == 2:
+        print(f'epoch: {epoch:3} loss: {single_loss.item():10.8f}')
 
 def moving_average(x, w):
     return np.convolve(x, np.ones(w), 'valid') / w
@@ -156,18 +138,24 @@ plot(moving_average(np.log10(np.array(losses)),100))
 
 # Train the model
 outputs_collect = []
-h_out = lstm.init_h_out()
-epoch = num_epochs
-for i in range(x[epoch].size(0)):
+epoch = num_epochs_finish
+for i in range(1,x[epoch].size(0)):
     # print(h_out.data.numpy())
-    outputs, h_out = lstm(x[epoch][i:i+1].unsqueeze(0).float(), h_out)
+    #optimizer.zero_grad()
+    model.hidden_cell = (torch.zeros(1, 1, model.hidden_layer_size),
+                        torch.zeros(1, 1, model.hidden_layer_size))
+    x_pred = x[epoch][:i+1].detach().clone()
+    x_pred[-1,-1] = 0
+    y_pred = model(x_pred)
+    #single_loss = loss_function(y_pred, y[epoch][i])
+    #single_loss.backward()
     # obtain the loss function
     print(epoch)
-    print(outputs.squeeze(0).data.numpy())
-    print(y[epoch][i:i+1].data.numpy())
+    print(y_pred)
+    print(y[epoch][i].data.numpy())
     outputs_collect = outputs_collect \
-        + [np.c_[outputs.squeeze(0).data.numpy(),
-                 y[epoch][i:i+1].data.numpy()]]
+        + [np.c_[y_pred.data.numpy(), y[epoch][i].data.numpy()]]
+    #optimizer.step()
 
 train_predict = lstm(x[70][:1].unsqueeze(0).float())
 
