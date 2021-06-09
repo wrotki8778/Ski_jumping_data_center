@@ -415,7 +415,7 @@ if not os.path.isfile(directory_stats):
     stats_dataframe.to_csv(directory_stats, index=False)
 stats_dataframe.to_csv(directory_stats_2, index=False)
 
-for directory in list_of_files[1:]:
+for directory in list_of_files[48:]:
     comps = pd.read_csv(directory)
     for k, comp_to_process in comps.iterrows():
         corrected_results = pd.DataFrame(get_round(comp_to_process))
