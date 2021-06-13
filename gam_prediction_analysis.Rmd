@@ -1,0 +1,116 @@
+---
+title: "Ski jump distance forecasting - GAM model"
+author: "Wiktor Florek"
+date: "12 06 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction and objectives
+
+One of the brightest aims while creating this ski jumping database was:
+
+*Can I use this data to sensible future prediction of distances achieved by the athletes?*
+
+I have a strong feeling that the answer is affirmative, because we have a lot of credible predictors like
+
+* tangential wind speed
+* inrun speed / start gate height
+* ratings system, which measure the long-time potential of every jumper
+
+et cetera. Of course these factors alone still leave a substantial amount of variance and that is an
+information which is known to every ski jumping fan - 
+*every minor or unobserved change can cause a huge difference in final distance*.
+We can express this property simply as the quasi-chaotic behavior of our
+target variable. Therefore we must be aware of the fact that the technique used has to handle these subtleties.
+
+# Our basic approach - linear regression and Generalized Addivite Model (GAM)
+
+First we will use an obvious base model - linear regression (without any penalties on the coefficients, because we have a huge amount of data to process and overfitting should not be present).
+
+To make this introduction concise, [here](https://www.kaggle.com/wrotki8778/nyc-airbnb-price-modeling-by-gam) you have my markdown with an example of using GAM and its theoretical foundation. To our purpose the most important is to know that GAM is a hybrid of generalized linear models (like logistic or linear regression) and polynomial regression. GAM allows to capture nonlinear dependencies between predictors and the target variable, also (with some restrictions) using interactions between predictors.
+
+# Data preparation
+
+The necessary point is to clean and pre-process our dataset to be used in GAM:
+
+```{r import}
+all_ratings <- read.csv("all_ratings.csv")
+all_comps_r <- read.csv("all_comps_r.csv")
+all_results <- read.csv("all_results.csv")
+all_names <- read.csv("all_names.csv")
+all_results <- all_results[all_results['speed']>50 & all_results['speed']<115,]
+all_results <- all_results[all_results['dist']>40,]
+dataset <- merge(all_results,all_comps_r,by=c('id'),all.y=FALSE)
+dataset['short_id'] <- apply(dataset['id'], 2, substr ,start=1, stop=10)
+short_ratings <- all_ratings
+short_ratings['short_id'] <- apply(short_ratings['id'], 2, substr ,start=1, stop=10)
+short_ratings <- short_ratings[!duplicated(short_ratings[,c('short_id','codex')]),c('short_id','codex','cumm_rating')]
+dataset['norm_dist'] = dataset['dist']/dataset['hill_size_x']
+dataset <- merge(dataset,short_ratings,by.x=c('short_id','codex.x'),by.y=c('short_id','codex'),all.y=FALSE,all.x=TRUE)
+dataset$gender = as.integer(as.factor(dataset$gender))
+dataset$date_new = as.integer(as.Date.character(dataset$date))
+train_dataset = dataset[(dataset['season']>2010) & (dataset['season']>2016),]
+```
+
+Dataset called *dataset* has a lot of variables, but we will use only columns called:
+
+* *norm_dist* -- normalized distance of an athlete and our target variable (1 means that our jumper achieved hill size of an object),
+* *speed* -- raw speed of an athlete in km/h,
+* *wind* -- the mean tangential speed of wind (negative values correspond with tail wind, positive -- with head wind),
+* *hill_size_x* -- the hill size of an underlying object, where the competition is held,
+* *cumm_rating* -- rating of an athlete (1000 is the average, the bigger the better)
+* *gender* - 0/1 variable indicating men or ladies competition,
+* *date_new* - integer indicating day of the competition (reformatted from the standard time scale to be able to included in GAM)
+* *training* - 0/1 variable indicating training rounds.
+
+Let's see how the basic linear regression model behaves:
+
+```{r linear regression}
+simple_model <- lm(norm_dist~speed+wind+hill_size_x+cumm_rating+gender+date_new+training, data=train_dataset)
+summary(simple_model)
+```
+
+As we can see, all variables are significant for this model. If we assume that the $\lvert t \rvert$ statistic is the ad-hoc chosen measure of importance, then we infer that the first five components of our model are the most important in terms of prediction power. The $R^2$ coefficient says that almost 50% of the variance can be explained by this model, what is pretty good result. Nevertheless we can improve that benchmark by GAM quite easily. The residuals of our model also are quite small, though not negligible (compare with the initial distribution of *norm_dist* below).
+
+```{r}
+hist(train_dataset$norm_dist)
+```
+
+We can ask *OK, but what do these results mean when we try to make the real predictions?* To answer that question we will check the predictions of our model in the following 3 cases:
+
+1. World Cup in Trondheim in 2017 (code 2017JP3817RL), which was pretty standard competition without any major weather surprises and other problems.
+2. World Ski Championships on Normal Hill in Seefeld in 2019 (code 2019JP3192RL), which was exactly the opposite of the first case, so it can be a good benchmark of robustness of our model,
+3. Ski Flying World Championships in Oberstdorf in 2018 (code 2018JP3265RL), where we will check the behavior on flying events.
+
+Now we will create appropriate test set and see how well our linear model generalizes:
+
+```{r test}
+require(tidyverse)
+require(knitr)
+codes = c('2017JP3817RL','2019JP3192RL','2018JP3265RL')
+test_dataset_1 = dataset %>% filter(grepl(codes[1], id))
+test_dataset_1 = merge(test_dataset_1, all_names,how='left',by.x='codex.x',by.y='codex')
+test_dataset_1['prediction'] = predict(model,test_dataset_1)*test_dataset_1['hill_size_x']
+test_dataset_1['prediction'] = round(2*test_dataset_1['prediction'])/2
+kable(test_dataset_1[,c('name','round','dist','prediction')])
+```
+
+```{r gam}
+library(mgcv) # contains our prime model
+model<-gam(norm_dist~s(speed)+wind+hill_size_x+s(cumm_rating)+gender+training+s(date_new), data=train_dataset)
+summary(model)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

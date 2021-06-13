@@ -28,7 +28,8 @@ actual_results_lstm = pd.merge(actual_results, actual_comps,
                                                      'hill_size_x', 'date',
                                                      'id', 'cutted_id_x',
                                                      'training', 'round',
-                                                     'gender','bib']]
+                                                     'gender','bib','team']]
+actual_results_lstm = actual_results_lstm[actual_results_lstm['team']==0]
 actual_results_lstm = pd.merge(actual_results_lstm, actual_ratings,
                                left_on=['id', 'round', 'codex_x'],
                                right_on=['id', 'round', 'codex'],
@@ -48,15 +49,17 @@ actual_results_lstm = actual_results_lstm[actual_results_lstm['speed']>0]
 
 actual_results_lstm = actual_results_lstm.dropna()
 sc = StandardScaler()
-actual_results_lstm[['norm_dist','codex_x','hill_size_x','cumm_rating','round','wind','speed','gender']]\
-    = sc.fit_transform(actual_results_lstm[['norm_dist','codex_x','hill_size_x','cumm_rating','round','wind','speed','gender']])
-
+sc2 = StandardScaler()
+actual_results_lstm[['codex_x','hill_size_x','cumm_rating','round','wind','speed','gender']]\
+    = sc.fit_transform(actual_results_lstm[['codex_x','hill_size_x','cumm_rating','round','wind','speed','gender']])
+actual_results_lstm[['norm_dist']]\
+    = sc2.fit_transform(actual_results_lstm[['norm_dist']])
 round_dict = actual_results_lstm[['id', 'round']].drop_duplicates()
 
 splitted_df = [actual_results_lstm[(actual_results_lstm['id'] == x['id']) &
                                    (actual_results_lstm['round'] == x['round'])].sort_values('bib')
                for i, x in round_dict.iloc[1:1000].iterrows()]
-x = [x[['codex_x','hill_size_x','cumm_rating','round','wind','speed','gender','norm_dist']].values[:,:].astype(float)
+x = [x[['hill_size_x','cumm_rating','wind','speed','gender','norm_dist']].values[:,:].astype(float)
      for x in splitted_df]
 y = [x[['norm_dist','codex_x']].values[:,:-1].astype(float)
      for x in splitted_df]
@@ -94,17 +97,17 @@ testY = Variable(torch.Tensor(np.array(y[train_size:len(y)])))
 """
 
 class LSTM(nn.Module):
-    def __init__(self, input_size=8, hidden_layer_size=100, output_size=1):
+    def __init__(self, input_size=6, hidden_layer_size=100, output_size=1, num_layers=2):
         super().__init__()
         self.hidden_layer_size = hidden_layer_size
 
-        self.lstm = nn.LSTM(input_size, hidden_layer_size)
+        self.lstm = nn.LSTM(input_size, hidden_layer_size, num_layers)
 
         self.linear = nn.Linear(hidden_layer_size, output_size)
         self.dropout = nn.Dropout(p=0.2)
 
-        self.hidden_cell = (torch.zeros(1,1,self.hidden_layer_size),
-                            torch.zeros(1,1,self.hidden_layer_size))
+        self.hidden_cell = (torch.zeros(num_layers,1,self.hidden_layer_size),
+                            torch.zeros(num_layers,1,self.hidden_layer_size))
 
     def forward(self, input_seq):
         lstm_out, self.hidden_cell = self.lstm(input_seq.view(len(input_seq) ,1, -1), self.hidden_cell)
@@ -114,22 +117,22 @@ class LSTM(nn.Module):
 
 model = LSTM()
 loss_function = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 seed = 0
 torch.manual_seed(seed)
 
-num_epochs_start = 450
-num_epochs_finish = 550
+num_epochs_start = 150
+num_epochs_finish = 400
 losses = []
 # Train the model
 for epoch in range(num_epochs_start, num_epochs_finish):
     optimizer.zero_grad()
     for i in range(1,x[epoch].shape[0]):
-        model.hidden_cell = (torch.zeros(1, 1, model.hidden_layer_size),
-                             torch.zeros(1, 1, model.hidden_layer_size))
-        x_pred = x[epoch][max(i-9,0):i+1].detach().clone()
-        x_pred[-1,-1]=0
-        y_pred = model(x[epoch][max(i-9,0):i+1])
+        model.hidden_cell = (torch.zeros(2, 1, model.hidden_layer_size),
+                             torch.zeros(2, 1, model.hidden_layer_size))
+        x_pred = x[epoch][:i+1].detach().clone()
+        x_pred[-1, -1] = 0
+        y_pred = model(x_pred)
         if(epoch == num_epochs_finish - 1):
             print(x_pred)
             print(epoch)
@@ -151,23 +154,24 @@ plot(moving_average(np.log10(np.array(losses)),1000))
 
 # Train the model
 outputs_collect = []
-epoch = num_epochs_finish+3
+epoch = 829
 model.eval()
 for epoch in range(epoch, epoch + 1):
+    ratio = splitted_df[epoch]['dist'].iloc[0]/sc2.inverse_transform([y[epoch][0].item()]).item()
     for i in range(1,x[epoch].shape[0]):
         with torch.no_grad():
             model.eval()
-            model.hidden_cell = (torch.zeros(1, 1, model.hidden_layer_size),
-                                 torch.zeros(1, 1, model.hidden_layer_size))
-            x_pred = x[epoch][max(i-9,0):i+1].detach().clone()
+            model.hidden_cell = (torch.zeros(2, 1, model.hidden_layer_size),
+                                 torch.zeros(2, 1, model.hidden_layer_size))
+            x_pred = x[epoch][:i+1].detach().clone()
             x_pred[-1, -1] = 0
-            y_pred = model(x[epoch][max(i-9,0):i+1])
+            y_pred = model(x_pred)
             print(epoch)
             print(x_pred)
-            print(y_pred)
-            print(y[epoch][i].data.numpy())
+            y_pred = sc2.inverse_transform([y_pred.item()])
+            y_true = sc2.inverse_transform([y[epoch][i].item()])
             outputs_collect = outputs_collect \
-                + [np.c_[y_pred, y[epoch][i].data.numpy()]]
+                + [np.c_[ratio*y_pred, ratio*y_true]]
 
 train_predict = lstm(x[70][:1].unsqueeze(0).float())
 
