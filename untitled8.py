@@ -6,7 +6,7 @@ Script to analyze results from untitled0/2/6.py and compute ratings.
 import os
 import pandas as pd
 import numpy as np
-os.chdir('C:/Users/HP-PC/Documents/Skoki')
+os.chdir('C:/Users/kubaf/Documents/Skoki')
 
 
 def merge_stats(directory):
@@ -163,25 +163,32 @@ def append_rating(results, i, comps, rating_act, rating_db, k, round_name):
     results['id'] = comps.iloc[i]['id']
     results['round'] = round_name
     results['number'] = i
-    results['short_rating'] = short_rating_compute(i,comps,results)
+    results['short_rating'] = short_rating_compute(i,results,comps,rating_act)
     new_rating_act = rating_act.append(results, ignore_index=True)
     new_rating_db = pd.merge(rating_db, results[['codex', 'delty']],
                              on='codex', how='left')
     new_rating_db['cumm_rating'] = new_rating_db['cumm_rating']\
-        + new_rating_db.fillna(0)['delty']
+        + new_rating_db.fillna(0)['delty']*(1 - comps.loc[i]['training'])
     new_rating_db = new_rating_db.drop(['delty'], axis=1)
     return [new_rating_act, new_rating_db]
 
 def neighborhood_comps(comps,code):
     comp = comps[comps['id'] == code]
-    print(comp.iloc[0]['place'])
     comp_number = comp.index.item()
     codes = comps.loc[comp_number-12:comp_number-1]
     filtered_codes = codes[codes['place'] == comp.iloc[0]['place']]['id']
     return(list(filtered_codes))
     
-def short_rating_compute(i,comps,rating_db):
-    return 0
+def short_rating_compute(i,results,comps,rating_act):
+    if comps.loc[i]['training']:
+        return 0
+    correct_ids = neighborhood_comps(comps, comps.loc[i]['id'])
+    if not correct_ids:
+        return 0
+    rating_tmp = rating_act[rating_act['id'].isin(correct_ids)][['codex','delty']]
+    rating_tmp = rating_act.groupby('codex').mean(['delty'])
+    results = pd.merge(results,rating_tmp,how='left',on='codex')
+    return results['delty_y'].fillna(0)
 
 def build_rating(comps, results, names):
     """
@@ -213,7 +220,6 @@ def build_rating(comps, results, names):
     rating_db = rating_db.drop_duplicates()
     rating_db.dropna()
     rating_db['cumm_rating'] = 1000
-    rating_db['short_rating'] = 0
     rating_act = pd.DataFrame()
     for i, comp in comps.iterrows():
         k = 8 * (1 + max(2013 - comp['season'],0))
@@ -222,6 +228,9 @@ def build_rating(comps, results, names):
         all_results = results[(results['id'] == comp['id'])
                               & (results['codex'].notna())]
         if all_results.empty:
+            if comp['training'] == 1:
+                print('omitted')
+                continue
             omit_sort = 1
             try:
                 file_name = os.getcwd()+'\\nazwy\\'+comp['id'][:10]+'nazfis.csv'
@@ -321,7 +330,7 @@ actual_comps = actual_comps.sort_values(['date', 'id'],
 actual_comps = actual_comps.reset_index()
 actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
-comps_to_process = actual_comps.loc[:200]
+comps_to_process = actual_comps
 actual_rating = build_rating(comps_to_process,
                              actual_results, actual_names)
 actual_standings = show_rating(comps_to_process, actual_names,
