@@ -42,6 +42,7 @@ all_ratings <- read.csv("all_ratings.csv")
 all_comps_r <- read.csv("all_comps_r.csv")
 all_results <- read.csv("all_results.csv")
 all_names <- read.csv("all_names.csv")
+all_names <- all_names[!duplicated(all_names[,c('codex')]),]
 all_results <- all_results[all_results['speed']>50 & all_results['speed']<115,]
 all_results <- all_results[all_results['dist']>40,]
 dataset <- merge(all_results,all_comps_r,by=c('id'),all.y=FALSE)
@@ -92,11 +93,15 @@ Now we will create appropriate test set and see how well our linear model genera
 require(tidyverse)
 require(knitr)
 codes = c('2017JP3817RL','2019JP3192RL','2018JP3265RL')
-test_dataset_1 = dataset %>% filter(grepl(codes[1], id))
-test_dataset_1 = merge(test_dataset_1, all_names,how='left',by.x='codex.x',by.y='codex')
-test_dataset_1['prediction'] = predict(model,test_dataset_1)*test_dataset_1['hill_size_x']
-test_dataset_1['prediction'] = round(2*test_dataset_1['prediction'])/2
-kable(test_dataset_1[,c('name','round','dist','prediction')])
+predict_comp <- function(code, dataset){
+  test_dataset = dataset %>% filter(grepl(code, id)) %>% arrange(desc(cumm_rating),round)
+  test_dataset = merge(test_dataset, all_names,how='left',by.x='codex.x',by.y='codex')
+  test_dataset['prediction'] = predict(simple_model,test_dataset)*test_dataset['hill_size_x']
+  test_dataset['prediction'] = round(2*test_dataset['prediction'])/2
+  test_dataset['error'] = test_dataset['dist'] - test_dataset['prediction']
+  kable(test_dataset[,c('name','round','dist','prediction','error')])
+}
+for(code in codes) print(predict_comp(code,dataset))
 ```
 
 ```{r gam}
