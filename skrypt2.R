@@ -1,10 +1,10 @@
 library(tidyverse)
-setwd('C://Users//kubaf//Documents//Skoki//')
+setwd('C://Users//HP-PC//Documents//Skoki//')
 
-dir = paste(getwd(), '/all_names.csv', sep = '')
-names <- read.csv2(dir, header = TRUE, sep = ',')
-dir = paste(getwd(), '/all_ratings.csv', sep = '')
-ratings <- read.csv2(dir, header = TRUE, sep = ',',dec = '.')
+# dir = paste(getwd(), '/all_names.csv', sep = '')
+# names <- read.csv2(dir, header = TRUE, sep = ',')
+# dir = paste(getwd(), '/all_ratings.csv', sep = '')
+# ratings <- read.csv2(dir, header = TRUE, sep = ',',dec = '.')
 
 files_RL <-
   list.files(

@@ -6,7 +6,7 @@ Script to analyze results from untitled0/2/6.py and compute ratings.
 import os
 import pandas as pd
 import numpy as np
-os.chdir('C:/Users/kubaf/Documents/Skoki')
+os.chdir('C:/Users/HP-PC/Documents/Skoki')
 
 
 def merge_stats(directory):
@@ -126,7 +126,7 @@ def new_rating(ratings, k):
     return delty
 
 
-def append_rating(results, i, comp, rating_act, rating_db, k, round_name):
+def append_rating(results, i, comps, rating_act, rating_db, k, round_name):
     """
     Update ratings in a incremental way.
 
@@ -136,8 +136,8 @@ def append_rating(results, i, comp, rating_act, rating_db, k, round_name):
         Dataframe with the results of the given competition round.
     i : integer
         Variable counting the number of competitions before a given round
-    comp : Pandas series
-        Infos about competition gathered in a way provided by import_links
+    comps : Pandas dataframe
+        Infos about all competitions gathered in a way provided by import_links
         function in untitled6.py script (check "database" output for details).
     rating_act : Pandas dataframe
         Dataframe containing all deltas until a given competition round.
@@ -160,9 +160,10 @@ def append_rating(results, i, comp, rating_act, rating_db, k, round_name):
     """
     ratings = results['cumm_rating']
     results['delty'] = new_rating(ratings, k)
-    results['id'] = comp['id']
+    results['id'] = comps.iloc[i]['id']
     results['round'] = round_name
     results['number'] = i
+    results['short_rating'] = short_rating_compute(i,comps,results)
     new_rating_act = rating_act.append(results, ignore_index=True)
     new_rating_db = pd.merge(rating_db, results[['codex', 'delty']],
                              on='codex', how='left')
@@ -171,6 +172,16 @@ def append_rating(results, i, comp, rating_act, rating_db, k, round_name):
     new_rating_db = new_rating_db.drop(['delty'], axis=1)
     return [new_rating_act, new_rating_db]
 
+def neighborhood_comps(comps,code):
+    comp = comps[comps['id'] == code]
+    print(comp.iloc[0]['place'])
+    comp_number = comp.index.item()
+    codes = comps.loc[comp_number-12:comp_number-1]
+    filtered_codes = codes[codes['place'] == comp.iloc[0]['place']]['id']
+    return(list(filtered_codes))
+    
+def short_rating_compute(i,comps,rating_db):
+    return 0
 
 def build_rating(comps, results, names):
     """
@@ -202,6 +213,7 @@ def build_rating(comps, results, names):
     rating_db = rating_db.drop_duplicates()
     rating_db.dropna()
     rating_db['cumm_rating'] = 1000
+    rating_db['short_rating'] = 0
     rating_act = pd.DataFrame()
     for i, comp in comps.iterrows():
         k = 8 * (1 + max(2013 - comp['season'],0))
@@ -250,7 +262,7 @@ def build_rating(comps, results, names):
                 continue
             result.columns = ['codex', 'rating']
             result = pd.merge(result, rating_db, how='left', on='codex')
-            rating_act, rating_db = append_rating(result, i, comp, rating_act,
+            rating_act, rating_db = append_rating(result, i, comps, rating_act,
                                                   rating_db, k, round_name)
     return rating_act, rating_db
 
@@ -309,7 +321,7 @@ actual_comps = actual_comps.sort_values(['date', 'id'],
 actual_comps = actual_comps.reset_index()
 actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
-comps_to_process = actual_comps
+comps_to_process = actual_comps.loc[:200]
 actual_rating = build_rating(comps_to_process,
                              actual_results, actual_names)
 actual_standings = show_rating(comps_to_process, actual_names,
