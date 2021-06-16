@@ -175,7 +175,7 @@ def append_rating(results, i, comps, rating_act, rating_db, k, round_name):
 def neighborhood_comps(comps,code):
     comp = comps[comps['id'] == code]
     comp_number = comp.index.item()
-    codes = comps.loc[comp_number-12:comp_number-1]
+    codes = comps.loc[comp_number-12:comp_number]
     filtered_codes = codes[codes['place'] == comp.iloc[0]['place']]['id']
     return(list(filtered_codes))
     
@@ -186,7 +186,7 @@ def short_rating_compute(i,results,comps,rating_act):
     if not correct_ids:
         return 0
     rating_tmp = rating_act[rating_act['id'].isin(correct_ids)][['codex','delty']]
-    rating_tmp = rating_act.groupby('codex').mean(['delty'])
+    rating_tmp = rating_tmp.groupby('codex').mean(['delty'])
     results = pd.merge(results,rating_tmp,how='left',on='codex')
     return results['delty_y'].fillna(0)
 

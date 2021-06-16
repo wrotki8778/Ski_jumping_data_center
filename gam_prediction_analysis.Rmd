@@ -46,12 +46,9 @@ all_names <- all_names[!duplicated(all_names[,c('codex')]),]
 all_results <- all_results[all_results['speed']>50 & all_results['speed']<115,]
 all_results <- all_results[all_results['dist']>40,]
 dataset <- merge(all_results,all_comps_r,by=c('id'),all.y=FALSE)
-dataset['short_id'] <- apply(dataset['id'], 2, substr ,start=1, stop=10)
-short_ratings <- all_ratings
-short_ratings['short_id'] <- apply(short_ratings['id'], 2, substr ,start=1, stop=10)
-short_ratings <- short_ratings[!duplicated(short_ratings[,c('short_id','codex')]),c('short_id','codex','cumm_rating')]
+
 dataset['norm_dist'] = dataset['dist']/dataset['hill_size_x']
-dataset <- merge(dataset,short_ratings,by.x=c('short_id','codex.x'),by.y=c('short_id','codex'),all.y=FALSE,all.x=TRUE)
+dataset <- merge(dataset,all_ratings,by.x=c('id','codex.x','round'),by.y=c('id','codex','round'),all.y=FALSE,all.x=TRUE)
 dataset$gender = as.integer(as.factor(dataset$gender))
 dataset$date_new = as.integer(as.Date.character(dataset$date))
 train_dataset = dataset[(dataset['season']>2010) & (dataset['season']>2016),]
@@ -64,14 +61,18 @@ Dataset called *dataset* has a lot of variables, but we will use only columns ca
 * *wind* -- the mean tangential speed of wind (negative values correspond with tail wind, positive -- with head wind),
 * *hill_size_x* -- the hill size of an underlying object, where the competition is held,
 * *cumm_rating* -- rating of an athlete (1000 is the average, the bigger the better)
-* *gender* - 0/1 variable indicating men or ladies competition,
-* *date_new* - integer indicating day of the competition (reformatted from the standard time scale to be able to included in GAM)
-* *training* - 0/1 variable indicating training rounds.
+* *gender* -- 0/1 variable indicating men or ladies competition,
+* *date_new* -- integer indicating day of the competition (reformatted from the standard time scale to be able to included in GAM)
+* *training* -- 0/1 variable indicating training rounds.
+
+One specific column is worth to mention, because it appears the first time in our dataset:
+
+* *short_rating* -- variable computed by the following method: take all previous jumps (training or competition) in the underlying weekend, calculate their deltas (i.e. see if the results of these are better or worse than the general level suggest) and take the mean. 
 
 Let's see how the basic linear regression model behaves:
 
 ```{r linear regression}
-simple_model <- lm(norm_dist~speed+wind+hill_size_x+cumm_rating+gender+date_new+training, data=train_dataset)
+simple_model <- lm(norm_dist~speed+wind+hill_size_x+cumm_rating+gender+date_new+training+short_rating, data=train_dataset)
 summary(simple_model)
 ```
 
@@ -93,20 +94,24 @@ Now we will create appropriate test set and see how well our linear model genera
 require(tidyverse)
 require(knitr)
 codes = c('2017JP3817RL','2019JP3192RL','2018JP3265RL')
-predict_comp <- function(code, dataset){
+predict_comp <- function(code, dataset, model){
   test_dataset = dataset %>% filter(grepl(code, id)) %>% arrange(desc(cumm_rating),round)
   test_dataset = merge(test_dataset, all_names,how='left',by.x='codex.x',by.y='codex')
-  test_dataset['prediction'] = predict(simple_model,test_dataset)*test_dataset['hill_size_x']
+  test_dataset['prediction'] = predict(model,test_dataset)*test_dataset['hill_size_x']
   test_dataset['prediction'] = round(2*test_dataset['prediction'])/2
   test_dataset['error'] = test_dataset['dist'] - test_dataset['prediction']
-  kable(test_dataset[,c('name','round','dist','prediction','error')])
+  kable(test_dataset[,c('name','round','cumm_rating','short_rating','dist','prediction','error')])
 }
-for(code in codes) print(predict_comp(code,dataset))
+for(code in codes) print(predict_comp(code,dataset,simple_model))
 ```
+
+The basic thoughts about the results can be as below:
+
+* In standard situations (like the first one, with little wind perturbations) this model behaves quite well, the errors are not obviously
 
 ```{r gam}
 library(mgcv) # contains our prime model
-model<-gam(norm_dist~s(speed)+wind+hill_size_x+s(cumm_rating)+gender+training+s(date_new), data=train_dataset)
+model<-gam(norm_dist~s(speed)+wind+hill_size_x+s(cumm_rating)+gender+training+s(date_new)+s(short_rating), data=train_dataset)
 summary(model)
 ```
 
