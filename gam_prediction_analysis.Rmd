@@ -69,6 +69,8 @@ One specific column is worth to mention, because it appears the first time in ou
 
 * *short_rating* -- variable computed by the following method: take all previous jumps (training or competition) in the underlying weekend, calculate their deltas (i.e. see if the results of these are better or worse than the general level suggest) and take the mean. 
 
+# Results - linear regression
+
 Let's see how the basic linear regression model behaves:
 
 ```{r linear regression}
@@ -107,7 +109,13 @@ for(code in codes) print(predict_comp(code,dataset,simple_model))
 
 The basic thoughts about the results can be as below:
 
-* In standard situations (like the first one, with little wind perturbations) this model behaves quite well, the errors are not obviously
+* In standard situations (like the first one, with little wind perturbations) this model behaves quite well, the errors are not obviously biased and the variance is not so huge.
+* In some cases (like the second one) with the abnormal conditions the predictions are significantly biased, so the "better" model should erase this problem.
+* In the case of flying hills we can see the conservative nature of this model -- the predicted values range between 170 and 215 meters, so in this setting we also should search an alternative approach.
+
+# Results - GAM
+
+Now we will try the more advanced model, when the non-linearity is present:
 
 ```{r gam}
 library(mgcv) # contains our prime model
@@ -115,12 +123,69 @@ model<-gam(norm_dist~s(speed)+wind+hill_size_x+s(cumm_rating)+gender+training+s(
 summary(model)
 ```
 
-## Including Plots
+The results suggest that the further development of the model increased the explained variance from 53% to 57.5%. Now we will check how it projects on the predictions phase:
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r gam_test}
+require(tidyverse)
+require(knitr)
+codes = c('2017JP3817RL','2019JP3192RL','2018JP3265RL')
+predict_comp_two <- function(code, dataset, simple_model, model){
+  test_dataset = dataset %>% filter(grepl(code, id)) %>% arrange(desc(cumm_rating),round)
+  test_dataset = merge(test_dataset, all_names,how='left',by.x='codex.x',by.y='codex')
+  test_dataset['linear_prediction'] = predict(simple_model,test_dataset)*test_dataset['hill_size_x']
+  test_dataset['linear_prediction'] = round(2*test_dataset['linear_prediction'])/2
+  test_dataset['prediction'] = predict(model,test_dataset)*test_dataset['hill_size_x']
+  test_dataset['prediction'] = round(2*test_dataset['prediction'])/2
+  test_dataset['linear_error'] = test_dataset['dist'] - test_dataset['linear_prediction']
+  test_dataset['error'] = test_dataset['dist'] - test_dataset['prediction']
+  kable(test_dataset[,c('name','round','dist','linear_prediction','linear_error','prediction','error')])
+}
+for(code in codes) print(predict_comp_two(code,dataset,simple_model,model))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+We can see that the biggest difference can be seen on the flying hills, but the problems remain similar.
+
+# How we can try to improve the quality of our model?
+
+I have been thought about these results and the basic explanation of the problems with our model can be as below:
+
+The target variable is not only *jumper-dependent*, but also (if not mainly) *time-dependent*, i.e. the actual model errors should be positively correlated if the moment of jumps are similar.
+
+If we introduce the time-dependency to our model, then most of our problems should be removed. How can we do that?
+
+# Autoregressive (AR) prediction model
+
+Before the code, I want to describe the basic equation of our model:
+
+$\hat{L}_t = \sum\limits_{i=t-10}^{t-1} \alpha_i \epsilon_i + GAM_t$
+
+where $\hat{L}_t$ is the predicted normalized length of the $t$-th jumper, $\epsilon_i = L_i - GAM_i$ is the *actual* error caused by the GAM approximation until time $t$ and $GAM_t$ is the GAM prediction of $L_t$.
+
+The $\alpha$'s have to be estimated, but for now we will assume that $\alpha_{t-1} = 2/9$ and $\alpha{t-(i+1)} = \alpha{t-i} - 2/81$:
+
+```{r ar_model}
+shift <- function(x, n){
+  return(c(rep(x[1], n),x[seq(length(x)-n)]))
+}
+code = '2019JP3192RL'
+hill_size = test_dataset['hill_size_x'][1]
+test_dataset = dataset %>% filter(grepl(code, id)) %>% arrange(round,bib)
+test_dataset['norm_dist'] = test_dataset['dist']/hill_size
+test_dataset['gam_t'] = predict(model,test_dataset)
+test_dataset['prediction'] = test_dataset['gam_t']
+test_dataset['epsilon_t'] = test_dataset['norm_dist'] - test_dataset['gam_t']
+coeffs = seq(2/9,0,length.out=9)
+for(i in 1:9){
+  name = paste('epsilon_t',-i, sep='')
+  test_dataset[name] = shift(test_dataset$epsilon_t,i)
+  test_dataset['prediction'] = test_dataset['prediction']+coeffs[i]*test_dataset[name]
+}
+test_dataset['error'] = test_dataset['norm_dist'] - test_dataset['prediction']
+test_dataset = test_dataset %>% 
+  mutate_at(vars(gam_t, epsilon_t, prediction, error),
+            .funs = funs(round(. * hill_size,1)))
+test_dataset = merge(test_dataset, all_names,how='left',by.x='codex.x',by.y='codex')
+kable(test_dataset[,c('name','round','dist','gam_t','epsilon_t','prediction','error')])
+```
+
