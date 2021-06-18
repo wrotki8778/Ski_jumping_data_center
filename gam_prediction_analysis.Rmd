@@ -51,7 +51,7 @@ dataset['norm_dist'] = dataset['dist']/dataset['hill_size_x']
 dataset <- merge(dataset,all_ratings,by.x=c('id','codex.x','round'),by.y=c('id','codex','round'),all.y=FALSE,all.x=TRUE)
 dataset$gender = as.integer(as.factor(dataset$gender))
 dataset$date_new = as.integer(as.Date.character(dataset$date))
-train_dataset = dataset[(dataset['season']>2010) & (dataset['season']>2016),]
+train_dataset = dataset[(dataset['season']>2011) & (dataset['season']<2017),]
 ```
 
 Dataset called *dataset* has a lot of variables, but we will use only columns called:
@@ -88,14 +88,14 @@ We can ask *OK, but what do these results mean when we try to make the real pred
 
 1. World Cup in Trondheim in 2017 (code 2017JP3817RL), which was pretty standard competition without any major weather surprises and other problems.
 2. World Ski Championships on Normal Hill in Seefeld in 2019 (code 2019JP3192RL), which was exactly the opposite of the first case, so it can be a good benchmark of robustness of our model,
-3. Ski Flying World Championships in Oberstdorf in 2018 (code 2018JP3265RL), where we will check the behavior on flying events.
+3. Ski Flying World Cup in Kulm in 2018 (code 2018JP3068RL), where we will check the behavior on flying events.
 
 Now we will create appropriate test set and see how well our linear model generalizes:
 
 ```{r test}
 require(tidyverse)
 require(knitr)
-codes = c('2017JP3817RL','2019JP3192RL','2018JP3265RL')
+codes = c('2017JP3817RL','2019JP3192RL','2018JP3068RL')
 predict_comp <- function(code, dataset, model){
   test_dataset = dataset %>% filter(grepl(code, id)) %>% arrange(desc(cumm_rating),round)
   test_dataset = merge(test_dataset, all_names,how='left',by.x='codex.x',by.y='codex')
@@ -123,13 +123,13 @@ model<-gam(norm_dist~s(speed)+wind+hill_size_x+s(cumm_rating)+gender+training+s(
 summary(model)
 ```
 
-The results suggest that the further development of the model increased the explained variance from 53% to 57.5%. Now we will check how it projects on the predictions phase:
+The results suggest that the further development of the model increased the explained variance from 48% to almost 51%. Now we will check how it projects on the predictions phase:
 
 
 ```{r gam_test}
 require(tidyverse)
 require(knitr)
-codes = c('2017JP3817RL','2019JP3192RL','2018JP3265RL')
+require(ggplot2)
 predict_comp_two <- function(code, dataset, simple_model, model){
   test_dataset = dataset %>% filter(grepl(code, id)) %>% arrange(desc(cumm_rating),round)
   test_dataset = merge(test_dataset, all_names,how='left',by.x='codex.x',by.y='codex')
@@ -139,7 +139,13 @@ predict_comp_two <- function(code, dataset, simple_model, model){
   test_dataset['prediction'] = round(2*test_dataset['prediction'])/2
   test_dataset['linear_error'] = test_dataset['dist'] - test_dataset['linear_prediction']
   test_dataset['error'] = test_dataset['dist'] - test_dataset['prediction']
-  kable(test_dataset[,c('name','round','dist','linear_prediction','linear_error','prediction','error')])
+  r_squared_gam = sum((test_dataset[,'error'])^2)/sum((test_dataset[,'dist']-mean(test_dataset[,'dist']))^2)
+  r_squared_linear = sum((test_dataset[,'linear_error'])^2)/sum((test_dataset[,'dist']-mean(test_dataset[,'dist']))^2)
+  print(paste(1-r_squared_gam, 1-r_squared_linear))
+  N = paste('Results from : ', code, ' with linear (red) and GAM model (green)')
+  print(ggplot(test_dataset) + geom_jitter(aes(x = dist, y = prediction), color='green') + geom_jitter(aes(x = dist, y = linear_prediction), color='red') + geom_abline(aes(intercept=0,slope=1), color='blue') + labs(title=N))
+  output = test_dataset[,c('name','round','dist','linear_prediction','linear_error','prediction','error')]
+  return(output)
 }
 for(code in codes) print(predict_comp_two(code,dataset,simple_model,model))
 ```
@@ -168,9 +174,9 @@ The $\alpha$'s have to be estimated, but for now we will assume that $\alpha_{t-
 shift <- function(x, n){
   return(c(rep(x[1], n),x[seq(length(x)-n)]))
 }
-code = '2019JP3192RL'
-hill_size = test_dataset['hill_size_x'][1]
+ar_predict <- function(dataset,model,code){
 test_dataset = dataset %>% filter(grepl(code, id)) %>% arrange(round,bib)
+hill_size = test_dataset['hill_size_x'][1]
 test_dataset['norm_dist'] = test_dataset['dist']/hill_size
 test_dataset['gam_t'] = predict(model,test_dataset)
 test_dataset['prediction'] = test_dataset['gam_t']
@@ -182,10 +188,55 @@ for(i in 1:9){
   test_dataset['prediction'] = test_dataset['prediction']+coeffs[i]*test_dataset[name]
 }
 test_dataset['error'] = test_dataset['norm_dist'] - test_dataset['prediction']
+r_squared_pr = sum((test_dataset[,'error'])^2)/sum((test_dataset[,'norm_dist']-mean(test_dataset[,'norm_dist']))^2)
+r_squared_gam = sum((test_dataset[,'epsilon_t'])^2)/sum((test_dataset[,'norm_dist']-mean(test_dataset[,'norm_dist']))^2)
+print(paste(1-r_squared_pr, 1-r_squared_gam))
+N = paste('Results from : ', code, ' with GAM (red) and AR model (green)')
+print(ggplot(test_dataset) + geom_jitter(aes(x = norm_dist, y = prediction), color='green') + geom_jitter(aes(x = norm_dist, y = gam_t), color='red') + geom_abline(aes(intercept=0,slope=1), color='blue') + labs(title=N) + xlim(0.6,1.1) + ylim(0.6,1.1))
 test_dataset = test_dataset %>% 
-  mutate_at(vars(gam_t, epsilon_t, prediction, error),
-            .funs = funs(round(. * hill_size,1)))
+  mutate(gam_t = round(gam_t * hill_size_x,1),
+          epsilon_t = round(epsilon_t * hill_size_x,1),
+          prediction = round(prediction * hill_size_x,1),
+          error = round(error * hill_size_x,1))
 test_dataset = merge(test_dataset, all_names,how='left',by.x='codex.x',by.y='codex')
-kable(test_dataset[,c('name','round','dist','gam_t','epsilon_t','prediction','error')])
+output = test_dataset[,c('name','round','dist','gam_t','epsilon_t','prediction','error')]
+return(output)
+}
+for(code in codes) print(ar_predict(dataset,simple_model,code))
 ```
 
+The fast look on the data and we can see that the outputs are substantially different, if the model is biased or the conditions changes fastly. Although sometimes the residuals are bigger under the time-dependent model, the ad-hoc $R^2$ measures printed in the console say that the variance explained is significantly higher, so the model can be quite safely considered as the better one, mainly because the biases are removed.
+
+(alert: these $R^2$ statistics do not seem to be exciting (here between 0.5 and 0.6 roughly), but we are referencing to the mean of distances in a given competition, which can differ significantly from the overall mean. Therefore the negative value of $R^2$ in the GAM second case.)
+
+Of course that is not the end of the story, because the $\alpha$ coefficients were taken a priori. We can now estimate their optimal values in the same fashion as in the standard linear regression:
+
+```{r estimation_of_alphas}
+ar_estimate <- function(dataset,model,code){
+test_dataset = dataset %>% filter(grepl(code, id)) %>% arrange(round,bib)
+hill_size = test_dataset['hill_size_x'][1]
+test_dataset['norm_dist'] = test_dataset['dist']/hill_size
+test_dataset['gam_t'] = predict(model,test_dataset)
+test_dataset['epsilon_t'] = test_dataset['norm_dist'] - test_dataset['gam_t']
+coeffs = seq(2/9,0,length.out=9)
+names=c()
+for(i in 1:9){
+  name = paste('epsilon_t',-i, sep='')
+  names = c(names,name)
+  test_dataset[name] = shift(test_dataset$epsilon_t,i)
+}
+output = test_dataset[,c(c('epsilon_t'),names)]
+return(output)
+}
+all_codes = c(all_comps_r[(all_comps_r['training']==0) & (all_comps_r['season']>2014) & (all_comps_r['team'] == 0) & (1-is.na(all_comps_r['wind.factor'])),'id'])
+set.seed(2)
+sample_codes = sample(all_codes,50)
+test_dataset = ar_estimate(dataset,model,sample_codes[1])
+for(i in 2:length(sample_codes)){
+  test_dataset = rbind(test_dataset,ar_estimate(dataset,model,sample_codes[i]))
+}
+estimates_model = lm(epsilon_t ~ ., data=test_dataset)
+summary(estimates_model)
+```
+
+We conclude that the time window is properly adjusted (i.e. all of these $\epsilon$'s are significant at least with the confidence of 95%). The weights also are roughly correct, because the most recent observations receive the highest weights.
