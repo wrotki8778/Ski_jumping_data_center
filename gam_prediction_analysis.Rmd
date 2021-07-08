@@ -1,14 +1,20 @@
 ---
-title: "Ski jump distance forecasting - GAM model"
+title: "**Ski jump distance forecasting - GAM model**"
 author: "Wiktor Florek"
-date: "12 06 2021"
-output: html_document
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    toc: yes
+    number_sections: yes
+    code_folding: hide
+    theme: cosmo
+    highlight: tango
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, echo=FALSE, message=FALSE}
+knitr::opts_chunk$set(include=TRUE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(out.width="100%", fig.height = 4.5, split=FALSE, fig.align = 'default')
+options(dplyr.summarise.inform = FALSE)
 ```
-
 # Introduction and objectives
 
 One of the brightest aims while creating this ski jumping database was:
@@ -38,10 +44,11 @@ To make this introduction concise, [here](https://www.kaggle.com/wrotki8778/nyc-
 The necessary point is to clean and pre-process our dataset to be used in GAM:
 
 ```{r import}
-all_ratings <- read.csv("all_ratings.csv")
-all_comps_r <- read.csv("all_comps_r.csv")
-all_results <- read.csv("all_results.csv")
-all_names <- read.csv("all_names.csv")
+all_ratings <- read.csv("../input/ski-jumping-results-database-2009now/all_ratings.csv")
+all_comps_r <- read.csv("../input/ski-jumping-results-database-2009now/all_comps_r.csv")
+all_comps_r['hill_type'] = cut(all_comps_r$hill_size_x,c(0,114,160,300),labels=c('normal','large','flying'))
+all_results <- read.csv("../input/ski-jumping-results-database-2009now/all_results.csv")
+all_names <- read.csv("../input/ski-jumping-results-database-2009now/all_names.csv")
 all_names <- all_names[!duplicated(all_names[,c('codex')]),]
 all_results <- all_results[all_results['speed']>50 & all_results['speed']<115,]
 all_results <- all_results[all_results['dist']>40,]
@@ -50,7 +57,6 @@ dataset <- merge(all_results,all_comps_r,by=c('id'),all.y=FALSE)
 dataset['norm_dist'] = dataset['dist']/dataset['hill_size_x']
 dataset <- merge(dataset,all_ratings,by.x=c('id','codex.x','round'),by.y=c('id','codex','round'),all.y=FALSE,all.x=TRUE)
 dataset$gender = as.integer(as.factor(dataset$gender))
-dataset$date_new = as.integer(as.Date.character(dataset$date))
 train_dataset = dataset[(dataset['season']>2011) & (dataset['season']<2017),]
 ```
 
@@ -59,10 +65,9 @@ Dataset called *dataset* has a lot of variables, but we will use only columns ca
 * *norm_dist* -- normalized distance of an athlete and our target variable (1 means that our jumper achieved hill size of an object),
 * *speed* -- raw speed of an athlete in km/h,
 * *wind* -- the mean tangential speed of wind (negative values correspond with tail wind, positive -- with head wind),
-* *hill_size_x* -- the hill size of an underlying object, where the competition is held,
+* *hill_type* -- factor with levels *normal*, *large* and *flying* indicating the size of an underlying object,
 * *cumm_rating* -- rating of an athlete (1000 is the average, the bigger the better)
 * *gender* -- 0/1 variable indicating men or ladies competition,
-* *date_new* -- integer indicating day of the competition (reformatted from the standard time scale to be able to included in GAM)
 * *training* -- 0/1 variable indicating training rounds.
 
 One specific column is worth to mention, because it appears the first time in our dataset:
@@ -72,13 +77,14 @@ One specific column is worth to mention, because it appears the first time in ou
 # Results - linear regression
 
 Let's see how the basic linear regression model behaves:
+(disclaimer: the *hill_type* interactions were added after the observation that different types of hills should have different slope coefficient by our predictors)
 
 ```{r linear regression}
-simple_model <- lm(norm_dist~speed+wind+hill_size_x+cumm_rating+gender+date_new+training+short_rating, data=train_dataset)
+simple_model <- lm(norm_dist~(speed+wind+short_rating+cumm_rating+gender+training)*hill_type+hill_type, data=train_dataset)
 summary(simple_model)
 ```
 
-As we can see, all variables are significant for this model. If we assume that the $\lvert t \rvert$ statistic is the ad-hoc chosen measure of importance, then we infer that the first five components of our model are the most important in terms of prediction power. The $R^2$ coefficient says that almost 50% of the variance can be explained by this model, what is pretty good result. Nevertheless we can improve that benchmark by GAM quite easily. The residuals of our model also are quite small, though not negligible (compare with the initial distribution of *norm_dist* below).
+As we can see, all variables are significant for this model. If we assume that the $\lvert t \rvert$ statistic is the ad-hoc chosen measure of importance, then we infer that the first five components of our model are the most important in terms of prediction power. The $R^2$ coefficient says what amount of the variance can be explained by this model. We can improve that benchmark by GAM quite easily. The residuals of our model also are quite small, though not negligible (compare with the initial distribution of *norm_dist* below).
 
 ```{r}
 hist(train_dataset$norm_dist)
@@ -99,19 +105,21 @@ codes = c('2017JP3817RL','2019JP3192RL','2018JP3068RL')
 predict_comp <- function(code, dataset, model){
   test_dataset = dataset %>% filter(grepl(code, id)) %>% arrange(desc(cumm_rating),round)
   test_dataset = merge(test_dataset, all_names,how='left',by.x='codex.x',by.y='codex')
-  test_dataset['prediction'] = predict(model,test_dataset)*test_dataset['hill_size_x']
-  test_dataset['prediction'] = round(2*test_dataset['prediction'])/2
-  test_dataset['error'] = test_dataset['dist'] - test_dataset['prediction']
-  kable(test_dataset[,c('name','round','cumm_rating','short_rating','dist','prediction','error')])
+  test_dataset['output'] = predict(model,test_dataset)*test_dataset['hill_size_x']
+  test_dataset['error'] = test_dataset['dist'] - test_dataset['output']
+  names = c('name','round','c_rating','s_rating','dist','output','error')
+  output_df = data.frame(test_dataset[,c('name','round','cumm_rating','short_rating','dist','output','error')])
+  colnames(output_df)=names
+  return(output_df)
 }
-for(code in codes) print(predict_comp(code,dataset,simple_model))
+for(code in codes) print(format.data.frame(predict_comp(code,dataset,simple_model),digits=1))
 ```
 
 The basic thoughts about the results can be as below:
 
 * In standard situations (like the first one, with little wind perturbations) this model behaves quite well, the errors are not obviously biased and the variance is not so huge.
 * In some cases (like the second one) with the abnormal conditions the predictions are significantly biased, so the "better" model should erase this problem.
-* In the case of flying hills we can see the conservative nature of this model -- the predicted values range between 170 and 215 meters, so in this setting we also should search an alternative approach.
+* In the case of flying hills we can observe quite high variance, although the general rule is OK, i.e. we have no obvious biases, what was the case without the interaction terms (then the model has been too conservative).
 
 # Results - GAM
 
@@ -119,11 +127,11 @@ Now we will try the more advanced model, when the non-linearity is present:
 
 ```{r gam}
 library(mgcv) # contains our prime model
-model<-gam(norm_dist~s(speed)+wind+hill_size_x+s(cumm_rating)+gender+training+s(date_new)+s(short_rating), data=train_dataset)
+model<-gam(norm_dist~s(speed, by = hill_type)+wind+wind:hill_type+s(cumm_rating, by = hill_type)+gender + gender:hill_type+training + training:hill_type+s(short_rating, by = hill_type), data=train_dataset)
 summary(model)
 ```
 
-The results suggest that the further development of the model increased the explained variance from 48% to almost 51%. Now we will check how it projects on the predictions phase:
+The results suggest that the further development of the model increased the explained variance. Now we will check how it projects on the predictions phase:
 
 
 ```{r gam_test}
@@ -133,21 +141,19 @@ require(ggplot2)
 predict_comp_two <- function(code, dataset, simple_model, model){
   test_dataset = dataset %>% filter(grepl(code, id)) %>% arrange(desc(cumm_rating),round)
   test_dataset = merge(test_dataset, all_names,how='left',by.x='codex.x',by.y='codex')
-  test_dataset['linear_prediction'] = predict(simple_model,test_dataset)*test_dataset['hill_size_x']
-  test_dataset['linear_prediction'] = round(2*test_dataset['linear_prediction'])/2
-  test_dataset['prediction'] = predict(model,test_dataset)*test_dataset['hill_size_x']
-  test_dataset['prediction'] = round(2*test_dataset['prediction'])/2
-  test_dataset['linear_error'] = test_dataset['dist'] - test_dataset['linear_prediction']
-  test_dataset['error'] = test_dataset['dist'] - test_dataset['prediction']
+  test_dataset['l_output'] = predict(simple_model,test_dataset)*test_dataset['hill_size_x']
+  test_dataset['output'] = predict(model,test_dataset)*test_dataset['hill_size_x']
+  test_dataset['l_error'] = test_dataset['dist'] - test_dataset['l_output']
+  test_dataset['error'] = test_dataset['dist'] - test_dataset['output']
   r_squared_gam = sum((test_dataset[,'error'])^2)/sum((test_dataset[,'dist']-mean(test_dataset[,'dist']))^2)
-  r_squared_linear = sum((test_dataset[,'linear_error'])^2)/sum((test_dataset[,'dist']-mean(test_dataset[,'dist']))^2)
+  r_squared_linear = sum((test_dataset[,'l_error'])^2)/sum((test_dataset[,'dist']-mean(test_dataset[,'dist']))^2)
   print(paste(1-r_squared_gam, 1-r_squared_linear))
   N = paste('Results from : ', code, ' with linear (red) and GAM model (green)')
-  print(ggplot(test_dataset) + geom_jitter(aes(x = dist, y = prediction), color='green') + geom_jitter(aes(x = dist, y = linear_prediction), color='red') + geom_abline(aes(intercept=0,slope=1), color='blue') + labs(title=N))
-  output = test_dataset[,c('name','round','dist','linear_prediction','linear_error','prediction','error')]
+  print(ggplot(test_dataset) + geom_jitter(aes(x = dist, y = output), color='green') + geom_jitter(aes(x = dist, y = l_output), color='red') + geom_abline(aes(intercept=0,slope=1), color='blue') + labs(title=N))
+  output = test_dataset[,c('name','round','dist','l_output','l_error','output','error')]
   return(output)
 }
-for(code in codes) print(predict_comp_two(code,dataset,simple_model,model))
+for(code in codes) print(format.data.frame(predict_comp_two(code,dataset,simple_model,model),digits=1))
 ```
 
 We can see that the biggest difference can be seen on the flying hills, but the problems remain similar.
@@ -168,10 +174,11 @@ $\hat{L}_t = \sum\limits_{i=t-10}^{t-1} \alpha_i \epsilon_i + GAM_t$
 
 where $\hat{L}_t$ is the predicted normalized length of the $t$-th jumper, $\epsilon_i = L_i - GAM_i$ is the *actual* error caused by the GAM approximation until time $t$ and $GAM_t$ is the GAM prediction of $L_t$.
 
-The $\alpha$'s have to be estimated, but for now we will assume that $\alpha_{t-1} = 2/9$ and $\alpha{t-(i+1)} = \alpha{t-i} - 2/81$:
+The $\alpha$'s have to be estimated, but for now we will assume that $\alpha_{t-1} = 2/9$ and $\alpha_{t-(i+1)} = \alpha_{t-i} - 2/81$:
 
 ```{r ar_model}
 shift <- function(x, n){
+  if (length(x)<=n){return(rep(0,length(x)))}
   return(c(rep(x[1], n),x[seq(length(x)-n)]))
 }
 ar_predict <- function(dataset,model,code){
@@ -179,27 +186,27 @@ test_dataset = dataset %>% filter(grepl(code, id)) %>% arrange(round,bib)
 hill_size = test_dataset['hill_size_x'][1]
 test_dataset['norm_dist'] = test_dataset['dist']/hill_size
 test_dataset['gam_t'] = predict(model,test_dataset)
-test_dataset['prediction'] = test_dataset['gam_t']
+test_dataset['output'] = test_dataset['gam_t']
 test_dataset['epsilon_t'] = test_dataset['norm_dist'] - test_dataset['gam_t']
 coeffs = seq(2/9,0,length.out=9)
 for(i in 1:9){
   name = paste('epsilon_t',-i, sep='')
   test_dataset[name] = shift(test_dataset$epsilon_t,i)
-  test_dataset['prediction'] = test_dataset['prediction']+coeffs[i]*test_dataset[name]
+  test_dataset['output'] = test_dataset['output']+coeffs[i]*test_dataset[name]
 }
-test_dataset['error'] = test_dataset['norm_dist'] - test_dataset['prediction']
+test_dataset['error'] = test_dataset['norm_dist'] - test_dataset['output']
 r_squared_pr = sum((test_dataset[,'error'])^2)/sum((test_dataset[,'norm_dist']-mean(test_dataset[,'norm_dist']))^2)
 r_squared_gam = sum((test_dataset[,'epsilon_t'])^2)/sum((test_dataset[,'norm_dist']-mean(test_dataset[,'norm_dist']))^2)
 print(paste(1-r_squared_pr, 1-r_squared_gam))
 N = paste('Results from : ', code, ' with GAM (red) and AR model (green)')
-print(ggplot(test_dataset) + geom_jitter(aes(x = norm_dist, y = prediction), color='green') + geom_jitter(aes(x = norm_dist, y = gam_t), color='red') + geom_abline(aes(intercept=0,slope=1), color='blue') + labs(title=N) + xlim(0.6,1.1) + ylim(0.6,1.1))
+print(ggplot(test_dataset) + geom_jitter(aes(x = norm_dist, y = output), color='green') + geom_jitter(aes(x = norm_dist, y = gam_t), color='red') + geom_abline(aes(intercept=0,slope=1), color='blue') + labs(title=N) + xlim(0.6,1.1) + ylim(0.6,1.1))
 test_dataset = test_dataset %>% 
   mutate(gam_t = round(gam_t * hill_size_x,1),
           epsilon_t = round(epsilon_t * hill_size_x,1),
-          prediction = round(prediction * hill_size_x,1),
+          output = round(output * hill_size_x,1),
           error = round(error * hill_size_x,1))
 test_dataset = merge(test_dataset, all_names,how='left',by.x='codex.x',by.y='codex')
-output = test_dataset[,c('name','round','dist','gam_t','epsilon_t','prediction','error')]
+output = test_dataset[,c('name','round','dist','gam_t','epsilon_t','output','error')]
 return(output)
 }
 for(code in codes) print(ar_predict(dataset,simple_model,code))
@@ -207,7 +214,7 @@ for(code in codes) print(ar_predict(dataset,simple_model,code))
 
 The fast look on the data and we can see that the outputs are substantially different, if the model is biased or the conditions changes fastly. Although sometimes the residuals are bigger under the time-dependent model, the ad-hoc $R^2$ measures printed in the console say that the variance explained is significantly higher, so the model can be quite safely considered as the better one, mainly because the biases are removed.
 
-(alert: these $R^2$ statistics do not seem to be exciting (here between 0.5 and 0.6 roughly), but we are referencing to the mean of distances in a given competition, which can differ significantly from the overall mean. Therefore the negative value of $R^2$ in the GAM second case.)
+(alert: these $R^2$ statistics do not seem to be exciting (here between 0.3 and 0.6 roughly), but we are referencing to the mean of distances in a given competition, which can differ significantly from the overall mean. Therefore the negative value of $R^2$ in the GAM second case.)
 
 Of course that is not the end of the story, because the $\alpha$ coefficients were taken a priori. We can now estimate their optimal values in the same fashion as in the standard linear regression:
 
@@ -230,7 +237,7 @@ return(output)
 }
 all_codes = c(all_comps_r[(all_comps_r['training']==0) & (all_comps_r['season']>2014) & (all_comps_r['team'] == 0) & (1-is.na(all_comps_r['wind.factor'])),'id'])
 set.seed(2)
-sample_codes = sample(all_codes,50)
+sample_codes = sample(all_codes,150)
 test_dataset = ar_estimate(dataset,model,sample_codes[1])
 for(i in 2:length(sample_codes)){
   test_dataset = rbind(test_dataset,ar_estimate(dataset,model,sample_codes[i]))
@@ -239,4 +246,16 @@ estimates_model = lm(epsilon_t ~ ., data=test_dataset)
 summary(estimates_model)
 ```
 
-We conclude that the time window is properly adjusted (i.e. all of these $\epsilon$'s are significant at least with the confidence of 95%). The weights also are roughly correct, because the most recent observations receive the highest weights.
+We conclude that the time window is properly adjusted (i.e. most of these $\epsilon$'s are significant at least with the confidence of 95%). The weights also are roughly correct, because the most recent observations receive the highest weights.
+
+# Conclusions
+
+We have implemented the time and static approach into our prediction model. It could be seen that both of these methods are necessary to make this model useful and flexible. 
+
+Of course the presented algorithm has its limitations. Because we have few predictors, even if their quality is good, the model will show its underfitting tendencies. To avoid this problem, it's possible to use deep recurrent methods like LSTM, but it will be considered later. The other alternative is to add new predictors possibly uncorrelated with the previous and of good predictive power. Basic candidates could be somewhat like:
+
+* the mid-term rating (i.e. mean rating movement over 3 weeks or a similar amount of time),
+* the flying hill performance (i.e. mean rating movement on the largest hills, the 3rd test case proves that some athletes can perform better than the other rating variables suggest)
+* more information about wind (i.e. the mean of tangential wind speed is sometimes misleading and the raw values in single sensors probably could be much more helpful)
+
+In the other words, more data would probably help to build a better model.
