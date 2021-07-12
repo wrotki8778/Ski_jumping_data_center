@@ -330,7 +330,7 @@ actual_comps = actual_comps.sort_values(['date', 'id'],
 actual_comps = actual_comps.reset_index()
 actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
-comps_to_process = actual_comps
+comps_to_process = actual_comps.loc[:500]
 actual_rating = build_rating(comps_to_process,
                              actual_results, actual_names)
 actual_standings = show_rating(comps_to_process, actual_names,

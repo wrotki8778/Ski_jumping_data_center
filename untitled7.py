@@ -18,6 +18,14 @@ import statistics as st
 import random
 os.chdir('C:/Users/kubaf/Documents/GitHub/Ski_jumping_data_center')
 
+def find_ten_last_comps(comp, dict_groups, dict_indices, ratings):
+    codexes = actual_ratings.loc[u[comp]]['codex']
+    start = dict_groups[comp][0]
+    last_ten_comps = {u: [x for x in dict_indices[u] if x < start+1][-11:]
+                      for u in codexes}
+    return last_ten_comps
+
+
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
 actual_results['cutted_id'] = actual_results.id.str.slice(0, 10)
 actual_comps = pd.read_csv(os.getcwd()+'\\all_comps_r.csv')
@@ -26,6 +34,16 @@ actual_comps = actual_comps[actual_comps['training'] == 0]
 actual_comps['cutted_id'] = actual_comps.id.str.slice(0, 10)
 actual_ratings = pd.read_csv(os.getcwd()+'\\all_ratings.csv')
 actual_ratings['cutted_id'] = actual_ratings.id.str.slice(0, 10)
+
+dict_groups = actual_ratings.groupby(['id','round']).groups
+dict_indices = actual_ratings.groupby('codex').indices
+round_dict = actual_ratings[['id', 'round']].drop_duplicates().reset_index()
+filtered_comps = find_ten_last_comps(('2018JP3265RL', '2nd round '),
+                                     dict_groups, dict_indices,
+                                     actual_ratings)
+M = [find_ten_last_comps(comp, dict_groups, dict_indices, actual_ratings)
+     for comp in list(dict_groups.keys())]
+
 
 actual_results_lstm = pd.merge(actual_results, actual_comps,
                                on='id', how='inner')[['dist', 'codex_x','wind','speed',
