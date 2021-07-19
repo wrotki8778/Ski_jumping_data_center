@@ -18,69 +18,43 @@ import statistics as st
 import random
 os.chdir('C:/Users/kubaf/Documents/GitHub/Ski_jumping_data_center')
 
-def find_ten_last_comps(comp, dict_indices, ratings):
-    new_dict_indices = dict_indices.copy()
-    codexes = ratings.loc[comp['index']:comp['next_index']]['codex']
-    for index in codexes.index:
-        actual_value = new_dict_indices[codexes.loc[index]]
-        if len(actual_value) < 11:
-            new_dict_indices.update({codexes.loc[index]:
-                                     actual_value + [index]})
-        else:
-            new_dict_indices.update({codexes.loc[index]:
-                                     actual_value[1:] + [index]})
-    return new_dict_indices
+def read_ratings(df, column_names = ['delty','training']):
+    counter = range(1, 11)
+    for col_name in column_names:
+        for i in counter:
+            string_name = col_name + '_' + str(i)
+            df[string_name] = df[col_name].shift(i, fill_value=0)
+    return df
 
-dict_groups = actual_ratings.groupby(['id', 'round']).groups
-dict_indices = actual_ratings.groupby('codex').indices
-round_dict = actual_ratings[['id', 'round']].drop_duplicates().reset_index()
-round_dict['next_index'] = round_dict['index'].shift(-1,
-                                                     fill_value =
-                                                     len(actual_ratings))
-filtered_comps = find_ten_last_comps(round_dict.loc[3540], new_dict_indices,
-                                     actual_ratings)
+def is_t(string):
+    if 'T' in string:
+        return 1
+    return 0
+
 
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
-actual_results['cutted_id'] = actual_results.id.str.slice(0, 10)
 actual_comps = pd.read_csv(os.getcwd()+'\\all_comps_r.csv')
 actual_comps = actual_comps[actual_comps['team'] == 0]
 actual_comps = actual_comps[actual_comps['training'] == 0]
-actual_comps['cutted_id'] = actual_comps.id.str.slice(0, 10)
 actual_ratings = pd.read_csv(os.getcwd()+'\\all_ratings.csv')
-actual_ratings['cutted_id'] = actual_ratings.id.str.slice(0, 10)
+actual_ratings['training'] = actual_ratings['id'].apply(is_t)
 
-M = {}
-new_dict_indices = dict.fromkeys(dict_indices.keys(),[])
-
-for comp in round_dict.iterrows():
-    new_dict_indices = find_ten_last_comps(comp[1], new_dict_indices,
-                                           actual_ratings)
-    M[(comp[1]['id'], comp[1]['round'])] = new_dict_indices
-
-jumper_id, comp_id, comp_round = actual_ratings.loc[200000][['codex',
-                                                             'id',
-                                                             'round']]
-
-actual_ratings.loc[M[(comp_id, comp_round)][jumper_id]]
-
+u = [x for _, x in actual_ratings.groupby(['codex'])]
+big_u = [read_ratings(x) for x in u]
+new_actual_ratings = pd.DataFrame().append(big_u)
 
 actual_results_lstm = pd.merge(actual_results, actual_comps,
-                               on='id', how='inner')[['dist', 'codex_x','wind','speed',
+                               on='id', how='inner')[['dist', 'codex_x',
+                                                      'wind', 'speed',
                                                      'hill_size_x', 'date',
-                                                     'id', 'cutted_id_x',
-                                                     'training', 'round',
-                                                     'gender','bib','team',
-                                                     'season']]
+                                                     'id', 'round', 'gender',
+                                                     'bib', 'team', 'season']]
 actual_results_lstm = actual_results_lstm[actual_results_lstm['team']==0]
-actual_results_lstm = pd.merge(actual_results_lstm, actual_ratings,
+actual_results_lstm = pd.merge(actual_results_lstm, new_actual_ratings,
                                left_on=['id', 'round', 'codex_x'],
                                right_on=['id', 'round', 'codex'],
-                               how='left')[['dist', 'codex_x','wind','speed',
-                                            'hill_size_x', 'date',
-                                            'training', 'round',
-                                            'gender', 'cumm_rating',
-                                            'short_rating', 'bib',
-                                            'season','id']]
+                               how='left')
+# [['dist', 'codex_x', 'wind', 'speed', 'hill_size_x', 'date', 'training', 'round', 'gender', 'cumm_rating','short_rating', 'bib','season', 'id']]
 actual_results_lstm = actual_results_lstm.sort_values(['date', 'round'],
                                                       ascending=[True, True])
 actual_results_lstm["round"] = actual_results_lstm["round"].astype('category')
@@ -95,8 +69,12 @@ actual_results_lstm = actual_results_lstm[actual_results_lstm['speed'] > 0]
 actual_results_lstm = actual_results_lstm.dropna()
 sc = StandardScaler()
 sc2 = StandardScaler()
+
+counter = range(1, 11)
+col_names = [x + '_' + str(y) for x in ['delty', 'training'] for y in counter]
+
 var_names = ['hill_size_x', 'cumm_rating', 'short_rating',
-             'wind', 'speed', 'gender','codex_x']
+             'wind', 'speed', 'gender', 'codex_x', 'training']+col_names
 all_var_names = var_names + ['norm_dist']
 input_len = len(all_var_names)
 actual_results_lstm[var_names]\
@@ -105,9 +83,9 @@ actual_results_lstm[['norm_dist']]\
     = sc2.fit_transform(actual_results_lstm[['norm_dist']])
 round_dict = actual_results_lstm[['id', 'round']].drop_duplicates().reset_index()
 
-splitted_df = [actual_results_lstm[(actual_results_lstm['id'] == x['id']) &
-                                   (actual_results_lstm['round'] == x['round'])].sort_values('bib')
-               for i, x in round_dict.iterrows()]
+splitted_df = [x.sort_values('bib') for _, x in actual_results_lstm.groupby(['id','round'])]
+splitted_df_indexes = [_ for _, x in actual_results_lstm.groupby(['id','round'])]
+
 x = [x[all_var_names].values[:,:].astype(float)
      for x in splitted_df]
 y = [x[['norm_dist']].values[:,-1].astype(float)
@@ -115,6 +93,19 @@ y = [x[['norm_dist']].values[:,-1].astype(float)
 x = [Variable(torch.Tensor(u)) for u in x]
 y = [Variable(torch.Tensor(u)) for u in y]
 """
+def find_ten_last_comps(comp, dict_indices, ratings):
+    new_dict_indices = dict_indices.copy()
+    codexes = ratings.loc[comp['index']:comp['next_index']]['codex']
+    for index in codexes.index:
+        actual_value = new_dict_indices[codexes.loc[index]]
+        if len(actual_value) < 11:
+            new_dict_indices.update({codexes.loc[index]:
+                                     actual_value + [index]})
+        else:
+            new_dict_indices.update({codexes.loc[index]:
+                                     actual_value[1:] + [index]})
+    return new_dict_indices
+
 def sliding_windows(data, seq_length):
     x = []
     y = []
@@ -126,6 +117,40 @@ def sliding_windows(data, seq_length):
         y.append(_y)
 
     return np.array(x),np.array(y)
+dict_groups = actual_ratings.groupby(['id', 'round']).groups
+dict_groups = actual_ratings.groupby(['codex']).groups
+dict_indices = actual_ratings.groupby('codex').indices
+round_dict = actual_ratings[['id', 'round']].drop_duplicates().reset_index()
+round_dict['next_index'] = round_dict['index'].shift(-1,
+                                                     fill_value=
+                                                     len(actual_ratings))
+round_dict_2 = {(x[1],x[2]): (x[0],x[3]) for x in round_dict.values}
+results_dict = actual_results[['id', 'round']].drop_duplicates().reset_index()
+results_dict['next_index'] = results_dict['index'].shift(-1,
+                                                     fill_value=
+                                                     len(actual_results))
+results_dict_2 = {(x[1],x[2]): (x[0],x[3]) for x in results_dict.values}
+
+ratings_dict = actual_ratings.to_dict()
+
+M = {}
+new_dict_indices = dict.fromkeys(dict_indices.keys(), [])
+
+filtered_comps = find_ten_last_comps(round_dict.loc[3540], new_dict_indices,
+                                     actual_ratings)
+
+for comp in round_dict.iterrows():
+    new_dict_indices = find_ten_last_comps(comp[1], new_dict_indices,
+                                           actual_ratings)
+    M[(comp[1]['id'], comp[1]['round'])] = new_dict_indices
+
+%%timeit 
+np_lines = [read_ratings(data[1], ratings_dict, M)
+            for data in actual_ratings.loc[1000:2000].iterrows()]
+%%timeit
+new_data = actual_ratings.loc[1000:20000].apply(read_ratings, axis = 1,
+                                ratings_dict = ratings_dict,
+                                last_ratings = M)
 
 #sc = MinMaxScaler()
 #training_data = sc.fit_transform(actual_results_lstm)
@@ -155,8 +180,8 @@ class LSTM(nn.Module):
         self.linear = nn.Linear(hidden_layer_size, output_size)
         self.dropout = nn.Dropout(p=0.2)
 
-        self.hidden_cell = (torch.zeros(num_layers,1,self.hidden_layer_size),
-                            torch.zeros(num_layers,1,self.hidden_layer_size))
+        self.hidden_cell = (torch.zeros(num_layers, 1, self.hidden_layer_size),
+                            torch.zeros(num_layers, 1, self.hidden_layer_size))
 
     def forward(self, input_seq):
         output = []
@@ -184,7 +209,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 seed = 0
 torch.manual_seed(seed)
 
-epochs_total = 3000
+epochs_total = 4000
 max_index = 1000
 losses = []
 # Train the model
@@ -220,11 +245,10 @@ plot(moving_average(np.log10(np.array(losses)),100))
 
 # Test the model
 
-def predict_lstm(model, code):
+def predict_lstm(model, code, comps, data, indexes):
     outputs_collect = []
-    comp = actual_comps.loc[actual_comps['id'] == code]
-    filtered_dict = round_dict.loc[round_dict['id'] == code]
-    filtered_dict = [u[0] for u in filtered_dict.iterrows()]
+    comp = comps.loc[comps['id'] == code]
+    filtered_dict = [i for i,x in enumerate(indexes) if x[0] == code]
     ha_es = comp['hill_size_x'].item()
     for instance in filtered_dict:
         model.eval()
@@ -232,17 +256,20 @@ def predict_lstm(model, code):
                              torch.zeros(1, 1, model.hidden_layer_size))
         with torch.no_grad():
             x_pred = x[instance].detach().clone()
-            #x_pred[-1, -1] = 0
             y_pred = model(x_pred)
             y_pred = sc2.inverse_transform(y_pred)
             y_true = sc2.inverse_transform(y[instance])
             outputs_collect = outputs_collect + [np.array([ha_es*(y_pred-y_true),ha_es*y_pred ,ha_es*y_true])]
     return outputs_collect
-id_test = ['2017JP3817RL','2019JP3192RL','2018JP3068RL','2015JP3880RL']
+
+
+id_test = ['2017JP3817RL', '2019JP3192RL', '2018JP3068RL', '2015JP3880RL']
+
 model.eval()
-results=[]
+results = []
 for code in id_test:
-    results.append(predict_lstm(model, code))
+    results.append(predict_lstm(model, code, actual_comps, splitted_df,
+                                splitted_df_indexes))
 
 
 """

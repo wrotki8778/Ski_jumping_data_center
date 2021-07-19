@@ -6,6 +6,7 @@ Script to analyze results from untitled0/2/6.py and compute ratings.
 import os
 import pandas as pd
 import numpy as np
+import math
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 
 
@@ -159,18 +160,20 @@ def append_rating(results, i, comps, rating_act, rating_db, k, round_name):
 
     """
     ratings = results['cumm_rating']
-    results['delty'] = new_rating(ratings, k)
+    results['delty'] = new_rating(ratings, 8)
     results['id'] = comps.iloc[i]['id']
     results['round'] = round_name
     results['number'] = i
-    results['short_rating'] = short_rating_compute(i,results,comps,rating_act)
+    results['short_rating'] = short_rating_compute(i, results, comps,
+                                                   rating_act)
     new_rating_act = rating_act.append(results, ignore_index=True)
     new_rating_db = pd.merge(rating_db, results[['codex', 'delty']],
                              on='codex', how='left')
     new_rating_db['cumm_rating'] = new_rating_db['cumm_rating']\
-        + new_rating_db.fillna(0)['delty']*(1 - comps.loc[i]['training'])
+        + new_rating_db.fillna(0)['delty']*(1 - comps.loc[i]['training'])*(k/8)
     new_rating_db = new_rating_db.drop(['delty'], axis=1)
     return [new_rating_act, new_rating_db]
+
 
 def neighborhood_comps(comps,code):
     comp = comps[comps['id'] == code]
@@ -178,17 +181,20 @@ def neighborhood_comps(comps,code):
     codes = comps.loc[comp_number-12:comp_number]
     filtered_codes = codes[codes['place'] == comp.iloc[0]['place']]['id']
     return(list(filtered_codes))
-    
-def short_rating_compute(i,results,comps,rating_act):
+
+
+def short_rating_compute(i, results, comps, rating_act):
     if comps.loc[i]['training']:
         return 0
     correct_ids = neighborhood_comps(comps, comps.loc[i]['id'])
     if not correct_ids:
         return 0
-    rating_tmp = rating_act[rating_act['id'].isin(correct_ids)][['codex','delty']]
+    rating_tmp = rating_act[rating_act['id'].isin(correct_ids)][['codex',
+                                                                 'delty']]
     rating_tmp = rating_tmp.groupby('codex').mean(['delty'])
-    results = pd.merge(results,rating_tmp,how='left',on='codex')
+    results = pd.merge(results, rating_tmp, how='left', on='codex')
     return results['delty_y'].fillna(0)
+
 
 def build_rating(comps, results, names):
     """
@@ -241,6 +247,7 @@ def build_rating(comps, results, names):
                 all_results['round'] = 'whole competition '
                 all_results['points'] = 1
                 all_results['dist_points'] = 1
+                all_results['dist'] = 1
                 print('imported from nazfis.csv file')
                 round_names = ['whole competition ']
                 k = 2*k
@@ -250,15 +257,20 @@ def build_rating(comps, results, names):
             round_names = np.unique([x['round']
                                      for i, x in all_results.iterrows()])
         all_results = pd.DataFrame(all_results[['codex', 'round',
-                                                'dist_points', 'points']])
+                                                'dist_points',
+                                                'points', 'dist']])
         for round_name in round_names:
             result = all_results[all_results['round']
                                  == round_name][['codex', 'points',
-                                                 'dist_points']]
+                                                 'dist_points', 'dist']]
             if not omit_sort:
                 if comp['training']:
-                    result = result.sort_values(['dist_points'],
-                                                ascending=[False]).reset_index()['codex']
+                    if not(math.isnan(comp['wind factor'])):
+                        result = result.sort_values(['dist_points'],
+                                                    ascending=[False]).reset_index()['codex']
+                    else:
+                        result = result.sort_values(['dist'],
+                                                    ascending=[False]).reset_index()['codex']
                 else:
                     result = result.sort_values(['points'],
                                                 ascending=[False]).reset_index()['codex']
@@ -330,7 +342,7 @@ actual_comps = actual_comps.sort_values(['date', 'id'],
 actual_comps = actual_comps.reset_index()
 actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
-comps_to_process = actual_comps.loc[:500]
+comps_to_process = actual_comps
 actual_rating = build_rating(comps_to_process,
                              actual_results, actual_names)
 actual_standings = show_rating(comps_to_process, actual_names,
