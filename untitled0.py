@@ -1168,11 +1168,11 @@ def collect(comp, manual_text=False, start_text=False,
 
 
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
-# directory = max(list_of_files, key=os.path.getctime)
-directory = os.getcwd()+'/comps/2021_FC_2021-01-11.csv'
+directory = max(list_of_files, key=os.path.getctime)
+# directory = os.getcwd()+'/comps/2021_FC_2021-01-11.csv'
 comps = pd.read_csv(directory)
 comps = comps[comps['k-point'].notnull()]
-"""
+
 # Standard procedure
 exit_codes = []
 errors = []
@@ -1198,7 +1198,7 @@ for k, comp_to_process in comps.iterrows():
             print(comp_to_process)
 
 # Procedure to parse some COC training rounds (do not run if unnecessary)
-
+"""
 to_fix = errors
 
 exit_codes = []
@@ -1221,11 +1221,11 @@ for comp_to_fix in to_fix:
     if not warn and not os.path.isfile(file_name):
         results.to_csv(file_name, index=False)
     results.to_csv(os.getcwd()+'\\elastic_results\\'+comp_to_fix['id']+'.csv', index=False)
-"""
+
 # Procedure to parse competitions manually one by one
 # (do not run if unnecessary)
 
-n = 17
+n = 2
 comp_manual = comps.loc[n]
 # comp_manual['type'] = 0
 template = 0
@@ -1252,3 +1252,4 @@ old_comp = math.isnan(comp_manual['wind factor'])
 if template == 1 and comp_manual['type'] in (1, 3, 6) and not old_comp:
     results = results.drop(['gate_points'], axis=1)
 results.to_csv(comp_manual['id']+'.csv', index=False)
+"""

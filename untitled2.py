@@ -390,8 +390,8 @@ def get_round(comp):
 
 
 list_of_files = glob.glob(os.getcwd()+'/comps/*')
-# directory = max(list_of_files, key=os.path.getctime)
-directory = os.getcwd()+'/comps/2020_WC.csv'
+directory = max(list_of_files, key=os.path.getctime)
+# directory = os.getcwd()+'/comps/2020_WC.csv'
 
 comps = pd.read_csv(directory)
 comps = comps[comps['k-point'].notnull()]
@@ -415,11 +415,10 @@ if not os.path.isfile(directory_stats):
     stats_dataframe.to_csv(directory_stats, index=False)
 stats_dataframe.to_csv(directory_stats_2, index=False)
 
-for directory in list_of_files[48:]:
-    comps = pd.read_csv(directory)
-    for k, comp_to_process in comps.iterrows():
-        corrected_results = pd.DataFrame(get_round(comp_to_process))
-        if not corrected_results.empty:
-            corrected_results.to_csv(os.getcwd()+'\\elastic_results\\'
-                                     + comp_to_process['id']+'.csv',
-                                     index=False)
+comps = pd.read_csv(directory)
+for k, comp_to_process in comps.iterrows():
+    corrected_results = pd.DataFrame(get_round(comp_to_process))
+    if not corrected_results.empty:
+        corrected_results.to_csv(os.getcwd()+'\\elastic_results\\'
+                                 + comp_to_process['id']+'.csv',
+                                 index=False)
