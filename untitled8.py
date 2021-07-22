@@ -6,6 +6,7 @@ Script to analyze results from untitled0/2/6.py and compute ratings.
 import os
 import pandas as pd
 import numpy as np
+import numexpr as ne
 import math
 os.chdir('C:/Users/kubaf/Documents/Skoki')
 
@@ -104,30 +105,16 @@ def new_rating(ratings, k):
         Ordered vector of changes in initial ratings.
 
     """
-    delty = []
-    for i, rating in enumerate(ratings):
-        if np.isnan(rating):
-            delty.append(0)
-            continue
-        delta = 0
-        exp_score = 0
-        fact_score = 0
-        for j, another_rating in enumerate(ratings):
-            if np.isnan(another_rating):
-                continue
-            if i == j:
-                continue
-            if i < j:
-                exp_score = exp_score+1.01/(10**((another_rating-rating)/400)+1)
-                fact_score = fact_score+1
-            else:
-                exp_score = exp_score+1.01/(10**((another_rating-rating)/400)+1)
-        delta = k*(fact_score-exp_score)/10
-        delty.append(delta)
-    return delty
+    delty = np.array(ratings)
+    n = len(delty)
+    delty_matrix = np.tile(delty, (n, 1))
+    delty_matrix = (delty_matrix - delty_matrix.T)/400
+    results = ne.evaluate('1/(10**delty_matrix + 1)')
+    exp_score = np.sum(results, axis=1, initial = -0.5)
+    fact_score = np.flip(np.arange(n))
+    return k*(fact_score - exp_score)/10
 
-
-def append_rating(results, i, comps, rating_act, rating_db, k, round_name):
+def append_rating(results, comp, rating_db, k, round_name):
     """
     Update ratings in a incremental way.
 
@@ -161,18 +148,16 @@ def append_rating(results, i, comps, rating_act, rating_db, k, round_name):
     """
     ratings = results['cumm_rating']
     results['delty'] = new_rating(ratings, 8)
-    results['id'] = comps.iloc[i]['id']
+    results['id'] = comp.name
     results['round'] = round_name
-    results['number'] = i
-    results['short_rating'] = short_rating_compute(i, results, comps,
-                                                   rating_act)
-    new_rating_act = rating_act.append(results, ignore_index=True)
+    #results['short_rating'] = short_rating_compute(i, results, comps,
+    #                                               rating_act)
     new_rating_db = pd.merge(rating_db, results[['codex', 'delty']],
                              on='codex', how='left')
     new_rating_db['cumm_rating'] = new_rating_db['cumm_rating']\
-        + new_rating_db.fillna(0)['delty']*(1 - comps.loc[i]['training'])*(k/8)
+        + new_rating_db.fillna(0)['delty']*(1 - comp['training'])*(k/8)
     new_rating_db = new_rating_db.drop(['delty'], axis=1)
-    return [new_rating_act, new_rating_db]
+    return [results, new_rating_db]
 
 
 def neighborhood_comps(comps,code):
@@ -196,7 +181,16 @@ def short_rating_compute(i, results, comps, rating_act):
     return results['delty_y'].fillna(0)
 
 
-def build_rating(comps, results, names):
+def initialize_build_rating(names):
+    rating_db = pd.DataFrame(names['codex'])
+    rating_db = rating_db.drop_duplicates()
+    rating_db.dropna()
+    rating_db['cumm_rating'] = 1000
+    return rating_db
+
+
+def build_rating(comp, names, results=pd.DataFrame(),
+                 rating_db=pd.DataFrame(), round_name=False):
     """
     Create a dataframe with ratings of all athletes.
 
@@ -204,10 +198,10 @@ def build_rating(comps, results, names):
 
     Parameters
     ----------
-    comps : Pandas dataframe
-        Dataframe with merged competition information files.
+    comp : Pandas dataframe
+        Series with the information about the competition.
     results : Pandas dataframe
-        Dataframe with all results.
+        Dataframe with the results of given competition round.
     names : Pandas dataframe
         Dataframe with one-to-many map connecting every athlete with his/hers
         FIS code.
@@ -222,133 +216,77 @@ def build_rating(comps, results, names):
         after all competition rounds.
 
     """
-    rating_db = pd.DataFrame(names['codex'])
-    rating_db = rating_db.drop_duplicates()
-    rating_db.dropna()
-    rating_db['cumm_rating'] = 1000
-    rating_act = pd.DataFrame()
-    for i, comp in comps.iterrows():
-        k = 8 * (1 + max(2013 - comp['season'],0))
-        omit_sort = 0
-        print(k)
-        all_results = results[(results['id'] == comp['id'])
-                              & (results['codex'].notna())]
-        if all_results.empty:
-            if comp['training'] == 1:
-                print('omitted')
-                continue
-            omit_sort = 1
-            try:
-                file_name = os.getcwd()+'\\nazwy\\'+comp['id'][:10]+'nazfis.csv'
-                all_results = pd.read_csv(file_name, sep=';', header=None)
-                if comp['team']:
-                    continue
-                all_results.columns = ['bib', 'codex', 'name']
-                all_results['round'] = 'whole competition '
-                all_results['points'] = 1
-                all_results['dist_points'] = 1
-                all_results['dist'] = 1
-                print('imported from nazfis.csv file')
-                round_names = ['whole competition ']
-                k = 2*k
-            except pd.errors.EmptyDataError:
-                continue
+    if rating_db.empty:
+        rating_db = initialize_build_rating(names)
+    k = 8 * (1 + max(2013 - comp['season'], 0))
+    # print(k)
+    # print(comp)
+    # print(round_name)
+    if results.empty:
+        if comp['training'] == 1:
+            # print('omitted')
+            return pd.DataFrame(), rating_db
+        file_name = os.getcwd()+'\\nazwy\\'+comp.name[:10]+'nazfis.csv'
+        if os.path.exists(file_name):
+            results = pd.read_csv(file_name, sep=';', header=None)
+            if comp['team']:
+                return pd.DataFrame(), rating_db
+            results.columns = ['bib', 'codex', 'name']
+            results = results.drop(['bib','name'], axis=1)
+            # results['round'] = 'whole competition '
+            # results['points'] = 1
+            # results['dist_points'] = 1
+            # results['dist'] = 1
+            # print('imported from nazfis.csv file')
+            round_name = 'whole competition '
+            k = 2*k
         else:
-            round_names = np.unique([x['round']
-                                     for i, x in all_results.iterrows()])
-        all_results = pd.DataFrame(all_results[['codex', 'round',
-                                                'dist_points',
-                                                'points', 'dist']])
-        for round_name in round_names:
-            result = all_results[all_results['round']
-                                 == round_name][['codex', 'points',
-                                                 'dist_points', 'dist']]
-            if not omit_sort:
-                if comp['training']:
-                    if not(math.isnan(comp['wind factor'])):
-                        result = result.sort_values(['dist_points'],
-                                                    ascending=[False]).reset_index()['codex']
-                    else:
-                        result = result.sort_values(['dist'],
-                                                    ascending=[False]).reset_index()['codex']
-                else:
-                    result = result.sort_values(['points'],
-                                                ascending=[False]).reset_index()['codex']
-            else:
-                result = result['codex']
-            print(comp)
-            print(round_name)
-            if result.empty:
-                print('omitted')
-                continue
-            result.columns = ['codex', 'rating']
-            result = pd.merge(result, rating_db, how='left', on='codex')
-            rating_act, rating_db = append_rating(result, i, comps, rating_act,
+            return pd.DataFrame(), rating_db
+    new_results = pd.merge(results, rating_db, how='left', on='codex')
+    new_rating_act, new_rating_db = append_rating(new_results, comp,
                                                   rating_db, k, round_name)
-    return rating_act, rating_db
-
-
-def show_rating(comps, names, rating_act, take_all=True, index=False):
-    """
-    Show an output of the build_rating in user-friendly manner.
-
-    Parameters
-    ----------
-    comps : Pandas dataframe
-        Dataframe with merged competition information files.
-    names : Pandas dataframe
-        Dataframe with one-to-many map connecting every athlete with his/hers
-        FIS code.
-    rating_act : Pandas dataframe
-        Dataframe containing deltas (increments) of rating of every athlete
-        after all competition rounds.
-    take_all : Boolean, optional
-        If True, then all jumpers to 100 competitions back
-        are taken into output.
-        If False, then only jumpers participating in last competition
-        are taken into output.
-        The default is True.
-    index : integer, optional
-        Variable counting the number of competitions before a given round.
-    Returns
-    -------
-    results : Pandas dataframe
-        Ranking of selected athletes with their names and actual ratings.
-    """
-    names = names.drop_duplicates(subset=['codex'])
-    if not index:
-        index = len(comps) - 1
-    if take_all:
-        results = rating_act[(rating_act['number'] <= index)
-                             & (rating_act['number'] > index - 100)]
-        results = results.sort_values(['number'], ascending=False)
-        results = results.drop_duplicates(['codex'])
-        results = results.drop(['delty', 'id', 'round'], axis=1)
-    else:
-        results = rating_act[rating_act['number'] == index]
-    results = pd.merge(results, names, how='left')
-    return results
+    return new_rating_act, new_rating_db
 
 
 actual_comps = merge_infos(os.getcwd()+'\\comps\\')
 actual_comps.to_csv(os.getcwd()+'\\all_comps.csv', index=False, na_rep='NA')
 actual_stats = merge_stats(os.getcwd()+'\\stats\\')
 actual_stats.to_csv(os.getcwd()+'\\all_stats.csv', index=False, na_rep='NA')
+actual_stats_rounds = {_: list(x['round_type'])
+                       for _, x in actual_stats.groupby(['fis_code'])}
 # here execute skrypt2.R
 # actual_comps = actual_comps[actual_comps['training'] == 0]
 actual_comps = actual_comps[actual_comps['season'] > 2009]
 actual_comps = actual_comps.sort_values(['date', 'id'],
                                         ascending=[True, False])
-actual_comps = actual_comps.reset_index()
+actual_comps = actual_comps.set_index(['id'])
 actual_names = pd.read_csv(os.getcwd()+'\\all_names.csv')
 actual_results = pd.read_csv(os.getcwd()+'\\all_results.csv')
-comps_to_process = actual_comps
-actual_rating = build_rating(comps_to_process,
-                             actual_results, actual_names)
-actual_standings = show_rating(comps_to_process, actual_names,
-                               actual_rating[0], True, 596)
-ryoyu = actual_rating[0][actual_rating[0]['codex'] == 2088]
-actual_rating[0].to_csv(os.getcwd()+'\\all_ratings.csv',
+actual_results_split = {_: x.sort_values(by=['points', 'dist_points', 'loc'],
+                                         ascending=[False, False, True])['codex'].dropna()
+                        for _, x in actual_results.groupby(['id', 'round'])}
+
+rating_db = pd.DataFrame()
+rating_act = pd.DataFrame()
+rating_results = {}
+for primary_id in list(actual_comps.index):
+    if primary_id in actual_stats_rounds.keys():
+        round_names = actual_stats_rounds[primary_id]
+    else:
+        continue
+    comp = actual_comps.loc[primary_id]
+    for round_name in round_names:
+        if (primary_id, round_name) in actual_results_split.keys():
+            results = actual_results_split[(primary_id, round_name)]
+        else:
+            results = pd.DataFrame()
+        rating_act, rating_db = build_rating(comp, actual_names, results,
+                                             rating_db=rating_db,
+                                             round_name=round_name)
+        rating_results[(primary_id, round_name)] = rating_act
+rating_final = pd.DataFrame().append(list(rating_results.values()))
+# Execution time 4x reduced (280s -> 70s)
+rating_final.to_csv(os.getcwd()+'\\all_ratings.csv',
                         index=False, na_rep='NA')
 
 
