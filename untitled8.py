@@ -211,18 +211,18 @@ def build_rating(comp, names, results=pd.DataFrame(),
     return new_rating_act, new_rating_db
 
 all_comps = import_stuff('C:/Users/kubaf/Documents/Skoki/comps/',['id'])
-all_comps.to_csv(os.getcwd()+'\\all_comps.csv', index=False, na_rep='NA')
+all_comps.to_csv(os.getcwd()+'\\all_comps.csv', index=False)
 print('competitions loaded')
 all_stats = import_stuff('C:/Users/kubaf/Documents/Skoki/stats/',
                          ['fis_code','round_type'])
-all_stats.to_csv(os.getcwd()+'\\all_stats.csv', index=False, na_rep='NA')
+all_stats.to_csv(os.getcwd()+'\\all_stats.csv', index=False)
 print('stats loaded')
 all_names = import_names('C:/Users/kubaf/Documents/Skoki/nazwy/')
-all_names.to_csv(os.getcwd()+'\\all_names.csv', index=False, na_rep='NA')
+all_names.to_csv(os.getcwd()+'\\all_names.csv', index=False)
 print('names loaded')
 all_results = import_stuff('C:/Users/kubaf/Documents/Skoki/elastic_results/')
-all_results.to_csv(os.getcwd()+'\\all_results.csv', index=False, na_rep='NA')
 all_results = pd.merge(all_results,all_names, how='left', on='name').drop(['name'], axis=1)
+all_results.to_csv(os.getcwd()+'\\all_results.csv', index=False)
 print('results loaded')
 all_stats_rounds = {_: list(x['round_type'])
                        for _, x in all_stats.groupby(['fis_code'])}
@@ -256,6 +256,6 @@ for primary_id in list(all_comps.index):
 rating_final = pd.DataFrame().append(list(rating_results.values()))
 # Execution time 4x reduced (280s -> 70s)
 rating_final.to_csv(os.getcwd()+'\\all_ratings.csv',
-                        index=False, na_rep='NA')
+                        index=False)
 
 
