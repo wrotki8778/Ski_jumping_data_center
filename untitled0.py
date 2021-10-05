@@ -1178,6 +1178,7 @@ exit_codes = []
 errors = []
 
 for k, comp_to_process in comps.iterrows():
+    comp_to_process['type'] = 0
     directory_res = os.getcwd()+'\\results\\'+comp_to_process['id']+'.csv'
     if os.path.isfile(directory_res):
         continue
@@ -1225,7 +1226,7 @@ for comp_to_fix in to_fix:
 # Procedure to parse competitions manually one by one
 # (do not run if unnecessary)
 
-n = 2
+n = 5
 comp_manual = comps.loc[n]
 # comp_manual['type'] = 0
 template = 0

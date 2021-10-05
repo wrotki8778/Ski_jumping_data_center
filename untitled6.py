@@ -477,10 +477,10 @@ def import_start_list(comp, pdf_name, block=False, manual_text=False):
 
 
 take_years = [2022]
-type_indice = 3
+type_indice = 2
 types = ['WC', 'COC', 'GP', 'FC', 'SFWC', 'WSC', 'WJC']
 new_data = import_links(years=take_years, genre=types[type_indice],
-                        import_num=3)
+                        import_num=0)
 
 comps_init = new_data[3]
 comps_init['type'] = type_indice

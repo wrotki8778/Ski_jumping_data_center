@@ -217,6 +217,7 @@ all_stats = import_stuff('C:/Users/kubaf/Documents/Skoki/stats/',
                          ['fis_code','round_type'])
 all_stats.to_csv(os.getcwd()+'\\all_stats.csv', index=False)
 print('stats loaded')
+
 all_names = import_names('C:/Users/kubaf/Documents/Skoki/nazwy/')
 all_names.to_csv(os.getcwd()+'\\all_names.csv', index=False)
 print('names loaded')
